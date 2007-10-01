@@ -1,0 +1,210 @@
+#!/usr/bin/perl
+
+=head1 NAME
+
+pristine-tar - regenerate pristine tarballs
+
+=head1 SYNOPSIS
+
+B<pristine-tar> [-v] extract delta tarball
+B<pristine-tar> [-v] stash tarball delta
+
+=head1 DESCRIPTION
+
+pristine-tar stash takes the specified upstream tarball, and generates a
+small binary delta file that can later be used by pristine-tar extract
+to recreate the tarball.
+
+pristine-tar extract takes the specified delta file, and the files in the
+current directory, which must have identical content to those in the
+upstream tarball, and uses these to regenerate the pristine upstream
+tarball.
+
+This is useful when maintaining a Debian package in revision control, as
+you can check the delta file into revision control, tag the upstream
+release in revision control, and later extract the upstream tarball from
+revison control.
+
+pristine-tar supports compressed tarballs, but only the actual tar archive
+will be identical. It does not try to preserve a bit-identical zgzip file.
+
+=head1 OPTIONS
+
+=over 4
+
+=item -v
+
+Verbose mode, show each command that is run.
+
+=head1 AUTHOR
+
+Joey Hess <joeyh@debian.org>
+
+Licensed under the GPL, version 2 or above.
+
+=cut
+
+use warnings;
+use strict;
+use File::Temp qw(tempdir);
+use File::Path;
+use Getopt::Long;
+
+my $verbose=0;
+
+sub usage {
+	print STDERR "Usage: pristine-tar [-v] extract delta tarball\n";
+	print STDERR "       pristine-tar [-v] stash tarball delta\n";
+}
+
+sub doit {
+	print "@_\n" if $verbose;
+	if (system(@_) != 0) {
+		die "command failed: @_\n";
+	}
+}
+
+sub gentarball {
+	my $tempdir=shift;
+	my $source=shift;
+	my $clobber_source=shift;
+	
+	doit("mkdir $tempdir/workdir");
+
+	my @manifest;
+	open (IN, "$tempdir/manifest") || die "$tempdir/manifest: $!";
+	while (<IN>) {
+		chomp;
+		push @manifest, $_;
+	}
+	close IN;
+
+	# The manifest and source should have the same filenames,
+	# but the manifest probably has all the files under a common
+	# subdirectory. Check if it does.
+	# XXX currently only zero or one subdirectory level is supported
+	my $subdir="";
+	foreach my $file (@manifest) {
+		if ($file=~m!^(/?[^/]+)/!) {
+			if (length $subdir && $subdir ne $1) {
+				last;
+			}
+			elsif (! length $subdir) {
+				$subdir=$1;
+			}
+		}
+	}
+	
+	if (! $clobber_source) {
+		doit("cp -a $source $tempdir/workdir/$subdir");
+	}
+	else {
+		doit("mv $source $tempdir/workdir/$subdir");
+	}
+
+	# It's important that this create an identical tarball each time
+	# for a given set of input files. So don't include file metadata
+	# in the tarball, since it can easily vary.
+	foreach my $file (@manifest) {
+		if (-l "$tempdir/workdir/$file") {
+			# Can't set timestamp of a symlink, so
+			# replace the symlink with an empty file.
+			unlink("$tempdir/workdir/$file");
+			open(OUT, ">$tempdir/workdir/$file");
+			close OUT;
+		}
+		elsif (! -e "$tempdir/workdir/$file") {
+			die "$file is listed in the manifest but not present in the source directory.\n";
+		}
+		utime 0, 0, "$tempdir/workdir/$file";
+	}
+	doit("tar", "cf", "$tempdir/gentarball", "--owner", 0, "--group", 0, 
+		"--numeric-owner", "--mode", 0, "-C", "$tempdir/workdir",
+		"--no-recursion", "--files-from", "$tempdir/manifest"); 
+}
+
+sub extract {
+	my $delta=shift;
+	my $tarball=shift;
+
+	my $tempdir=tempdir(CLEANUP => 1);
+	
+	doit("tar", "xf", File::Spec->rel2abs($delta), "-C", $tempdir);
+	if (! -e "$tempdir/delta" || ! -e "$tempdir/manifest") {
+		die "failed to extract delta $delta\n";
+	}
+
+	open (IN, "$tempdir/version") || die "delta lacks version number ($!)";
+	my $version=<IN>;
+	if ($version > 1) {
+		die "delta is version $version, not supported\n";
+	}
+	close IN;
+
+	gentarball($tempdir, ".", 0);
+	doit("xdelta", "patch", "$tempdir/delta", "$tempdir/gentarball", $tarball);
+
+	if ($tarball =~ /(.*)\.gz$/) {
+		my $base=$1;
+		if (! rename($tarball, $base)) {
+			die "failed to rename $tarball to $base";
+		}
+		# --rsyncable might make the deltas use marginally less
+		# space in revision control.
+		doit("gzip", "--rsyncable", $base);
+	}
+}
+
+sub stash {
+	my $tarball=shift;
+	my $delta=shift;
+
+	my $tempdir=tempdir(CLEANUP => 1);
+
+	if ($tarball =~ /\.gz$/) {
+		doit("zcat $tarball > $tempdir/origtarball");
+		$tarball="$tempdir/origtarball";
+	}
+	
+	my $sourcedir="$tempdir/tmp";
+	doit("mkdir $sourcedir");
+	doit("tar", "xf", File::Spec->rel2abs($tarball), "-C", $sourcedir);
+	# if all files were in a subdir, use the subdir as the sourcedir
+	my @out=grep { $_ ne "$sourcedir/.." && $_ ne "$sourcedir/." }
+		(glob("$sourcedir/*"), glob("$sourcedir/.*"));
+	if ($#out == 0 && -d $out[0]) {
+		$sourcedir=$out[0];
+	}
+
+	doit("tar tf $tarball > $tempdir/manifest");
+	gentarball($tempdir, $sourcedir, 1);
+	my $ret=system("xdelta delta -0 --pristine $tempdir/gentarball $tarball $tempdir/delta") >> 8;
+	# xdelta exits 1 on success if there were differences
+	if ($ret != 1 && $ret != 0) {
+		die "xdelta failed with return code $ret\n";
+	}
+
+	open(OUT, ">", "$tempdir/version") || die "$!";
+	print OUT "1.0\n";
+	close OUT;
+
+	doit("tar czf $delta -C $tempdir delta manifest version");
+}
+
+if (! GetOptions("verbose" => \$verbose) || @ARGV != 3) {
+	usage();
+	exit 1;
+}
+
+my $command=shift;
+if ($command eq 'extract') {
+	extract(@ARGV);
+}
+elsif ($command eq 'stash') {
+	stash(@ARGV);
+}
+else {
+	print STDERR "Unknown subcommand \"$command\"\n";
+	usage();
+	exit 1;
+}

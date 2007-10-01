@@ -1,0 +1,5 @@
+* regenerate the pristine .gz too, if possible
+* Would be nice to keep a md5sums list of the files in the manifest and
+  check and error if any are different. The error message from xdelta when
+  a source file doesn't have the right checksup is fairly obscure and
+  doesn't aid in fixing the problem.
