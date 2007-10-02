@@ -1,0 +1,23 @@
+=head1 NAME
+
+zgz - libz based gz creator
+
+=head1 SYNOPSIS
+
+B<zgz> [options] file
+
+=head1 DESCRIPTION
+
+zgz is a modified version of a BSD gzip program. Unlike gzip(1), it
+uses libz for compression.
+
+It supports a variety of special, and currently unducumented options which
+aid pristine-gz(1) in reproducing builds of gz files that are bit-identical
+to the originals.
+
+=head1 AUTHOR
+
+Matthew R. Green,
+Faidon Liambotis
+
+=cut
