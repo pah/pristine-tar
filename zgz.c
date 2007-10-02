@@ -261,7 +261,7 @@ main(int argc, char **argv)
 		argv++;
 	}
 
-#define OPT_LIST "123456789acdfhlLNnMmqrS:tVvi:k:s:"
+#define OPT_LIST "123456789acdfhlLNnMmqrS:tVvo:k:s:"
 
 	while ((ch = getopt_long(argc, argv, OPT_LIST, longopts, NULL)) != -1) {
 		switch (ch) {
