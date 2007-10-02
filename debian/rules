@@ -2,13 +2,14 @@
 
 build:
 	$(MAKE)
-	pod2man -c "pristine-tar" pristine-tar > pristine-tar.1
+	pod2man -c pristine-tar pristine-tar > pristine-tar.1
+	pod2man -c pristine-gz pristine-gz > pristine-gz.1
 
 clean:
 	dh_testdir
 	dh_testroot
 	$(MAKE) clean
-	dh_clean pristine-tar.1
+	dh_clean pristine-tar.1 pristine-gz.1
 
 binary-arch: build
 
