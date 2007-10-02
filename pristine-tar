@@ -213,7 +213,8 @@ sub gendelta {
 	doit("tar", "czf", $delta, "-C", $tempdir, @files);
 }
 
-if (! GetOptions("verbose!" => \$verbose) || @ARGV != 3) {
+Getopt::Long::Configure("bundling");
+if (! GetOptions("v|verbose!" => \$verbose) || @ARGV != 3) {
 	usage();
 	exit 1;
 }
