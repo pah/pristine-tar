@@ -11,9 +11,13 @@ B<zgz> [options] file
 zgz is a modified version of a BSD gzip program. Unlike gzip(1), it
 uses libz for compression.
 
-It supports a variety of special, and currently unducumented options which
-aid pristine-gz(1) in reproducing builds of gz files that are bit-identical
-to the originals.
+BSD gzip is a drop-in replacement for GNU gzip(1). You can refer to GNU gzip's
+manpage for the command-line arguments.
+However, this is a modified version that removes support for some options, most
+notably decompression (-d) and recursive (-r).
+
+This version supports a variety of special options which aid pristine-gz(1) in
+reproducing builds of gz files that are bit-identical to the originals.
 
 =head1 AUTHOR
 
