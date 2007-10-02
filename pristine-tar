@@ -94,7 +94,7 @@ sub gentarball {
 	my $source=shift;
 	my $clobber_source=shift;
 	
-	doit("mkdir $tempdir/workdir");
+	doit("mkdir", "$tempdir/workdir");
 
 	my @manifest;
 	open (IN, "$tempdir/manifest") || die "$tempdir/manifest: $!";
@@ -121,10 +121,10 @@ sub gentarball {
 	}
 	
 	if (! $clobber_source) {
-		doit("cp -a $source $tempdir/workdir/$subdir");
+		doit("cp", "-a", $source, "$tempdir/workdir/$subdir");
 	}
 	else {
-		doit("mv $source $tempdir/workdir/$subdir");
+		doit("mv", $source, "$tempdir/workdir/$subdir");
 	}
 
 	# It's important that this create an identical tarball each time
@@ -183,7 +183,7 @@ sub gentar {
 			($verbose ? "-v" : "--no-verbose"),
 			($debug ? "-d" : "--no-debug"),
 			"gengz", "$tempdir/wrapper", $out);
-		doit("mv", $out.".gz", $tarball);
+		doit("mv", "-f", $out.".gz", $tarball);
 	}
 }
 
@@ -212,7 +212,7 @@ sub gendelta {
 	close IN;
 	
 	my $sourcedir="$tempdir/tmp";
-	doit("mkdir $sourcedir");
+	doit("mkdir", $sourcedir);
 	doit("tar", "xf", File::Spec->rel2abs($tarball), "-C", $sourcedir);
 	# if all files were in a subdir, use the subdir as the sourcedir
 	my @out=grep { $_ ne "$sourcedir/.." && $_ ne "$sourcedir/." }

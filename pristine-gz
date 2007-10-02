@@ -346,8 +346,8 @@ sub gengz {
 	utime($timestamp, $timestamp, "$tempdir/$filename") ||
 		die "utime: $!";
 	doit("zgz", @params, "-f", "$tempdir/$filename");
-	doit("mv", "$tempdir/$filename.gz", "$file.gz");
-	doit("rm", "-f", "$tempdir/$filename.gz", $file);
+	doit("mv", "-f", "$tempdir/$filename.gz", "$file.gz");
+	doit("rm", "-f", $file);
 }
 
 sub gendelta {
