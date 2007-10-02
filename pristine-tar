@@ -99,8 +99,6 @@ sub gentarball {
 	my $source=shift;
 	my $clobber_source=shift;
 	
-	doit("mkdir", "$tempdir/workdir");
-
 	my @manifest;
 	open (IN, "$tempdir/manifest") || die "$tempdir/manifest: $!";
 	while (<IN>) {
@@ -124,12 +122,21 @@ sub gentarball {
 			}
 		}
 	}
-	
-	if (! $clobber_source) {
-		doit("cp", "-a", $source, "$tempdir/workdir/$subdir");
+
+	if ($subdir) {
+		debug("subdir is $subdir");
+		doit("mkdir", "$tempdir/workdir");
+		$subdir="/$subdir";
 	}
 	else {
-		doit("mv", $source, "$tempdir/workdir/$subdir");
+		debug("tarball does not unpack into a subdir");
+	}
+
+	if (! $clobber_source) {
+		doit("cp", "-a", $source, "$tempdir/workdir$subdir");
+	}
+	else {
+		doit("mv", $source, "$tempdir/workdir$subdir");
 	}
 
 	# It's important that this create an identical tarball each time

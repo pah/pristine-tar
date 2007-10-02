@@ -341,9 +341,7 @@ sub gengz {
 	open (IN, "$tempdir/filename") || die "delta lacks filename file ($!)";
 	my $filename=<IN>;
 	chomp $filename;
-	if ($filename =~ /\//) {
-		die "paranoia check failed on filename field from delta ($filename)";
-	}
+	$filename=~s/^.*\///; # basename isn't strong enough
 	if (! length $filename) {
 		$filename="input";
 	}
