@@ -241,7 +241,6 @@ sub reproducegz {
 	if ($name !~ /\//) {
 		if ($name) {
 			$name = "$wd/$name";
-			move($new, "$name.gz");
 			doit("mv", "-f", $new, "$name.gz");
 			$new = "$name.gz";
 		}
