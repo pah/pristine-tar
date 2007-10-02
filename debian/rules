@@ -1,11 +1,13 @@
 #!/usr/bin/make -f
 
 build:
+	$(MAKE)
 	pod2man -c "pristine-tar" pristine-tar > pristine-tar.1
 
 clean:
 	dh_testdir
 	dh_testroot
+	$(MAKE) clean
 	dh_clean pristine-tar.1
 
 binary-arch: build
