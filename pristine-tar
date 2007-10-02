@@ -210,7 +210,6 @@ sub gendelta {
 		$tarball="$tempdir/origtarball";
 	}
 	close IN;
-	exit;
 	
 	my $sourcedir="$tempdir/tmp";
 	doit("mkdir $sourcedir");
