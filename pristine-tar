@@ -6,27 +6,27 @@ pristine-tar - regenerate pristine tarballs
 
 =head1 SYNOPSIS
 
-B<pristine-tar> [-v] extract delta tarball
-B<pristine-tar> [-v] stash tarball delta
+B<pristine-tar> [-v] gentar delta tarball
+B<pristine-tar> [-v] gendelta tarball delta
 
 =head1 DESCRIPTION
 
-pristine-tar stash takes the specified upstream tarball, and generates a
-small binary delta file that can later be used by pristine-tar extract
+pristine-tar gendelta takes the specified upstream tarball, and generates a
+small binary delta file that can later be used by pristine-tar gentar
 to recreate the tarball.
 
-pristine-tar extract takes the specified delta file, and the files in the
+pristine-tar gentar takes the specified delta file, and the files in the
 current directory, which must have identical content to those in the
 upstream tarball, and uses these to regenerate the pristine upstream
 tarball.
 
 This is useful when maintaining a Debian package in revision control, as
 you can check the delta file into revision control, tag the upstream
-release in revision control, and later extract the upstream tarball from
+release in revision control, and later gentar the upstream tarball from
 revison control.
 
-pristine-tar supports compressed tarballs, but only the actual tar archive
-will be identical. It does not try to preserve a bit-identical zgzip file.
+pristine-tar supports compressed tarballs, calling out to pristine-gz(1)
+to produce pristine gzip files.
 
 =head1 OPTIONS
 
@@ -46,22 +46,31 @@ Licensed under the GPL, version 2 or above.
 
 use warnings;
 use strict;
-use File::Temp qw(tempdir);
+use File::Temp;
 use File::Path;
 use Getopt::Long;
 
 my $verbose=0;
 
 sub usage {
-	print STDERR "Usage: pristine-tar [-v] extract delta tarball\n";
-	print STDERR "       pristine-tar [-v] stash tarball delta\n";
+	print STDERR "Usage: pristine-tar [-v] gentar delta tarball\n";
+	print STDERR "       pristine-tar [-v] gendelta tarball delta\n";
+}
+
+sub vprint {
+	print "pristine-tar: @_\n" if $verbose;
 }
 
 sub doit {
-	print "@_\n" if $verbose;
+	vprint(@_);
 	if (system(@_) != 0) {
 		die "command failed: @_\n";
 	}
+}
+
+sub tempdir {
+	return File::Temp::tempdir("pristine-tar.XXXXXXXXXX",
+		TMPDIR => 1, CLEANUP => 1);
 }
 
 sub gentarball {
@@ -123,45 +132,55 @@ sub gentarball {
 		"--no-recursion", "--files-from", "$tempdir/manifest"); 
 }
 
-sub extract {
+sub gentar {
 	my $delta=shift;
 	my $tarball=shift;
 
-	my $tempdir=tempdir(CLEANUP => 1);
+	my $tempdir=tempdir();
 	
 	doit("tar", "xf", File::Spec->rel2abs($delta), "-C", $tempdir);
-	if (! -e "$tempdir/delta" || ! -e "$tempdir/manifest") {
-		die "failed to extract delta $delta\n";
+	if (! -e "$tempdir/type") {
+		die "failed to gentar delta $delta\n";
 	}
 
 	open (IN, "$tempdir/version") || die "delta lacks version number ($!)";
 	my $version=<IN>;
-	if ($version > 1) {
+	if ($version >= 2) {
 		die "delta is version $version, not supported\n";
 	}
 	close IN;
+	if (open (IN, "$tempdir/type")) {
+		my $type=<IN>;
+		chomp $type;
+		if ($type ne "tar") {
+			die "delta is for a $type, not a tar\n";
+		}
+		close IN;
+	}
 
 	gentarball($tempdir, ".", 0);
-	doit("xdelta", "patch", "$tempdir/delta", "$tempdir/gentarball", $tarball);
+	my $out=(-e "$tempdir/wrapper") ? $tarball.".tmp" : $tarball;
+	doit("xdelta", "patch", "$tempdir/delta", "$tempdir/gentarball", $out);
 
-	if ($tarball =~ /(.*)\.gz$/) {
-		my $base=$1;
-		if (! rename($tarball, $base)) {
-			die "failed to rename $tarball to $base";
-		}
-		# --rsyncable might make the deltas use marginally less
-		# space in revision control.
-		doit("gzip", "--rsyncable", $base);
+	if (-e "$tempdir/wrapper") {
+		doit("pristine-gz", ($verbose ? "-v" : "--no-verbose"),
+			"gengz", "$tempdir/wrapper", $out);
+		doit("mv", $out.".gz", $tarball);
 	}
 }
 
-sub stash {
+sub gendelta {
 	my $tarball=shift;
 	my $delta=shift;
 
-	my $tempdir=tempdir(CLEANUP => 1);
+	my $tempdir=tempdir();
+	my @files=qw(delta manifest version type);
 
-	if ($tarball =~ /\.gz$/) {
+	my $file=`LANG=C file $tarball`;
+	if ($file=~/: gzip compressed data/) {
+		doit("pristine-gz", ($verbose ? "-v" : "--no-verbose"),
+			"gendelta", $tarball, "$tempdir/wrapper");
+		push @files, "wrapper";
 		doit("zcat $tarball > $tempdir/origtarball");
 		$tarball="$tempdir/origtarball";
 	}
@@ -185,23 +204,26 @@ sub stash {
 	}
 
 	open(OUT, ">", "$tempdir/version") || die "$!";
-	print OUT "1.0\n";
+	print OUT "1.1\n";
+	close OUT;
+	open(OUT, ">", "$tempdir/type") || die "$!";
+	print OUT "tar\n";
 	close OUT;
 
-	doit("tar czf $delta -C $tempdir delta manifest version");
+	doit("tar", "czf", $delta, "-C", $tempdir, @files);
 }
 
-if (! GetOptions("verbose" => \$verbose) || @ARGV != 3) {
+if (! GetOptions("verbose!" => \$verbose) || @ARGV != 3) {
 	usage();
 	exit 1;
 }
 
 my $command=shift;
-if ($command eq 'extract') {
-	extract(@ARGV);
+if ($command eq 'gentar') {
+	gentar(@ARGV);
 }
-elsif ($command eq 'stash') {
-	stash(@ARGV);
+elsif ($command eq 'gendelta') {
+	gendelta(@ARGV);
 }
 else {
 	print STDERR "Unknown subcommand \"$command\"\n";

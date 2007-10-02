@@ -1,0 +1,32 @@
+The delta file is a compressed tarball, containing the following files:
+
+version
+	Currently "1.0".
+type
+	Type of file this is a delta for ("tar" or "gz").
+	Defaults to "tar" if not present.
+
+
+For tar files, it contains:
+
+manifest
+	List of all files in the tarball, as output by `tar t`.
+	Used to order files correctly when rebuilding it.
+delta
+	xdelta between the generated tarball and the original tarball.
+wrapper
+	Encapsulated delta file for the .gz (or other) wrapper for the
+	tarball. Optional, if not present a pristine .gz won't be generated.
+
+
+For gz files it contains:
+
+program
+	The program to run to recreate the original gz.
+	("gzip" or "bsd-gzip")
+params
+	Parameters to pass to the program.
+	("-n 9", "-M", "--rsyncable")
+os
+	OS number from the original gz. Optional, if not present, no OS
+	field munging is done.

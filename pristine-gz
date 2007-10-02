@@ -1,0 +1,179 @@
+#!/usr/bin/perl
+
+=head1 NAME
+
+pristine-gz - regenerate pristine gz files
+
+=head1 SYNOPSIS
+
+B<pristine-gz> [-v] gengz delta file
+B<pristine-gz> [-v] gendelta file.gz delta
+
+=head1 DESCRIPTION
+
+This is a complement to the pristine-tar(1) command. Normally you don't
+need to run it by hand, since pristine-tar calls it as necessary to handle
+.tar.gz files.
+
+pristine-gz gendelta takes the specified gz file, and generates a
+small binary delta file that can later be used by pristine-gz gengz
+to recreate the original file.
+
+pristine-gz gengz takes the specified delta file, and compresses
+the specified input file (which must be identical to the contents
+of the original gz file). The resulting gz file will be identical to the
+original gz file.
+
+The approach used to regenerate the original gz file is to figure out how
+it was produced -- what compression level was used, whether it was built
+with gzip(1) or with bsd-gzip(1), whether the --rsyncable option was used,
+etc, and to reproduce this build environment when regenerating the gz.
+In a few cases post-build fixups are also done to ensure that the gz is
+identical to the original.
+
+This approach will work in the vast majority of cases. If it doesn't work,
+no delta will be generated. Please file bug reports.
+
+=head1 OPTIONS
+
+=over 4
+
+=item -v
+
+Verbose mode, show each command that is run.
+
+=head1 AUTHOR
+
+Joey Hess <joeyh@debian.org>,
+Faidon Liambotis <paravoid@debian.org>
+
+Licensed under the GPL, version 2.
+
+=cut
+
+use warnings;
+use strict;
+use File::Temp;
+use File::Path;
+use Getopt::Long;
+
+my $verbose=0;
+
+sub usage {
+	print STDERR "Usage: pristine-gz [-v] gengz delta file\n";
+	print STDERR "       pristine-gz [-v] gendelta file.gz delta\n";
+}
+
+sub vprint {
+	print "pristine-gz: @_\n" if $verbose;
+}
+
+sub doit {
+	vprint(@_);
+	if (system(@_) != 0) {
+		die "command failed: @_\n";
+	}
+}
+
+sub tempdir {
+	return File::Temp::tempdir("pristine-gz.XXXXXXXXXX",
+		TMPDIR => 1, CLEANUP => 1);
+}
+
+sub reproducegz {
+	my $gzfile=shift;
+
+	return "gzip", "-9"; # FIXME
+}
+
+sub gengz {
+	my $delta=shift;
+	my $file=shift;
+
+	my $tempdir=tempdir();
+	
+	doit("tar", "xf", File::Spec->rel2abs($delta), "-C", $tempdir);
+	if (! -e "$tempdir/type") {
+		die "failed to gengz delta $delta\n";
+	}
+
+	open (IN, "$tempdir/version") || die "delta lacks version number ($!)";
+	my $version=<IN>;
+	if ($version >= 2) {
+		die "delta is version $version, not supported\n";
+	}
+	close IN;
+	if (open (IN, "$tempdir/type")) {
+		my $type=<IN>;
+		chomp $type;
+		if ($type ne "gz") {
+			die "delta is for a $type, not a gz\n";
+		}
+		close IN;
+	}
+
+	
+	open (IN, "$tempdir/program") || die "delta lacks program file ($!)";
+	my $program=<IN>;
+	chomp $program;
+	if ($program !~ /^(gzip|bsd-gzip)$/) {
+		die "paranoia check failed on program file from delta ($program)";
+	}
+	close IN;
+	open (IN, "$tempdir/params") || die "delta lacks params file ($!)";
+	my $params=<IN>;
+	chomp $params;
+	my @params=split(' ', $params);
+	if (grep { ! /^(--no-xfl|--rsyncable|-[nmM1-9])$/ } @params) {
+		die "paranoia check failed on params file from delta (@params)";
+	}
+	close IN;
+
+	doit($program, $params, "-f", $file);
+}
+
+sub gendelta {
+	my $gzfile=shift;
+	my $delta=shift;
+
+	my $tempdir=tempdir();
+	my @files=qw(version type program params);
+
+	my $sourcedir="$tempdir/tmp";
+	doit("mkdir $sourcedir");
+
+	my ($program, $params)=reproducegz($gzfile);
+
+	open(OUT, ">", "$tempdir/version") || die "$!";
+	print OUT "1.1\n";
+	close OUT;
+	open(OUT, ">", "$tempdir/type") || die "$!";
+	print OUT "gz\n";
+	close OUT;
+	open(OUT, ">", "$tempdir/program") || die "$!";
+	print OUT "$program\n";
+	close OUT;
+	open(OUT, ">", "$tempdir/params") || die "$!";
+	print OUT "$params\n";
+	close OUT;
+
+	doit("tar", "czf", $delta, "-C", $tempdir, @files);
+}
+
+if (! GetOptions("verbose!" => \$verbose) || @ARGV != 3) {
+	usage();
+	exit 1;
+}
+
+my $command=shift;
+if ($command eq 'gengz') {
+	gengz(@ARGV);
+}
+elsif ($command eq 'gendelta') {
+	gendelta(@ARGV);
+}
+else {
+	print STDERR "Unknown subcommand \"$command\"\n";
+	usage();
+	exit 1;
+}

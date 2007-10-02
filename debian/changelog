@@ -1,10 +1,12 @@
 pristine-tar (0.2) UNRELEASED; urgency=low
 
+  * Added pristine-gz.
   * Added bsd-gzip, modified by paravoid to support gzip's (undocumented) -m
     and -M timestamp setting options. This will be needed when regenerating gz
     files created on bsd systems since the compression algorythm differs.
+  * Renamed the subcommands extract => gentar , stash => gendelta
 
- -- Joey Hess <joeyh@debian.org>  Tue, 02 Oct 2007 03:35:25 -0400
+ -- Joey Hess <joeyh@debian.org>  Tue, 02 Oct 2007 09:29:03 -0400
 
 pristine-tar (0.1) unstable; urgency=low
 
