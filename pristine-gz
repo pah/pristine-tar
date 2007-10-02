@@ -238,23 +238,30 @@ sub reproducegz {
 	# information
 	my @args = predictgzipargs($flags, $timestamp, $level);
 
-	$name = "$wd/$name" if $name && $name !~ /\//;
-	
-	if ($os == GZIP_OS_UNIX && $name !~ /\//) {
-		# for 98% of the cases the simple heuristic above works
-		testvariant($orig, $new, $name, '--gnu', @args)
-			&& return $name, $timestamp, '--gnu', @args;
+	if ($name !~ /\//) {
+		if ($name) {
+			$name = "$wd/$name";
+			move($new, "$name.gz");
+			doit("mv", "-f", $new, "$name.gz");
+			$new = "$name.gz";
+		}
+		if ($os == GZIP_OS_UNIX) {
+			# for 98% of the cases the simple heuristic above works
+			testvariant($orig, $new, $name, '--gnu', @args)
+				&& return $name, $timestamp, '--gnu', @args;
 
-		# some .gz are created using --rsyncable
-		# it is a Debian-specific option not very popular
-		testvariant($orig, $new, $name, '--gnu', @args, '--rsyncable')
-			&& return $name, $timestamp, '--gnu', @args, '--rsyncable';
+			# some .gz are created using --rsyncable
+			# it is a Debian-specific option not very popular
+			testvariant($orig, $new, $name, '--gnu', @args, '--rsyncable')
+				&& return $name, $timestamp, '--gnu', @args, '--rsyncable';
+		}
 	}
-
-	if ($name =~ /\//) {
+	else {
 		push @args, "--original-name", $name;
 		$name = basename($name);
 		$name = "$wd/$name";
+		doit("mv", "-f", $new, "$name.gz");
+		$new = "$name.gz";
 	}
 
 	# Windows' NTFS gzip implementation; quirk is really really evil
