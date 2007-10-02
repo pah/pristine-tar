@@ -32,7 +32,9 @@ In a few cases post-build fixups are also done to ensure that the gz is
 identical to the original.
 
 This approach will work in the vast majority of cases. If it doesn't work,
-no delta will be generated.
+no delta will be generated. One example of a case it cannot currently
+support is a gz file that has been produced by appending together multiple
+gz files.
 
 =head1 OPTIONS
 
