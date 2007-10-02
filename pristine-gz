@@ -129,10 +129,10 @@ sub doit {
 
 sub tempdir {
 	return File::Temp::tempdir("pristine-gz.XXXXXXXXXX",
-		TMPDIR => 1, CLEANUP => 1);
+		TMPDIR => 1, CLEANUP => 0);
 }
 
-sub readGzip($) {
+sub readgzip($) {
 	my $filename = shift;
 	my $chars;
 
@@ -161,33 +161,7 @@ sub readGzip($) {
 	return (\@flags, $timestamp, $level, $os, $name);
 }
 
-sub debugGzip($$$$$) {
-	my ($flags, $timestamp, $level, $os, $name) = @_;
-	my @flags = @$flags;
-
-	if ($os != GZIP_OS_UNIX) {
-		debug("Unknown Operating System: $os");
-	}
-	if ($timestamp > 0) {
-		debug("Created on ", scalar localtime $timestamp);
-	}
-
-	if ($level == GZIP_COMPRESSION_NORMAL) {
-		debug("Normal compression");
-	} elsif ($level == GZIP_COMPRESSION_BEST) {
-		debug("Maximum/Slower compression");
-	} elsif ($level == GZIP_COMPRESSION_FAST) {
-		debug("Minimum/Faster compression");
-	} else {
-		debug("Unknown/invalid compression level: $level");
-	}
-
-	if ($flags[GZIP_FLAG_FNAME]) {
-		debug("Has name: '$name')");
-	}
-}
-
-sub findGzipArgs($$$) {
+sub findgzipargs($$$) {
 	my ($flags, $timestamp, $level) = @_;
 	my @flags = @$flags;
 
@@ -209,7 +183,7 @@ sub findGzipArgs($$$) {
 	return @args;
 }
 
-sub compareFiles($$) {
+sub comparefiles($$) {
 	my ($old, $new) = (shift, shift);
 	system('cmp', '-s', $old, $new);
 
@@ -248,9 +222,9 @@ sub gzip($@) {
 	return $filename;
 }
 
-sub cycleGzip($$@) {
+sub cyclegzip($$@) {
 	my ($filename, $name, @args) = @_;
-
+print ">> @args\n";
 	$filename = gunzip($filename, $name);
 	$filename = gzip($filename, @args);
 
@@ -266,55 +240,63 @@ sub reproducegz {
 	doit("cp", $orig, $tmp);
 
 	# read fields from gzip headers
-	my ($flags, $timestamp, $level, $os, $name) = readGzip($tmp);
+	my ($flags, $timestamp, $level, $os, $name) = readgzip($tmp);
 	debug("Examining $orig", $name ? " (real: $name)" : '');
 	$name = "$wd/$name" if $name;
 
 	# try to guess the gzip arguments that are needed by the header
 	# information
-	my @args = findGzipArgs($flags, $timestamp, $level);
+	my @args = findgzipargs($flags, $timestamp, $level);
 
-	# for 98% of the cases the simple heuristic above works
-	debug("Trying 'gzip ", join(' ', @args), "'...");
-	$tmp = cycleGzip($tmp, $name, 'gzip', @args);
-	unless (compareFiles($orig, $tmp)) {
-		return 0, 'gzip', @args;
-	}
+	my @methods=(
+		# for 98% of the cases the simple heuristic works
+		sub {
+			debug("Trying 'gzip ", join(' ', @args), "'...");
+			return undef, "gzip", @args;
+		},
+		# some archives have an Operating System flag different
+		# than Unix
+		#  XXX: if they're the same, just replace the bit
+		#sub {
+		#	if ($os != GZIP_OS_UNIX) {
+		#		debug("Unknown Operating System: $os");
+		#	}
+		#},
+		# some .gz are created using --rsyncable -- this is a
+		# Debian-specific option however and it's not very popular
+		sub {
+			debug("Trying with --rsyncable...");
+			return undef, "gzip", @args, '--rsyncable';
+		},
+		# many of the .gz out there are created using the BSD version
+		# of gzip which is using the zlib library; try with our version
+		# of bsd-gzip with added support for the undocumented GNU gzip
+		# options -m and -M
+		sub {
+			debug("Trying with bsd-gzip...");
+			return undef, "bsd-gzip", @args;
+		},
+		# apparently, there is an old version of bsd-gzip (or a similar
+		# tool based on zlib) that creates gz using maximum compression
+		# (-9) but does not indicate so in the headers. surprisingly,
+		# there are many .gz out there
+		sub {
+			debug("Trying with buggy variant of bsd-gzip...");
+			return undef, "bsd-gzip", @args, '--no-xfl';
+		},
+	);
 
-	# some archives have an Operating System flag different than Unix
-	# XXX: if they're the same, just replace the bit
-	#if ($os != GZIP_OS_UNIX) {
-	#	debug("Unknown Operating System: $os");
-	#}
-
-	# some .gz are created using --rsyncable -- this is a Debian-specific
-	# option however and it's not very popular
-	debug("Trying with --rsyncable...");
-	$tmp = cycleGzip($tmp, $name, 'gzip', @args, '--rsyncable');
-	unless (compareFiles($orig, $tmp)) {
-		return 0, 'gzip', @args, '--rsyncable';
-	}
-
-	# many of the .gz out there are created using the BSD version of gzip
-	# which is using the zlib library; try with our version of bsd-gzip
-	# with added support for the undocumented GNU gzip options -m and -M
-	debug("Trying with bsd-gzip...");
-	$tmp = cycleGzip($tmp, $name, 'bsd-gzip', @args);
-	
-	unless (compareFiles($orig, $tmp)) {
-		return 0, 'bsd-gzip', @args;
-	}
-
-	# apparently, there is an old version of bsd-gzip (or a similar tool
-	# based on zlib) that creates gz using maximum compression (-9) but
-	# does not indicate so in the headers. surprisingly, there are many
-	# .gz out there
-	debug("Trying with buggy variant of bsd-gzip...");
-	$tmp = cycleGzip($tmp, $name, 'bsd-gzip', @args, '--no-xfl');
-
-	unless (compareFiles($orig, $tmp)) {
-		return 0, 'bsd-gzip', @args, '--no-xfl';
-	}
+	foreach my $method (@methods) {
+		my @r=$method->();
+                my $postsub=shift @r;
+                $tmp = cyclegzip($tmp, $name, @r);
+                $postsub->() if $postsub;
+		doit("md5sum", $orig, $tmp);
+                if (comparefiles($orig, $tmp) == 0) {
+                        $tmp=~s/\.gz$//;
+                        return basename($tmp), $timestamp, 0, @r;
+                }
+        };
 
 	print STDERR("pristine-gz failed to reproduce build of $orig\n");
 	print STDERR("(Please file a bug report.)\n");
@@ -363,8 +345,21 @@ sub gengz {
 		die "paranoia check failed on params file from delta (@params)";
 	}
 	close IN;
+	open (IN, "$tempdir/filename") || die "delta lacks filename file ($!)";
+	my $filename=<IN>;
+	chomp $filename;
+	close IN;
+	open (IN, "$tempdir/timestamp") || die "delta lacks timestamp file ($!)";
+	my $timestamp=<IN>;
+	chomp $timestamp;
+	close IN;
 
-	doit($program, $params, "-f", $file);
+	doit("cp", $file, "$tempdir/$filename");
+	utime($timestamp, $timestamp, "$tempdir/$filename") ||
+		die "utime: $!";
+	doit($program, @params, "-f", "$tempdir/$filename");
+	doit("mv", "$tempdir/$filename.gz", "$file.gz");
+	doit("rm", "-f", "$tempdir/$filename.gz", $file);
 }
 
 sub gendelta {
@@ -372,12 +367,13 @@ sub gendelta {
 	my $delta=shift;
 
 	my $tempdir=tempdir();
-	my @files=qw(version type program params);
+	my @files=qw(version type program params filename timestamp);
 
 	my $sourcedir="$tempdir/tmp";
 	doit("mkdir $sourcedir");
 
-	my ($osflag, $program, @params)=reproducegz($gzfile, $tempdir);
+	my ($filename, $timestamp, $osflag, $program, @params)=
+		reproducegz($gzfile, $tempdir);
 
 	open(OUT, ">", "$tempdir/version") || die "$!";
 	print OUT "1.1\n";
@@ -390,6 +386,12 @@ sub gendelta {
 	close OUT;
 	open(OUT, ">", "$tempdir/params") || die "$!";
 	print OUT "@params\n";
+	close OUT;
+	open(OUT, ">", "$tempdir/filename") || die "$!";
+	print OUT "$filename\n";
+	close OUT;
+	open(OUT, ">", "$tempdir/timestamp") || die "$!";
+	print OUT "$timestamp\n";
 	close OUT;
 
 	doit("tar", "czf", $delta, "-C", $tempdir, @files);

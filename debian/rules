@@ -17,7 +17,7 @@ binary-indep: build
 	dh_testdir
 	dh_testroot
 	dh_clean -k
-	dh_install pristine-tar usr/bin
+	dh_install pristine-tar pristine-gz usr/bin
 	dh_installdocs TODO delta-format.txt
 	dh_installman *.1
 	dh_installchangelogs

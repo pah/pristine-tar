@@ -27,6 +27,12 @@ program
 params
 	Parameters to pass to the program.
 	("-n 9", "-M", "--rsyncable")
+filename
+	The filename of the file contained in the gz.
+timestamp
+	Contains the timestamp of the file contained in the gz, as number
+	of seconds from the spoch.
 os
 	OS number from the original gz. Optional, if not present, no OS
 	field munging is done.
+

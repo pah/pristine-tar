@@ -6,8 +6,8 @@ pristine-tar - regenerate pristine tarballs
 
 =head1 SYNOPSIS
 
-B<pristine-tar> [-v] gentar delta tarball
-B<pristine-tar> [-v] gendelta tarball delta
+B<pristine-tar> [-vd] gentar delta tarball
+B<pristine-tar> [-vd] gendelta tarball delta
 
 =head1 DESCRIPTION
 
@@ -26,7 +26,7 @@ release in revision control, and later gentar the upstream tarball from
 revison control.
 
 pristine-tar supports compressed tarballs, calling out to pristine-gz(1)
-to produce pristine gzip files.
+to produce the pristine gzip files.
 
 =head1 OPTIONS
 
@@ -35,6 +35,10 @@ to produce pristine gzip files.
 =item -v
 
 Verbose mode, show each command that is run.
+
+=item -d
+
+Debug mode.
 
 =head1 AUTHOR
 
@@ -51,10 +55,15 @@ use File::Path;
 use Getopt::Long;
 
 my $verbose=0;
+my $debug=0;
 
 sub usage {
 	print STDERR "Usage: pristine-tar [-v] gentar delta tarball\n";
 	print STDERR "       pristine-tar [-v] gendelta tarball delta\n";
+}
+
+sub debug {
+	print "pristine-tar: @_\n" if $debug;
 }
 
 sub vprint {
@@ -163,7 +172,9 @@ sub gentar {
 	doit("xdelta", "patch", "$tempdir/delta", "$tempdir/gentarball", $out);
 
 	if (-e "$tempdir/wrapper") {
-		doit("pristine-gz", ($verbose ? "-v" : "--no-verbose"),
+		doit("pristine-gz", 
+			($verbose ? "-v" : "--no-verbose"),
+			($debug ? "-d" : "--no-debug"),
 			"gengz", "$tempdir/wrapper", $out);
 		doit("mv", $out.".gz", $tarball);
 	}
@@ -178,7 +189,9 @@ sub gendelta {
 
 	my $file=`LANG=C file $tarball`;
 	if ($file=~/: gzip compressed data/) {
-		doit("pristine-gz", ($verbose ? "-v" : "--no-verbose"),
+		doit("pristine-gz",
+			($verbose ? "-v" : "--no-verbose"),
+			($debug ? "-d" : "--no-debug"),
 			"gendelta", $tarball, "$tempdir/wrapper");
 		push @files, "wrapper";
 		doit("zcat $tarball > $tempdir/origtarball");
@@ -214,7 +227,7 @@ sub gendelta {
 }
 
 Getopt::Long::Configure("bundling");
-if (! GetOptions("v|verbose!" => \$verbose) || @ARGV != 3) {
+if (! GetOptions("v|verbose!" => \$verbose, "d|debug!" => \$debug) || @ARGV != 3) {
 	usage();
 	exit 1;
 }
