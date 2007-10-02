@@ -5,8 +5,13 @@ pristine-tar (0.2) UNRELEASED; urgency=low
     Modified by paravoid to support many options needed to reproduce gz
     files.
   * Renamed the subcommands extract => gentar , stash => gendelta
+  * Quite a lot of testing (ie, on the entire Debian archive) and bugfixes.
+  * Put files in the generated tarball mode 0644 pre-delta, this is a much
+    more likely file mode than the previous 0000 and thus makes the delta
+    smaller.
+  * File format version is up to 2.0 due to misc incompatible changes.
 
- -- Joey Hess <joeyh@debian.org>  Tue, 02 Oct 2007 09:29:03 -0400
+ -- Joey Hess <joeyh@debian.org>  Tue, 02 Oct 2007 19:36:26 -0400
 
 pristine-tar (0.1) unstable; urgency=low
 

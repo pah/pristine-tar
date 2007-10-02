@@ -156,7 +156,7 @@ sub gentarball {
 		utime 0, 0, "$tempdir/workdir/$file";
 	}
 	doit("tar", "cf", "$tempdir/gentarball", "--owner", 0, "--group", 0, 
-		"--numeric-owner", "--mode", 0, "-C", "$tempdir/workdir",
+		"--numeric-owner", "--mode", "0644", "-C", "$tempdir/workdir",
 		"--no-recursion", "--files-from", "$tempdir/manifest"); 
 }
 
@@ -173,7 +173,7 @@ sub gentar {
 
 	open (IN, "$tempdir/version") || die "delta lacks version number ($!)";
 	my $version=<IN>;
-	if ($version >= 2 || $version < 1.1) {
+	if ($version >= 3 || $version < 2) {
 		die "delta is version $version, not supported\n";
 	}
 	close IN;
@@ -244,7 +244,7 @@ sub gendelta {
 	}
 
 	open(OUT, ">", "$tempdir/version") || die "$!";
-	print OUT "1.1\n";
+	print OUT "2.0\n";
 	close OUT;
 	open(OUT, ">", "$tempdir/type") || die "$!";
 	print OUT "tar\n";

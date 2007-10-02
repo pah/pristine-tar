@@ -312,7 +312,7 @@ sub gengz {
 
 	open (IN, "$tempdir/version") || die "delta lacks version number ($!)";
 	my $version=<IN>;
-	if ($version >= 2) {
+	if ($version >= 3) {
 		die "delta is version $version, not supported\n";
 	}
 	close IN;
@@ -373,7 +373,7 @@ sub gendelta {
 		reproducegz($tempdir, $gzfile, "$tempdir/test.gz");
 
 	open(OUT, ">", "$tempdir/version") || die "$!";
-	print OUT "1.1\n";
+	print OUT "2.0\n";
 	close OUT;
 	open(OUT, ">", "$tempdir/type") || die "$!";
 	print OUT "gz\n";
