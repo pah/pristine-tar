@@ -287,8 +287,8 @@ sub reproducegz {
 	testvariant($orig, $new, $name, @args, '--quirk', 'buggy-bsd')
 		&& return $name. $timestamp, @args, '--quirk', 'buggy-bsd';
 
-	print STDERR("pristine-gz failed to reproduce build of $orig\n");
-	print STDERR("(Please file a bug report.)\n");
+	print STDERR "pristine-gz failed to reproduce build of $orig\n";
+	print STDERR "(Please file a bug report.)\n";
 	exit 1;
 }
 
