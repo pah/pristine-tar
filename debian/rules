@@ -26,6 +26,7 @@ binary-arch: build
 	dh_strip
 	dh_fixperms
 	dh_perl
+	dh_shlibdeps
 	dh_installdeb
 	dh_gencontrol
 	dh_md5sums

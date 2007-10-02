@@ -134,7 +134,7 @@ sub tempdir {
 		TMPDIR => 1, CLEANUP => 1);
 }
 
-sub readgzip($) {
+sub readgzip {
 	my $filename = shift;
 	my $chars;
 
@@ -163,7 +163,7 @@ sub readgzip($) {
 	return (\@flags, $timestamp, $level, $os, $name);
 }
 
-sub predictgzipargs($$$) {
+sub predictgzipargs {
 	my ($flags, $timestamp, $level) = @_;
 	my @flags = @$flags;
 
@@ -185,7 +185,7 @@ sub predictgzipargs($$$) {
 	return @args;
 }
 
-sub comparefiles($$) {
+sub comparefiles {
 	my ($old, $new) = (shift, shift);
 	system('cmp', '-s', $old, $new);
 
@@ -196,7 +196,7 @@ sub comparefiles($$) {
 	return $? >> 8;
 }
 
-sub testvariant($$$@) {
+sub testvariant {
 	my ($old, $new, $origname, @args) = @_;
 
 	# Unzip attempt of the previous run (or the original on the first run)
@@ -226,7 +226,7 @@ sub testvariant($$$@) {
 	return !comparefiles($old, $new);
 }
 
-sub reproducegz($$$) {
+sub reproducegz {
 	my ($wd, $orig, $new) = (shift, shift, shift);
 
 	# read fields from gzip headers
