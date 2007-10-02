@@ -4,7 +4,6 @@ version
 	Currently "1.0".
 type
 	Type of file this is a delta for ("tar" or "gz").
-	Defaults to "tar" if not present.
 
 
 For tar files, it contains:
