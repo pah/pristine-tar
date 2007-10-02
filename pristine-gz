@@ -129,7 +129,7 @@ sub doit {
 
 sub tempdir {
 	return File::Temp::tempdir("pristine-gz.XXXXXXXXXX",
-		TMPDIR => 1, CLEANUP => 0);
+		TMPDIR => 1, CLEANUP => 1);
 }
 
 sub readgzip($) {
