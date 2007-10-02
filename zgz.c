@@ -1,4 +1,14 @@
-/*-
+/*
+ * Author: Faidon Liambotis <paravoid@debian.org>
+ *
+ * This is a zlib-based gzip that is heavily based on NetBSD's gzip,
+ * developed by Matthew R. Green.
+ *
+ * This is suited for gzip regeneration and is part of pristine-tar.
+ * As such, it adds some extra options which are needed to successfully
+ * reproduce the gzips out there and removes features of the original
+ * implementation that were not relevant (e.g. decompression)
+ *
  * Copyright (c) 1997, 1998, 2003, 2004, 2006 Matthew R. Green
  * Copyright (c) 2007 Faidon Liambotis
  * All rights reserved.
@@ -110,6 +120,8 @@ static suffixes_t suffixes[] = {
 static	const char	gzip_version[] = "zgz 20071002 based on NetBSD gzip 20060927";
 
 static	const char	gzip_copyright[] = \
+" Author: Faidon Liambotis <paravoid@debian.org>\n"
+"\n"
 " Copyright (c) 1997, 1998, 2003, 2004, 2006 Matthew R. Green\n"
 " Copyright (c) 2007 Faidon Liambotis\n"
 " * All rights reserved.\n"
