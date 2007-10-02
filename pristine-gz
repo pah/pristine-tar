@@ -161,7 +161,7 @@ sub readgzip($) {
 	return (\@flags, $timestamp, $level, $os, $name);
 }
 
-sub findgzipargs($$$) {
+sub predictgzipargs($$$) {
 	my ($flags, $timestamp, $level) = @_;
 	my @flags = @$flags;
 
@@ -194,109 +194,88 @@ sub comparefiles($$) {
 	return $? >> 8;
 }
 
-sub gunzip($$) {
-	my ($filename, $name) = (shift, shift);
-	doit('gunzip', '-N', $filename);
-	if (-e $filename) {
-		die("gunzip failed, aborting");
-	} elsif ($name && -e $name) {
-		# original filename because we passed -N to gunzip
-		return $name; 
-	} else {
-		$filename =~ s/\.gz$//;
-		unless (-e $filename) {
-			die("gunzip succeded but I can't find the filename");
+sub testvariant($$$@) {
+	my ($old, $new, $origname, @args) = @_;
+
+	# Unzip attempt of the previous run (or the original on the first run)
+	doit('gunzip', '-N', $new);
+	if (-e $new) {
+		die "gunzip failed, aborting";
+	}
+	elsif ($origname && -e $origname) {
+		# original new because we passed -N to gunzip
+		$new = $origname;
+	}
+	else {
+		$new =~ s/\.gz$//;
+		unless (-e $new) {
+			die("gunzip succeded but I can't find the new file");
 		}
-		return $filename;
 	}
-}
 
-sub gzip($@) {
-	my ($filename, @args) = @_;
-
-	doit(@args, $filename);
-	$filename .= '.gz';
-	unless (-e $filename) {
-		die("gzip failed, aborting");
+	# try gzipping with the arguments passed
+	doit('zgz', @args, $new);
+	$new .= '.gz';
+	unless (-e $new) {
+		die("zgz failed, aborting");
 	}
-	return $filename;
+
+	# and compare the generated with the original
+	return !comparefiles($old, $new);
 }
 
-sub cyclegzip($$@) {
-	my ($filename, $name, @args) = @_;
-print ">> @args\n";
-	$filename = gunzip($filename, $name);
-	$filename = gzip($filename, @args);
-
-	return $filename;
-}
-
-sub reproducegz {
-	my $orig=shift;
-	my $wd=shift;
-
-	# copy the original .gz to the newly created temporary directory
-	my $tmp = "$wd/".basename($orig);
-	doit("cp", $orig, $tmp);
+sub reproducegz($$$) {
+	my ($wd, $orig, $new) = (shift, shift, shift);
 
 	# read fields from gzip headers
-	my ($flags, $timestamp, $level, $os, $name) = readgzip($tmp);
-	debug("Examining $orig", $name ? " (real: $name)" : '');
-	$name = "$wd/$name" if $name;
+	my ($flags, $timestamp, $level, $os, $name) = readgzip($new);
 
 	# try to guess the gzip arguments that are needed by the header
 	# information
-	my @args = findgzipargs($flags, $timestamp, $level);
+	my @args = predictgzipargs($flags, $timestamp, $level);
 
-	my @methods=(
-		# for 98% of the cases the simple heuristic works
-		sub {
-			debug("Trying 'gzip ", join(' ', @args), "'...");
-			return undef, "gzip", @args;
-		},
-		# some archives have an Operating System flag different
-		# than Unix
-		#  XXX: if they're the same, just replace the bit
-		#sub {
-		#	if ($os != GZIP_OS_UNIX) {
-		#		debug("Unknown Operating System: $os");
-		#	}
-		#},
-		# some .gz are created using --rsyncable -- this is a
-		# Debian-specific option however and it's not very popular
-		sub {
-			debug("Trying with --rsyncable...");
-			return undef, "gzip", @args, '--rsyncable';
-		},
-		# many of the .gz out there are created using the BSD version
-		# of gzip which is using the zlib library; try with our version
-		# of bsd-gzip with added support for the undocumented GNU gzip
-		# options -m and -M
-		sub {
-			debug("Trying with bsd-gzip...");
-			return undef, "bsd-gzip", @args;
-		},
-		# apparently, there is an old version of bsd-gzip (or a similar
-		# tool based on zlib) that creates gz using maximum compression
-		# (-9) but does not indicate so in the headers. surprisingly,
-		# there are many .gz out there
-		sub {
-			debug("Trying with buggy variant of bsd-gzip...");
-			return undef, "bsd-gzip", @args, '--no-xfl';
-		},
-	);
+	$name = "$wd/$name" if $name && $name !~ /\//;
+	
+	if ($os == GZIP_OS_UNIX && $name !~ /\//) {
+		# for 98% of the cases the simple heuristic above works
+		testvariant($orig, $new, $name, '--gnu', @args)
+			&& return $name, $timestamp, '--gnu', @args;
 
-	foreach my $method (@methods) {
-		my @r=$method->();
-                my $postsub=shift @r;
-                $tmp = cyclegzip($tmp, $name, @r);
-                $postsub->() if $postsub;
-		doit("md5sum", $orig, $tmp);
-                if (comparefiles($orig, $tmp) == 0) {
-                        $tmp=~s/\.gz$//;
-                        return basename($tmp), $timestamp, 0, @r;
-                }
-        };
+		# some .gz are created using --rsyncable
+		# it is a Debian-specific option not very popular
+		testvariant($orig, $new, $name, '--gnu', @args, '--rsyncable')
+			&& return $name, $timestamp, '--gnu', @args, '--rsyncable';
+	}
+
+	if ($name =~ /\//) {
+		push @args, "--original-name", $name;
+		$name = basename($name);
+		$name = "$wd/$name";
+	}
+
+	# Windows' NTFS gzip implementation; quirk is really really evil
+	if ($os == GZIP_OS_NTFS) {
+		testvariant($orig, $new, $name, @args, '--quirk', 'ntfs')
+			&& return $name, $timestamp, @args, '--quirk', 'ntfs';
+	}
+
+	# set the Operating System flag to the one found in the original
+	# archive
+	push @args, ("--osflag", $os) if $os != GZIP_OS_UNIX;
+
+	# many of the .gz out there are created using the BSD version of
+	# gzip which is using the zlib library; try with our version of
+	# bsd-gzip with added support for the undocumented GNU gzip options
+	# -m and -M
+	testvariant($orig, $new, $name, @args)
+		&& return $name, $timestamp, @args;
+	
+	# apparently, there is an old version of bsd-gzip (or a similar tool
+	# based on zlib) that creates gz using maximum compression (-9) but
+	# does not indicate so in the headers. surprisingly, there are many
+	# .gz out there.
+	testvariant($orig, $new, $name, @args, '--quirk', 'buggy-bsd')
+		&& return $name. $timestamp, @args, '--quirk', 'buggy-bsd';
 
 	print STDERR("pristine-gz failed to reproduce build of $orig\n");
 	print STDERR("(Please file a bug report.)\n");
@@ -330,24 +309,29 @@ sub gengz {
 	}
 
 	
-	open (IN, "$tempdir/program") || die "delta lacks program file ($!)";
-	my $program=<IN>;
-	chomp $program;
-	if ($program !~ /^(gzip|bsd-gzip)$/) {
-		die "paranoia check failed on program file from delta ($program)";
-	}
-	close IN;
 	open (IN, "$tempdir/params") || die "delta lacks params file ($!)";
 	my $params=<IN>;
 	chomp $params;
 	my @params=split(' ', $params);
-	if (grep { ! /^(--no-xfl|--rsyncable|-[nmM1-9])$/ } @params) {
-		die "paranoia check failed on params file from delta (@params)";
+	while (@params) {
+		$_=shift @params;
+		next if /^(--gnu|--rsyncable|-[nmM1-9])$/;
+		if (/^(--original-name|--quirk|--osflag)$/) {
+			shift @params;
+		}
+		die "paranoia check failed on params file from delta ($params)";
 	}
+	@params=split(' ', $params);
 	close IN;
 	open (IN, "$tempdir/filename") || die "delta lacks filename file ($!)";
 	my $filename=<IN>;
 	chomp $filename;
+	if ($filename =~ /\//) {
+		die "paranoia check failed on filename field from delta ($filename)";
+	}
+	if (! length $filename) {
+		$filename="input";
+	}
 	close IN;
 	open (IN, "$tempdir/timestamp") || die "delta lacks timestamp file ($!)";
 	my $timestamp=<IN>;
@@ -357,7 +341,7 @@ sub gengz {
 	doit("cp", $file, "$tempdir/$filename");
 	utime($timestamp, $timestamp, "$tempdir/$filename") ||
 		die "utime: $!";
-	doit($program, @params, "-f", "$tempdir/$filename");
+	doit("zgz", @params, "-f", "$tempdir/$filename");
 	doit("mv", "$tempdir/$filename.gz", "$file.gz");
 	doit("rm", "-f", "$tempdir/$filename.gz", $file);
 }
@@ -367,22 +351,17 @@ sub gendelta {
 	my $delta=shift;
 
 	my $tempdir=tempdir();
-	my @files=qw(version type program params filename timestamp);
+	my @files=qw(version type params filename timestamp);
 
-	my $sourcedir="$tempdir/tmp";
-	doit("mkdir $sourcedir");
-
-	my ($filename, $timestamp, $osflag, $program, @params)=
-		reproducegz($gzfile, $tempdir);
+	doit("cp", $gzfile, "$tempdir/test.gz");
+	my ($filename, $timestamp, @params)=
+		reproducegz($tempdir, $gzfile, "$tempdir/test.gz");
 
 	open(OUT, ">", "$tempdir/version") || die "$!";
 	print OUT "1.1\n";
 	close OUT;
 	open(OUT, ">", "$tempdir/type") || die "$!";
 	print OUT "gz\n";
-	close OUT;
-	open(OUT, ">", "$tempdir/program") || die "$!";
-	print OUT "$program\n";
 	close OUT;
 	open(OUT, ">", "$tempdir/params") || die "$!";
 	print OUT "@params\n";

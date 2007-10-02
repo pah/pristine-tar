@@ -21,18 +21,10 @@ wrapper
 
 For gz files it contains:
 
-program
-	The program to run to recreate the original gz.
-	("gzip" or "bsd-gzip")
 params
-	Parameters to pass to the program.
+	Parameters to pass to zgz.
 	("-n 9", "-M", "--rsyncable")
-filename
-	The filename of the file contained in the gz.
 timestamp
-	Contains the timestamp of the file contained in the gz, as number
-	of seconds from the spoch.
-os
-	OS number from the original gz. Optional, if not present, no OS
-	field munging is done.
-
+	Timestamp of the original input file, in seconds from epoch.
+filename
+	Filename of the original input file.
