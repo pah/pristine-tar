@@ -9,7 +9,7 @@ XS-Vcs-Svn: svn://svn.debian.org/collab-maint/deb-maint/pristine-tar/trunk
 Package: pristine-tar
 Architecture: any
 Section: utils
-Depends: xdelta, ${shlibs:Depends}, ${misc:Depends}
+Depends: xdelta, ${shlibs:Depends}, ${misc:Depends}, perl-modules
 Description: regenerate pristine tarballs
  pristine-tar can generate a pristine upstream tarball using only a small
  binary delta file and a revision control checkout of the upstream branch.
