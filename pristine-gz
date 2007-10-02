@@ -377,7 +377,7 @@ sub gendelta {
 	print OUT "@params\n";
 	close OUT;
 	open(OUT, ">", "$tempdir/filename") || die "$!";
-	print OUT "$filename\n";
+	print OUT basename($filename)."\n";
 	close OUT;
 	open(OUT, ">", "$tempdir/timestamp") || die "$!";
 	print OUT "$timestamp\n";
