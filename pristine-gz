@@ -6,8 +6,8 @@ pristine-gz - regenerate pristine gz files
 
 =head1 SYNOPSIS
 
-B<pristine-gz> [-vd] gengz delta file
-B<pristine-gz> [-vd] gendelta file.gz delta
+B<pristine-gz> [-vdk] gengz delta file
+B<pristine-gz> [-vdk] gendelta file.gz delta
 
 =head1 DESCRIPTION
 
@@ -47,6 +47,10 @@ Verbose mode, show each command that is run.
 =item -d
 
 Debug mode.
+
+=item -k
+
+Don't clean up the temporary directory on exit.
 
 =head1 AUTHOR
 
@@ -108,10 +112,11 @@ use constant {
 
 my $verbose=0;
 my $debug=0;
+my $keep=0;
 
 sub usage {
-	print STDERR "Usage: pristine-gz [-v] gengz delta file\n";
-	print STDERR "       pristine-gz [-v] gendelta file.gz delta\n";
+	print STDERR "Usage: pristine-gz [-vdk] gengz delta file\n";
+	print STDERR "       pristine-gz [-vdk] gendelta file.gz delta\n";
 }
 
 sub debug {
@@ -131,7 +136,7 @@ sub doit {
 
 sub tempdir {
 	return File::Temp::tempdir("pristine-gz.XXXXXXXXXX",
-		TMPDIR => 1, CLEANUP => 1);
+		TMPDIR => 1, CLEANUP => !$keep);
 }
 
 sub readgzip {
@@ -387,7 +392,11 @@ sub gendelta {
 }
 
 Getopt::Long::Configure("bundling");
-if (! GetOptions("v|verbose!" => \$verbose, "d|debug!" => \$debug) || @ARGV != 3) {
+if (! GetOptions(
+	"v|verbose!" => \$verbose,
+	"d|debug!" => \$debug,
+	"k|keep!" => \$keep,
+   ) || @ARGV != 3) {
 	usage();
 	exit 1;
 }

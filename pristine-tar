@@ -6,8 +6,8 @@ pristine-tar - regenerate pristine tarballs
 
 =head1 SYNOPSIS
 
-B<pristine-tar> [-vd] gentar delta tarball
-B<pristine-tar> [-vd] gendelta tarball delta
+B<pristine-tar> [-vdk] gentar delta tarball
+B<pristine-tar> [-vdk] gendelta tarball delta
 
 =head1 DESCRIPTION
 
@@ -40,6 +40,10 @@ Verbose mode, show each command that is run.
 
 Debug mode.
 
+=item -k
+
+Don't clean up the temporary directory on exit.
+
 =head1 AUTHOR
 
 Joey Hess <joeyh@debian.org>
@@ -63,10 +67,11 @@ use constant GZIP_METHOD_DEFLATE => 0x08;
 
 my $verbose=0;
 my $debug=0;
+my $keep=0;
 
 sub usage {
-	print STDERR "Usage: pristine-tar [-v] gentar delta tarball\n";
-	print STDERR "       pristine-tar [-v] gendelta tarball delta\n";
+	print STDERR "Usage: pristine-tar [-vdk] gentar delta tarball\n";
+	print STDERR "       pristine-tar [-vdk] gendelta tarball delta\n";
 }
 
 sub debug {
@@ -86,7 +91,7 @@ sub doit {
 
 sub tempdir {
 	return File::Temp::tempdir("pristine-tar.XXXXXXXXXX",
-		TMPDIR => 1, CLEANUP => 1);
+		TMPDIR => 1, CLEANUP => !$keep);
 }
 
 sub gentarball {
@@ -182,6 +187,7 @@ sub gentar {
 		doit("pristine-gz", 
 			($verbose ? "-v" : "--no-verbose"),
 			($debug ? "-d" : "--no-debug"),
+			($keep ? "-k" : "--no-keep"),
 			"gengz", "$tempdir/wrapper", $out);
 		doit("mv", "-f", $out.".gz", $tarball);
 	}
@@ -204,6 +210,7 @@ sub gendelta {
 		doit("pristine-gz",
 			($verbose ? "-v" : "--no-verbose"),
 			($debug ? "-d" : "--no-debug"),
+			($keep ? "-k" : "--no-keep"),
 			"gendelta", $tarball, "$tempdir/wrapper");
 		push @files, "wrapper";
 		doit("zcat $tarball > $tempdir/origtarball");
@@ -240,7 +247,11 @@ sub gendelta {
 }
 
 Getopt::Long::Configure("bundling");
-if (! GetOptions("v|verbose!" => \$verbose, "d|debug!" => \$debug) || @ARGV != 3) {
+if (! GetOptions(
+	"v|verbose!" => \$verbose,
+	"d|debug!" => \$debug,
+	"k|keep!" => \$keep,
+   ) || @ARGV != 3) {
 	usage();
 	exit 1;
 }
