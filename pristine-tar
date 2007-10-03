@@ -284,9 +284,10 @@ sub gendelta {
 	open(IN, "tar tf $tarball |") || die "tar tf: $!";
 	open(OUT, ">", "$tempdir/manifest") || die "$!";
 	while (<IN>) {
+		chomp;
 		# ./ or / in the manifest just confuses tar
 		s/^\.?\/+//;
-		print OUT $_;
+		print OUT "$_\n"; if length $_;
 	}
 	close IN || die "tar tf exited nonzero";
 	close OUT;
