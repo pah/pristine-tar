@@ -287,7 +287,7 @@ sub gendelta {
 		chomp;
 		# ./ or / in the manifest just confuses tar
 		s/^\.?\/+//;
-		print OUT "$_\n"; if length $_;
+		print OUT "$_\n" if length $_;
 	}
 	close IN || die "tar tf exited nonzero";
 	close OUT;
