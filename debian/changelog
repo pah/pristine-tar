@@ -4,8 +4,10 @@ pristine-tar (0.3) UNRELEASED; urgency=low
     all files into a subdir. Fixes sear-media and 18 others.
   * tar was confused by ./ in the manifest, so strip it out. Fixes
     erlang-doc-html and 18 others.
+  * Some tarballs put files in a subdir, but don't show a "/" after the subdir
+    name in a manifest. Stop relying on that. (example: streamtuner)
 
- -- Joey Hess <joeyh@debian.org>  Tue, 02 Oct 2007 23:35:02 -0400
+ -- Joey Hess <joeyh@debian.org>  Wed, 03 Oct 2007 13:16:05 -0400
 
 pristine-tar (0.2) unstable; urgency=low
 
