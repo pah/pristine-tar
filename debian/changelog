@@ -10,6 +10,9 @@ pristine-tar (0.2) UNRELEASED; urgency=low
     more likely file mode than the previous 0000 and thus makes the delta
     smaller.
   * File format version is up to 2.0 due to misc incompatible changes.
+  * Fix a bug related to tar's handling of unicode filenames.
+  * Work around a strange tar behavior: When run with --mode 644, tar
+    preserves the sgid bit on subdirectories.
 
  -- Joey Hess <joeyh@debian.org>  Tue, 02 Oct 2007 19:36:26 -0400
 

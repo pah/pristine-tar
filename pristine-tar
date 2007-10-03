@@ -68,6 +68,10 @@ use constant GZIP_METHOD_DEFLATE => 0x08;
 my $verbose=0;
 my $debug=0;
 my $keep=0;
+	
+# Force locale to C since tar may output utf-8 filenames differently
+# depending on the locale.
+$ENV{LANG}='C';
 
 sub usage {
 	print STDERR "Usage: pristine-tar [-vdk] gentar delta tarball\n";
@@ -143,6 +147,28 @@ sub gentarball {
 	# for a given set of input files. So don't include file metadata
 	# in the tarball, since it can easily vary.
 	foreach my $file (@manifest) {
+		if (! -e "$tempdir/workdir/$file" &&
+		    ! -l "$tempdir/workdir/$file") {
+		    	my $try=$file;
+			# XXX this is a stupid approach. Should just
+			# convert tar's encoding to utf-8.
+			$try=~s/\\(\d+)/*/g;
+			if ($try ne $file) {
+			    	debug("$file not found, seems to be encoded by tar, trying to glob: $try");
+				my @result=glob("$tempdir/workdir/$try");
+				if (@result == 1) {
+					$try=shift @result;
+					if (-e $try || -l $try) {
+						$try=~s/^\Q$tempdir\/workdir\/\E//;
+						$file=$try;
+						debug("found it: $file");
+					}
+				}
+				else {
+					debug("multiple results :-(");
+				}
+			}
+		}
 		if (-l "$tempdir/workdir/$file") {
 			# Can't set timestamp of a symlink, so
 			# replace the symlink with an empty file.
@@ -151,13 +177,22 @@ sub gentarball {
 			close OUT;
 		}
 		elsif (! -e "$tempdir/workdir/$file") {
-			die "$file is listed in the manifest but not present in the source directory.\n";
+			die "$file is listed in the manifest but may not be present in the source directory.\n";
 		}
-		utime 0, 0, "$tempdir/workdir/$file";
+		
+		if (-d "$tempdir/workdir/$file" && (-u _ || -g _ || -k _)) {
+			# tar behaves weirdly for some special modes
+			# and ignores --mode, so clear them.
+			debug("chmod $file");
+			chmod(0755, "$tempdir/workdir/$file") ||
+				die "chmod: $!";
+		}
+		utime 0, 0, "$tempdir/workdir/$file" || die "utime: $!";
 	}
 	doit("tar", "cf", "$tempdir/gentarball", "--owner", 0, "--group", 0, 
-		"--numeric-owner", "--mode", "0644", "-C", "$tempdir/workdir",
-		"--no-recursion", "--files-from", "$tempdir/manifest"); 
+		"--numeric-owner", "-C", "$tempdir/workdir",
+		"--no-recursion", "--mode", "0644", 
+		"--files-from", "$tempdir/manifest"); 
 }
 
 sub gentar {
