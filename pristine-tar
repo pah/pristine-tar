@@ -156,7 +156,7 @@ sub gentarball {
 			close OUT;
 		}
 		elsif (! -e "$tempdir/workdir/$file") {
-			print STDERR "pristine-tar: $file is listed in the manifest but may not be present in the source directory.\n";
+			debug("$file is listed in the manifest but may not be present in the source directory");
 			$full_sweep=1;
 		}
 		

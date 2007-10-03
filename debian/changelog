@@ -1,4 +1,4 @@
-pristine-tar (0.2) UNRELEASED; urgency=low
+pristine-tar (0.2) unstable; urgency=low
 
   * Added pristine-gz, thanks to paravoid for making this possible!
   * Added zgz, which is derived from a BSD gzip program that uses libz.
@@ -14,7 +14,11 @@ pristine-tar (0.2) UNRELEASED; urgency=low
   * Work around a strange tar behavior: When run with --mode 644, tar
     preserves the sgid bit on subdirectories.
 
- -- Joey Hess <joeyh@debian.org>  Tue, 02 Oct 2007 19:36:26 -0400
+  Current stats: Out of the whole debian archive, pristine-gz fails
+  on 131 files, and pristine-tar fails on 45. Success with 98.63% of
+  files.
+
+ -- Joey Hess <joeyh@debian.org>  Tue, 02 Oct 2007 21:51:03 -0400
 
 pristine-tar (0.1) unstable; urgency=low
 
