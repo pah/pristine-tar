@@ -146,38 +146,18 @@ sub gentarball {
 	# It's important that this create an identical tarball each time
 	# for a given set of input files. So don't include file metadata
 	# in the tarball, since it can easily vary.
+	my $full_sweep=0;
 	foreach my $file (@manifest) {
-		if (! -e "$tempdir/workdir/$file" &&
-		    ! -l "$tempdir/workdir/$file") {
-		    	my $try=$file;
-			# XXX this is a stupid approach. Should just
-			# convert tar's encoding to utf-8.
-			$try=~s/\\(\d+)/*/g;
-			if ($try ne $file) {
-			    	debug("$file not found, seems to be encoded by tar, trying to glob: $try");
-				my @result=glob("$tempdir/workdir/$try");
-				if (@result == 1) {
-					$try=shift @result;
-					if (-e $try || -l $try) {
-						$try=~s/^\Q$tempdir\/workdir\/\E//;
-						$file=$try;
-						debug("found it: $file");
-					}
-				}
-				else {
-					debug("multiple results :-(");
-				}
-			}
-		}
 		if (-l "$tempdir/workdir/$file") {
 			# Can't set timestamp of a symlink, so
 			# replace the symlink with an empty file.
-			unlink("$tempdir/workdir/$file");
-			open(OUT, ">$tempdir/workdir/$file");
+			unlink("$tempdir/workdir/$file") || die "unlink: $!";
+			open(OUT, ">", "$tempdir/workdir/$file") || die "open: $!";
 			close OUT;
 		}
 		elsif (! -e "$tempdir/workdir/$file") {
-			die "$file is listed in the manifest but may not be present in the source directory.\n";
+			print STDERR "pristine-tar: $file is listed in the manifest but may not be present in the source directory.\n";
+			$full_sweep=1;
 		}
 		
 		if (-d "$tempdir/workdir/$file" && (-u _ || -g _ || -k _)) {
@@ -189,6 +169,29 @@ sub gentarball {
 		}
 		utime 0, 0, "$tempdir/workdir/$file" || die "utime: $!";
 	}
+	
+	# If some files couldn't be matched up with the manifest,
+	# it's possible they do exist, but just with names that make sense
+	# to tar, but not to this program. To work around this and make sure
+	# such files have their metadata tweaked, by doing a full sweep of
+	# the tree.
+	if ($full_sweep) {
+		debug("doing full tree sweep to catch missing files");
+		use File::Find;
+		find(sub {
+			if (-l $_) {
+				unlink($_) || die "unlink: $!";
+				open(OUT, ">", $_) || die "open: $!";
+				close OUT;
+			}
+			if (-d $_ && (-u _ || -g _ || -k _)) {
+				chmod(0755, $_) ||
+					die "chmod: $!";
+			}
+			utime 0, 0, $_ || die "utime: $!";
+		}, "$tempdir/workdir");
+	}
+
 	doit("tar", "cf", "$tempdir/gentarball", "--owner", 0, "--group", 0, 
 		"--numeric-owner", "-C", "$tempdir/workdir",
 		"--no-recursion", "--mode", "0644", 
