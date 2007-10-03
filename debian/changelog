@@ -1,7 +1,9 @@
 pristine-tar (0.3) UNRELEASED; urgency=low
 
   * pristine-tar sometimes got confused about tarballs that did not unpack
-    all files into a subdir. (eg, sear-media)
+    all files into a subdir. Fixes sear-media and 18 others.
+  * tar was confused by ./ in the manifest, so strip it out. Fixes
+    erlang-doc-html.
 
  -- Joey Hess <joeyh@debian.org>  Tue, 02 Oct 2007 23:13:08 -0400
 

@@ -107,6 +107,8 @@ sub gentarball {
 	open (IN, "$tempdir/manifest") || die "$tempdir/manifest: $!";
 	while (<IN>) {
 		chomp;
+		# ./ in the manifest just confuses tar
+		s/^\.\///;
 		push @manifest, $_;
 	}
 	close IN;
