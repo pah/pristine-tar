@@ -125,9 +125,14 @@ sub gentarball {
 				$subdir=$1;
 			}
 		}
+		else {
+			debug("found file not in subdir: $file");
+			$subdir="";
+			last;
+		}
 	}
 
-	if ($subdir) {
+	if (length $subdir) {
 		debug("subdir is $subdir");
 		doit("mkdir", "$tempdir/workdir");
 		$subdir="/$subdir";
