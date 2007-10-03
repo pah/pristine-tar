@@ -116,11 +116,12 @@ sub gentarball {
 	# The manifest and source should have the same filenames,
 	# but the manifest probably has all the files under a common
 	# subdirectory. Check if it does.
-	# XXX currently only zero or one subdirectory level is supported
 	my $subdir="";
 	foreach my $file (@manifest) {
 		if ($file=~m!^(/?[^/]+)/!) {
 			if (length $subdir && $subdir ne $1) {
+				debug("found file not in subdir $subdir: $file");
+				$subdir="";
 				last;
 			}
 			elsif (! length $subdir) {
