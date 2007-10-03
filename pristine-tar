@@ -107,8 +107,6 @@ sub gentarball {
 	open (IN, "$tempdir/manifest") || die "$tempdir/manifest: $!";
 	while (<IN>) {
 		chomp;
-		# ./ in the manifest just confuses tar
-		s/^\.\///;
 		push @manifest, $_;
 	}
 	close IN;
@@ -281,7 +279,16 @@ sub gendelta {
 		$sourcedir=$out[0];
 	}
 
-	doit("tar tf $tarball > $tempdir/manifest");
+	open(IN, "tar tf $tarball |") || die "tar tf: $!";
+	open(OUT, ">", "$tempdir/manifest") || die "$!";
+	while (<IN>) {
+		# ./ or / in the manifest just confuses tar
+		s/^\.?\/+//;
+		print OUT $_;
+	}
+	close IN || die "tar tf exited nonzero";
+	close OUT;
+
 	gentarball($tempdir, $sourcedir, 1);
 	my $ret=system("xdelta delta -0 --pristine $tempdir/gentarball $tarball $tempdir/delta") >> 8;
 	# xdelta exits 1 on success if there were differences
