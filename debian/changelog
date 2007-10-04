@@ -1,13 +1,18 @@
-pristine-tar (0.3) UNRELEASED; urgency=low
+pristine-tar (0.3) unstable; urgency=low
 
   * pristine-tar sometimes got confused about tarballs that did not unpack
-    all files into a subdir. Fixes sear-media and 18 others.
-  * tar was confused by ./ in the manifest, so strip it out. Fixes
-    erlang-doc-html and 18 others.
+    all files into a subdir. Fixes sear-media and 30 others.
+  * tar was confused by files starting with ./ or / in the manifest, so
+    strip it out. Fixes erlang-doc-html and 19 others, including doc-fdc,
+    which is the only package to have files in / in its tarball.
   * Some tarballs put files in a subdir, but don't show a "/" after the subdir
     name in a manifest. Stop relying on that. (example: streamtuner)
+  
+  Current stats: Out of the whole debian archive, pristine-gz fails
+  on 132 files, and pristine-tar fails on 0. Success with 98.97% of
+  files.
 
- -- Joey Hess <joeyh@debian.org>  Wed, 03 Oct 2007 13:16:05 -0400
+ -- Joey Hess <joeyh@debian.org>  Wed, 03 Oct 2007 00:07:54 -0400
 
 pristine-tar (0.2) unstable; urgency=low
 
