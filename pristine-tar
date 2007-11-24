@@ -7,6 +7,7 @@ pristine-tar - regenerate pristine tarballs
 =head1 SYNOPSIS
 
 B<pristine-tar> [-vdk] gentar delta tarball
+
 B<pristine-tar> [-vdk] gendelta tarball delta
 
 =head1 DESCRIPTION
@@ -27,6 +28,8 @@ revison control.
 
 pristine-tar supports compressed tarballs, calling out to pristine-gz(1)
 to produce the pristine gzip files.
+
+If the delta filename is "-", pristine-tar reads or writes it to stdio.
 
 =head1 OPTIONS
 
@@ -212,6 +215,15 @@ sub gentar {
 
 	my $tempdir=tempdir();
 	
+	if ($delta eq "-") {
+		$delta="$tempdir/in";
+		open (OUT, ">", $delta) || die "$delta: $!";
+		while (<STDIN>) {
+			print OUT $_;
+		}
+		close OUT;
+	}
+
 	doit("tar", "xf", File::Spec->rel2abs($delta), "-C", $tempdir);
 	if (! -e "$tempdir/type") {
 		die "failed to gentar delta $delta\n";
@@ -251,6 +263,13 @@ sub gendelta {
 	my $delta=shift;
 
 	my $tempdir=tempdir();
+
+	my $stdout=0;
+	if ($delta eq "-") {
+		$stdout=1;
+		$delta="$tempdir/out";
+	}
+
 	my @files=qw(delta manifest version type);
 
 	# Check to see if it's compressed.
@@ -307,6 +326,10 @@ sub gendelta {
 	close OUT;
 
 	doit("tar", "czf", $delta, "-C", $tempdir, @files);
+
+	if ($stdout) {
+		doit("cat", $delta);
+	}
 }
 
 Getopt::Long::Configure("bundling");

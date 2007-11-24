@@ -7,6 +7,7 @@ pristine-gz - regenerate pristine gz files
 =head1 SYNOPSIS
 
 B<pristine-gz> [-vdk] gengz delta file
+
 B<pristine-gz> [-vdk] gendelta file.gz delta
 
 =head1 DESCRIPTION
@@ -35,6 +36,8 @@ This approach will work in the vast majority of cases. If it doesn't work,
 no delta will be generated. One example of a case it cannot currently
 support is a gz file that has been produced by appending together multiple
 gz files.
+
+If the delta filename is "-", pristine-gz reads or writes it to stdio.
 
 =head1 OPTIONS
 
@@ -304,6 +307,15 @@ sub gengz {
 	my $file=shift;
 
 	my $tempdir=tempdir();
+
+	if ($delta eq "-") {
+		$delta="$tempdir/in";
+		open (OUT, ">", $delta) || die "$delta: $!";
+		while (<STDIN>) {
+			print OUT $_;
+		}
+		close OUT;
+	}
 	
 	doit("tar", "xf", File::Spec->rel2abs($delta), "-C", $tempdir);
 	if (! -e "$tempdir/type") {
@@ -366,6 +378,13 @@ sub gendelta {
 	my $delta=shift;
 
 	my $tempdir=tempdir();
+	
+	my $stdout=0;
+	if ($delta eq "-") {
+		$stdout=1;
+		$delta="$tempdir/out";
+	}
+
 	my @files=qw(version type params filename timestamp);
 
 	doit("cp", $gzfile, "$tempdir/test.gz");
@@ -389,6 +408,10 @@ sub gendelta {
 	close OUT;
 
 	doit("tar", "czf", $delta, "-C", $tempdir, @files);
+
+	if ($stdout) {
+		doit("cat", $delta);
+	}
 }
 
 Getopt::Long::Configure("bundling");
