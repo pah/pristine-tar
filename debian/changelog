@@ -1,9 +1,9 @@
-pristine-tar (0.4) UNRELEASED; urgency=low
+pristine-tar (0.4) unstable; urgency=low
 
   * Allow the delta file to be read or written from stdio.
   * Fix man page synopses formatting.
 
- -- Joey Hess <joeyh@debian.org>  Sat, 24 Nov 2007 16:36:57 -0500
+ -- Joey Hess <joeyh@debian.org>  Sat, 24 Nov 2007 16:45:04 -0500
 
 pristine-tar (0.3) unstable; urgency=low
 
