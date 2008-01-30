@@ -1,6 +1,6 @@
 pristine-tar (0.5) UNRELEASED; urgency=low
 
-  * Moved to git.
+  * Moved to git, and added a Vcs-Browser field.
 
  -- Joey Hess <joeyh@debian.org>  Sat, 24 Nov 2007 18:29:04 -0500
 
