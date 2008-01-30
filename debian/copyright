@@ -1,13 +1,13 @@
 Files: *
-Copyright: (c) 2007 Joey Hess <joeyh@debian.org>
-  (c) 2007 Faidon Liambotis
+Copyright: © 2007 Joey Hess <joeyh@debian.org>
+  © 2007 Faidon Liambotis
 License: GPL-2+
  On Debian systems, the complete text of the GPL can be found in
  /usr/share/common-licenses/GPL.
 
 Files: zgz.c
-Copyright: (c) 1997, 1998, 2003, 2004, 2006 Matthew R. Green
- (c) 2007 Faidon Liambotis
+Copyright: © 1997, 1998, 2003, 2004, 2006 Matthew R. Green
+ © 2007 Faidon Liambotis
 License: BSD-3
  On Debian systems, the complete text of the 3 clause BSD license can be
  found in /usr/share/common-licenses/BSD.
