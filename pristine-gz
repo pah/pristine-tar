@@ -347,6 +347,7 @@ sub gengz {
 		next if /^(--gnu|--rsyncable|-[nmM1-9])$/;
 		if (/^(--original-name|--quirk|--osflag)$/) {
 			shift @params;
+			next;
 		}
 		die "paranoia check failed on params file from delta ($params)";
 	}
