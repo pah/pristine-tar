@@ -1,7 +1,7 @@
 The delta file is a compressed tarball, containing the following files:
 
 version
-	Currently "1.0".
+	Currently "2.0".
 type
 	Type of file this is a delta for ("tar" or "gz").
 
