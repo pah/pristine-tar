@@ -237,9 +237,11 @@ sub recreatetarball {
 			debug("$file is listed in the manifest but may not be present in the source directory");
 			$full_sweep=1;
 
-			# Avoid tar failing on the nonexistent item by
-			# creating a dummy directory.
-			mkpath "$tempdir/workdir/$file";
+			if ($options{create_missing}) {
+				# Avoid tar failing on the nonexistent item by
+				# creating a dummy directory.
+				mkpath "$tempdir/workdir/$file";
+			}
 		}
 		
 		if (-d "$tempdir/workdir/$file" && (-u _ || -g _ || -k _)) {
@@ -561,7 +563,8 @@ sub commit {
 	my $tempdir=tempdir();
 	my ($sourcedir, $id)=export($upstream);
 	genmanifest($tarball, "$tempdir/manifest");
-	recreatetarball($tempdir, $sourcedir, clobber_source => 1);
+	recreatetarball($tempdir, $sourcedir, clobber_source => 1,
+		create_missing => 1);
 	my $pid = open(GENDELTA, "-|");
 	if (! $pid) {
 		# child
@@ -585,7 +588,7 @@ sub checkout {
 		# child
 		$tarball=abs_path($tarball);
 		chdir($sourcedir) || die "chdir $sourcedir: $!";
-		gentar("-", $tarball, clobber_source => 1);
+		gentar("-", $tarball, clobber_source => 1, create_missing => 1);
 		exit 0;
 	}
 	print GENTAR $delta;
