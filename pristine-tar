@@ -516,7 +516,6 @@ sub commitdelta {
 		chdir($tempdir) || die "chdir: $!";
 		my $branch_exists=(system("git show-ref --quiet --verify refs/heads/$branch") == 0);
 		if ($branch_exists) {
-			print "prepop\n";
 			doit("git ls-tree -r --full-name $branch | git update-index --index-info");
 		}
 		doit("git", "update-index", "--add", $deltafile, $idfile);
