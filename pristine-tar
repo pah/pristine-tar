@@ -240,6 +240,7 @@ sub recreatetarball {
 			if ($options{create_missing}) {
 				# Avoid tar failing on the nonexistent item by
 				# creating a dummy directory.
+				debug("creating missing $file");
 				mkpath "$tempdir/workdir/$file";
 			}
 		}
