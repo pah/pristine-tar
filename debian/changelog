@@ -1,4 +1,4 @@
-pristine-tar (0.5) UNRELEASED; urgency=low
+pristine-tar (0.5) unstable; urgency=low
 
   * Moved to git, and added a Vcs-Browser field.
   * pristine-tar can now "commit" deltas for a tarball directly to a git
@@ -12,7 +12,7 @@ pristine-tar (0.5) UNRELEASED; urgency=low
   * Fix paranoia check in pristine-gz to correctly handle parameters
     that take an option.
 
- -- Joey Hess <joeyh@debian.org>  Sat, 24 Nov 2007 18:29:04 -0500
+ -- Joey Hess <joeyh@debian.org>  Thu, 31 Jan 2008 21:52:45 -0500
 
 pristine-tar (0.4) unstable; urgency=low
 
