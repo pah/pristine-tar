@@ -10,9 +10,9 @@ B<pristine-tar> [-vdk] gentar delta tarball
 
 B<pristine-tar> [-vdk] gendelta tarball delta
 
-B<pristine-tar> commit tarball [upstream]
+B<pristine-tar> [-vdk] commit tarball [upstream]
 
-B<pristine-tar> checkout tarball
+B<pristine-tar> [-vdk] checkout tarball
 
 =head1 DESCRIPTION
 
@@ -115,7 +115,7 @@ use File::Temp;
 use File::Path;
 use File::Basename;
 use Getopt::Long;
-use Cwd;
+use Cwd qw{getcwd abs_path};
 
 # magic identification
 use constant GZIP_ID1            => 0x1F;
@@ -135,8 +135,8 @@ $ENV{LANG}='C';
 sub usage {
 	print STDERR "Usage: pristine-tar [-vdk] gentar delta tarball\n";
 	print STDERR "       pristine-tar [-vdk] gendelta tarball delta\n";
-	print STDERR "       pristine-tar commit tarball [upstream]\n";
-	print STDERR "       pristine-tar checkout tarball\n";
+	print STDERR "       pristine-tar [-vdk] commit tarball [upstream]\n";
+	print STDERR "       pristine-tar [-vdk] checkout tarball\n";
 	exit 1;
 }
 
@@ -237,9 +237,9 @@ sub recreatetarball {
 			debug("$file is listed in the manifest but may not be present in the source directory");
 			$full_sweep=1;
 
-			if ($options{create_missing}) {
-				mkpath "$tempdir/workdir/$file";
-			}
+			# Avoid tar failing on the nonexistent item by
+			# creating a dummy directory.
+			mkpath "$tempdir/workdir/$file";
 		}
 		
 		if (-d "$tempdir/workdir/$file" && (-u _ || -g _ || -k _)) {
@@ -283,6 +283,7 @@ sub recreatetarball {
 sub gentar {
 	my $delta=shift;
 	my $tarball=shift;
+	my %opts=@_;
 
 	my $tempdir=tempdir();
 	
@@ -315,7 +316,7 @@ sub gentar {
 		close IN;
 	}
 
-	recreatetarball($tempdir, ".", clobber_source => 1);
+	recreatetarball($tempdir, getcwd, clobber_source => 0, %opts);
 	my $out=(-e "$tempdir/wrapper") ? $tarball.".tmp" : $tarball;
 	doit("xdelta", "patch", "$tempdir/delta", "$tempdir/recreatetarball", $out);
 
@@ -426,16 +427,21 @@ sub export {
 	
 	my $vcs=vcstype();
 	if ($vcs eq "git") {
-		# Convert $upstream into an object id.
-		my @reflines=map { chomp; $_ } `git show-ref \Q$upstream\E`;
-		if (! @reflines) {
-			error "failed to find ref using: git show-ref $upstream"
+		if ($upstream =~ /[A-Za-z0-9]{40}/) {
+			$id=$upstream;
 		}
-		if (@reflines > 1) {
-			error "more than one ref matches \"$upstream\":\n".
-				join("\n", @reflines);
+		else {
+			# Convert $upstream into an object id.
+			my @reflines=map { chomp; $_ } `git show-ref \Q$upstream\E`;
+			if (! @reflines) {
+				error "failed to find ref using: git show-ref $upstream"
+			}
+			if (@reflines > 1) {
+				error "more than one ref matches \"$upstream\":\n".
+					join("\n", @reflines);
+			}
+			($id)=$reflines[0]=~/^([A-Za-z0-9]+)\s/;
 		}
-		($id)=$reflines[0]=~/^([A-Za-z0-9]+)\s/;
 
 		doit("git archive --format=tar \Q$id\E | (cd '$dest' && tar x)");
 	}
@@ -446,10 +452,44 @@ sub export {
 	return ($dest, $id);
 }
 
-sub savedelta {
-	my $delta=shift;
+sub checkoutdelta {
 	my $tarball=shift;
+
+	my $branch="pristine-tar";
+	my $deltafile=basename($tarball).".delta";
+	my $idfile=basename($tarball).".id";
+
+	my ($delta, $id);
+
+	my $vcs=vcstype();
+	if ($vcs eq "git") {
+		$delta=`git show $branch:\Q$deltafile\E`;
+		if ($?) {
+			error "git show $branch:$deltafile failed";
+		}
+		if (! length $delta) {
+			error "git show $branch:$deltafile returned no content";
+		}
+		$id=`git show $branch:\Q$idfile\E`;
+		if ($?) {
+			error "git show $branch:$idfile failed";
+		}
+		chomp $id; # just in case..
+		if (! length $id) {
+			error "git show $branch:$idfile returned no id";
+		}
+	}
+	else {
+		die "unsupported vcs $vcs";
+	}
+
+	return ($delta, $id);
+}
+
+sub commitdelta {
+	my $delta=shift;
 	my $id=shift;
+	my $tarball=shift;
 	
 	my $branch="pristine-tar";
 	my $deltafile=basename($tarball).".delta";
@@ -518,15 +558,10 @@ sub commit {
 	my $tarball=shift;
 	my $upstream=(@_ ? shift : "upstream");
 
-	my ($sourcedir, $id)=export($upstream);
 	my $tempdir=tempdir();
+	my ($sourcedir, $id)=export($upstream);
 	genmanifest($tarball, "$tempdir/manifest");
-	recreatetarball($tempdir, $sourcedir, clobber_source => 1,
-		# Set this because revision control systems may
-		# omit empty directories or the like.
-		# (A side effect is that, if $upstream is incomplete,
-		# the delta may become large.)
-		create_missing => 1);
+	recreatetarball($tempdir, $sourcedir, clobber_source => 1);
 	my $pid = open(GENDELTA, "-|");
 	if (! $pid) {
 		# child
@@ -536,13 +571,27 @@ sub commit {
 	local $/=undef;
 	my $delta=<GENDELTA>;
 	close GENDELTA || error "failed to generate delta";
-	savedelta($delta, $tarball, $id);
+	commitdelta($delta, $id, $tarball);
 }
 
 sub checkout {
 	my $tarball=shift;
 	
 	my $tempdir=tempdir();
+	my ($delta, $id)=checkoutdelta($tarball);
+	my ($sourcedir, undef)=export($id);
+	my $pid = open(GENTAR, "|-");
+	if (! $pid) {
+		# child
+		$tarball=abs_path($tarball);
+		chdir($sourcedir) || die "chdir $sourcedir: $!";
+		gentar("-", $tarball, clobber_source => 1);
+		exit 0;
+	}
+	print GENTAR $delta;
+	close GENTAR || error "failed to generate tarball";
+
+	message("successfully generated $tarball");
 }
 
 Getopt::Long::Configure("bundling");
@@ -553,13 +602,15 @@ if (! GetOptions(
 	usage();
 }
 
+usage unless @ARGV;
 my $command=shift;
+
 if ($command eq 'gentar') {
-	usage unless @ARGV == 3;
+	usage unless @ARGV == 2;
 	gentar(@ARGV);
 }
 elsif ($command eq 'gendelta') {
-	usage unless @ARGV == 3;
+	usage unless @ARGV == 2;
 	gendelta(@ARGV);
 }
 elsif ($command eq 'commit') {
