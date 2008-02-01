@@ -57,7 +57,8 @@ on the information stored in version control.
 For B<pristine-tar checkout> to work, you also need to store the precise
 contents of the tarball in version control. To specify in which tag (or
 branch or other treeish object) it's stored, use the B<upstream> parameter.
-This defaults to "upstream". The name of the tree it points to will be
+This defaults to "refs/heads/upstream", or if there's no such branch, any
+branch matching "upstream". The name of the tree it points to will be
 recorded for later use by B<pristine-tar checkout>.
 
 The delta files are stored in a branch named "pristine-tar", with filenames
@@ -430,20 +431,33 @@ sub export {
 	
 	my $vcs=vcstype();
 	if ($vcs eq "git") {
-		if ($upstream =~ /[A-Za-z0-9]{40}/) {
+		if (defined $upstream && $upstream =~ /[A-Za-z0-9]{40}/) {
 			$id=$upstream;
 		}
 		else {
-			# Convert $upstream into an object id.
-			my @reflines=map { chomp; $_ } `git show-ref \Q$upstream\E`;
-			if (! @reflines) {
-				error "failed to find ref using: git show-ref $upstream"
+			my @totry;
+			if (! defined $upstream) {
+				# try a specific name first, if that's not
+				# present fall back to any upstream branch
+				@totry=("refs/heads/upstream", "upstream")
 			}
-			if (@reflines > 1) {
-				error "more than one ref matches \"$upstream\":\n".
-					join("\n", @reflines);
+			else {
+				@totry=($upstream);
 			}
-			($id)=$reflines[0]=~/^([A-Za-z0-9]+)\s/;
+			foreach my $branch (@totry) {
+				my @reflines=map { chomp; $_ } `git show-ref \Q$branch\E`;
+				if (@reflines > 1) {
+					error "more than one ref matches \"$branch\":\n".
+						join("\n", @reflines);
+				}
+				elsif (@reflines) {
+					($id)=$reflines[0]=~/^([A-Za-z0-9]+)\s/;
+					last;
+				}
+			}
+			if (! defined $id) {
+				error "failed to find ref using: git show-ref @totry";
+			}
 		}
 
 		doit("git archive --format=tar \Q$id\E | (cd '$dest' && tar x)");
@@ -558,7 +572,7 @@ sub commitdelta {
 
 sub commit {
 	my $tarball=shift;
-	my $upstream=(@_ ? shift : "upstream");
+	my $upstream=shift;
 
 	my $tempdir=tempdir();
 	my ($sourcedir, $id)=export($upstream);
