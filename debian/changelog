@@ -1,4 +1,4 @@
-pristine-tar (0.6) UNRELEASED; urgency=low
+pristine-tar (0.6) unstable; urgency=low
 
   * Improve search for upstream branch. Default to looking for first
     refs/heads/upstream, and failing that, anything with "upstream" in its
@@ -9,7 +9,7 @@ pristine-tar (0.6) UNRELEASED; urgency=low
     is exactly one remote branch, use it for checkout. If more than one or
     none, show a nice error message. (Cyril Brulebois)
 
- -- Joey Hess <joeyh@debian.org>  Fri, 01 Feb 2008 13:33:04 -0500
+ -- Joey Hess <joeyh@debian.org>  Fri, 01 Feb 2008 14:06:28 -0500
 
 pristine-tar (0.5) unstable; urgency=low
 
