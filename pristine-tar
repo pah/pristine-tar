@@ -480,23 +480,18 @@ sub checkoutdelta {
 
 	my $vcs=vcstype();
 	if ($vcs eq "git") {
-		# Check a local pristine-tar branch exists
+		# Check that a local $branch exists
 		my @reflines=map { chomp; $_ } `git show-ref \Q$branch\E`;
 		if (! grep { "refs/heads/$branch" eq $_ } @reflines) {
-			# a local pristine-tar branch is missing
-			message "no local pristine-tar branch found";
 			if (scalar @reflines == 0) {
-				error 'no pristine-tar branch at all, use "pristine-tar commit" first';
+				error "no $branch branch found, use \"pristine-tar commit\" first";
 			}
 			elsif (scalar @reflines == 1) {
-				my $proposed=$reflines[0];
-				$proposed =~ s/^.*\s+//;
-				message "Q: Do you want to create one from the $proposed branch? [Y/n]";
-				# Prompt here.
-				error "still no local pristine-tar branch";
+				($branch)=$reflines[0]=~/^[A-Za-z0-9]+\s(.*)/;
 			}
 			else {
-				error 'Several remote pristine-tar branches exist, use "git-branch pristine-tar $remote/pristine-tar" to create a local pristine-tar branch';
+				error "Several remote $branch branches exist. Run \"git branch --track $branch <remote>\" to create a local $branch branch\n".
+					join("\n", @reflines);
 			}
 		}
 

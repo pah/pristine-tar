@@ -5,6 +5,9 @@ pristine-tar (0.6) UNRELEASED; urgency=low
     name. This way if there is a local upstream branch and a remote one, it
     will use the local one. If there's only a remote one, it'll use that.
     Closes: #463566
+  * Handle the case where this is no local pristine-tar branch. If there
+    is exactly one remote branch, use it for checkout. If more than one or
+    none, show a nice error message. (Cyril Brulebois)
 
  -- Joey Hess <joeyh@debian.org>  Fri, 01 Feb 2008 13:33:04 -0500
 
