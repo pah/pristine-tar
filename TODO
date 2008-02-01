@@ -2,4 +2,9 @@
   check and error if any are different. The error message from xdelta when
   a source file doesn't have the right checksup is fairly obscure and
   doesn't aid in fixing the problem.
+
+  There's an implementation of this in the manifest-md5sums branch of
+  git://git.debian.org/git/users/kibi-guest/pristine-tar.git , but I have
+  not yet decided about applying it, since it would bloat the delta files
+  with a list of all the files and md5sums..
 * bzip?
