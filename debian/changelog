@@ -1,6 +1,14 @@
 pristine-tar (0.5) UNRELEASED; urgency=low
 
   * Moved to git, and added a Vcs-Browser field.
+  * pristine-tar can now "commit" deltas for a tarball directly to a git
+    branch, and then "checkout" the original tarball again. Git users
+    are recommended to use these new subcommands because they're easier,
+    store the deltas in a consistent location, and avoid problems with
+    recreating things like empty directories that git doesn't track.
+    Closes: #463352
+  * Thanks to madcoder for help with manipulating git branches without
+    touching the working copy.
   * Fix paranoia check in pristine-gz to correctly handle parameters
     that take an option.
 

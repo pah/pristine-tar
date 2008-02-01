@@ -10,26 +10,66 @@ B<pristine-tar> [-vdk] gentar delta tarball
 
 B<pristine-tar> [-vdk] gendelta tarball delta
 
+B<pristine-tar> commit tarball [upstream]
+
+B<pristine-tar> checkout tarball
+
 =head1 DESCRIPTION
 
-pristine-tar gendelta takes the specified upstream tarball, and generates a
-small binary delta file that can later be used by pristine-tar gentar
-to recreate the tarball.
-
-pristine-tar gentar takes the specified delta file, and the files in the
-current directory, which must have identical content to those in the
-upstream tarball, and uses these to regenerate the pristine upstream
-tarball.
-
-This is useful when maintaining a Debian package in revision control, as
-you can check the delta file into revision control, tag the upstream
-release in revision control, and later gentar the upstream tarball from
-revison control.
+pristine-tar can regenerate a pristine upstream tarball using only a small
+binary delta file and a revision control checkout of the upstream branch.
+ 
+The delta file is designed to be checked into revision control along-side
+the upstream branch, thus allowing Debian packages to be built entirely
+using sources in revision control, without the need to keep copies of
+upstream tarballs.
 
 pristine-tar supports compressed tarballs, calling out to pristine-gz(1)
 to produce the pristine gzip files.
 
-If the delta filename is "-", pristine-tar reads or writes it to stdio.
+=head1 COMMANDS
+
+=over 4
+
+=item pristine-tar gendelta
+
+This takes the specified upstream tarball, and generates a small binary
+delta file that can later be used by pristine-tar gentar to recreate the
+tarball.
+
+If the delta filename is "-", it is written to standard output.
+
+=item pristine-tar gentar 
+
+This takes the specified delta file, and the files in the current
+directory, which must have identical content to those in the upstream
+tarball, and uses these to regenerate the pristine upstream tarball.
+
+If the delta filename is "-", it is read from standard input.
+
+=item pristine-tar commit
+
+B<pristine-tar commit> generatess a pristine-tar delta file for the specified
+tarball, and commits it to version control. The B<pristine-tar checkout>
+command can later be used to recreate the original tarball based only
+on the information stored in version control.
+
+For B<pristine-tar checkout> to work, you also need to store the precise
+contents of the tarball in version control. To specify in which tag (or
+branch or other treeish object) it's stored, use the B<upstream> parameter.
+This defaults to "upstream". The name of the tree it points to will be
+recorded for later use by B<pristine-tar checkout>.
+
+The delta files are stored in a branch named "pristine-tar", with filenames
+corresponding to the input tarball, with ".delta" prepended. This
+branch is created or updated as needed to add each new delta.
+
+=item pristine-tar checkout
+
+This regenerates a copy of the specified tarball using information
+previously saved to revision control by B<pristine-tar commit>.
+
+=back
 
 =head1 OPTIONS
 
@@ -47,6 +87,20 @@ Debug mode.
 
 Don't clean up the temporary directory on exit.
 
+=head1 LIMITATIONS
+
+Only tar.gz files and .tar files are currently supported; there's
+currently no support for .tar.bz2.
+
+It could fail on certian spectacularly strange files. If it fails, it will
+fail during creation of the delta, since the delta is tested to make sure it
+reproduces the pristine tarball.
+
+Currently only the git revision control system is supported by the
+"checkout" and "commit" commands. It's ok if the working copy
+is not clean or has uncommitted changes, or has changes staged in the
+index; none of that will be touched by "checkout" or "commit".
+
 =head1 AUTHOR
 
 Joey Hess <joeyh@debian.org>
@@ -59,7 +113,9 @@ use warnings;
 use strict;
 use File::Temp;
 use File::Path;
+use File::Basename;
 use Getopt::Long;
+use Cwd;
 
 # magic identification
 use constant GZIP_ID1            => 0x1F;
@@ -79,20 +135,31 @@ $ENV{LANG}='C';
 sub usage {
 	print STDERR "Usage: pristine-tar [-vdk] gentar delta tarball\n";
 	print STDERR "       pristine-tar [-vdk] gendelta tarball delta\n";
+	print STDERR "       pristine-tar commit tarball [upstream]\n";
+	print STDERR "       pristine-tar checkout tarball\n";
+	exit 1;
+}
+
+sub error {
+	die "pristine-tar: @_\n";
+}
+
+sub message {
+	print "pristine-tar: @_\n";
 }
 
 sub debug {
-	print "pristine-tar: @_\n" if $debug;
+	message(@_) if $debug;
 }
 
 sub vprint {
-	print "pristine-tar: @_\n" if $verbose;
+	message(@_) if $verbose;
 }
 
 sub doit {
 	vprint(@_);
 	if (system(@_) != 0) {
-		die "command failed: @_\n";
+		error "command failed: @_";
 	}
 }
 
@@ -101,10 +168,10 @@ sub tempdir {
 		TMPDIR => 1, CLEANUP => !$keep);
 }
 
-sub gentarball {
+sub recreatetarball {
 	my $tempdir=shift;
 	my $source=shift;
-	my $clobber_source=shift;
+	my %options=@_;
 	
 	my @manifest;
 	open (IN, "$tempdir/manifest") || die "$tempdir/manifest: $!";
@@ -147,7 +214,7 @@ sub gentarball {
 		debug("tarball does not unpack into a subdir");
 	}
 
-	if (! $clobber_source) {
+	if (! $options{clobber_source}) {
 		doit("cp", "-a", $source, "$tempdir/workdir$subdir");
 	}
 	else {
@@ -169,6 +236,10 @@ sub gentarball {
 		elsif (! -e "$tempdir/workdir/$file") {
 			debug("$file is listed in the manifest but may not be present in the source directory");
 			$full_sweep=1;
+
+			if ($options{create_missing}) {
+				mkpath "$tempdir/workdir/$file";
+			}
 		}
 		
 		if (-d "$tempdir/workdir/$file" && (-u _ || -g _ || -k _)) {
@@ -183,7 +254,7 @@ sub gentarball {
 	
 	# If some files couldn't be matched up with the manifest,
 	# it's possible they do exist, but just with names that make sense
-	# to tar, but not to this program. To work around this and make sure
+	# to tar, but not to this program. Work around this and make sure
 	# such files have their metadata tweaked, by doing a full sweep of
 	# the tree.
 	if ($full_sweep) {
@@ -203,7 +274,7 @@ sub gentarball {
 		}, "$tempdir/workdir");
 	}
 
-	doit("tar", "cf", "$tempdir/gentarball", "--owner", 0, "--group", 0, 
+	doit("tar", "cf", "$tempdir/recreatetarball", "--owner", 0, "--group", 0, 
 		"--numeric-owner", "-C", "$tempdir/workdir",
 		"--no-recursion", "--mode", "0644", 
 		"--files-from", "$tempdir/manifest"); 
@@ -226,27 +297,27 @@ sub gentar {
 
 	doit("tar", "xf", File::Spec->rel2abs($delta), "-C", $tempdir);
 	if (! -e "$tempdir/type") {
-		die "failed to gentar delta $delta\n";
+		error "failed to gentar delta $delta";
 	}
 
-	open (IN, "$tempdir/version") || die "delta lacks version number ($!)";
+	open (IN, "$tempdir/version") || error "delta lacks version number ($!)";
 	my $version=<IN>;
 	if ($version >= 3 || $version < 2) {
-		die "delta is version $version, not supported\n";
+		error "delta is version $version, not supported";
 	}
 	close IN;
 	if (open (IN, "$tempdir/type")) {
 		my $type=<IN>;
 		chomp $type;
 		if ($type ne "tar") {
-			die "delta is for a $type, not a tar\n";
+			error "delta is for a $type, not a tar";
 		}
 		close IN;
 	}
 
-	gentarball($tempdir, ".", 0);
+	recreatetarball($tempdir, ".", clobber_source => 1);
 	my $out=(-e "$tempdir/wrapper") ? $tarball.".tmp" : $tarball;
-	doit("xdelta", "patch", "$tempdir/delta", "$tempdir/gentarball", $out);
+	doit("xdelta", "patch", "$tempdir/delta", "$tempdir/recreatetarball", $out);
 
 	if (-e "$tempdir/wrapper") {
 		doit("pristine-gz", 
@@ -256,6 +327,22 @@ sub gentar {
 			"gengz", "$tempdir/wrapper", $out);
 		doit("mv", "-f", $out.".gz", $tarball);
 	}
+}
+	
+sub genmanifest {
+	my $tarball=shift;
+	my $manifest=shift;
+
+	open(IN, "tar tf $tarball |") || die "tar tf: $!";
+	open(OUT, ">", $manifest) || die "$!";
+	while (<IN>) {
+		chomp;
+		# ./ or / in the manifest just confuses tar
+		s/^\.?\/+//;
+		print OUT "$_\n" if length $_;
+	}
+	close IN || error "tar tf exited nonzero";
+	close OUT;
 }
 
 sub gendelta {
@@ -273,7 +360,7 @@ sub gendelta {
 	my @files=qw(delta manifest version type);
 
 	# Check to see if it's compressed.
-	open (IN, "<", $tarball) || die "Cannot read $tarball: $!\n";
+	open (IN, "<", $tarball) || error "Cannot read $tarball: $!\n";
 	my ($chars, $id1, $id2, $method);
 	if (read(IN, $chars, 10) == 10 &&
 	    (($id1, $id2, $method) = unpack("CCC", $chars)) &&
@@ -300,22 +387,12 @@ sub gendelta {
 		$sourcedir=$out[0];
 	}
 
-	open(IN, "tar tf $tarball |") || die "tar tf: $!";
-	open(OUT, ">", "$tempdir/manifest") || die "$!";
-	while (<IN>) {
-		chomp;
-		# ./ or / in the manifest just confuses tar
-		s/^\.?\/+//;
-		print OUT "$_\n" if length $_;
-	}
-	close IN || die "tar tf exited nonzero";
-	close OUT;
-
-	gentarball($tempdir, $sourcedir, 1);
-	my $ret=system("xdelta delta -0 --pristine $tempdir/gentarball $tarball $tempdir/delta") >> 8;
+	genmanifest($tarball, "$tempdir/manifest");
+	recreatetarball($tempdir, $sourcedir, clobber_source => 1);
+	my $ret=system("xdelta delta -0 --pristine $tempdir/recreatetarball $tarball $tempdir/delta") >> 8;
 	# xdelta exits 1 on success if there were differences
 	if ($ret != 1 && $ret != 0) {
-		die "xdelta failed with return code $ret\n";
+		error "xdelta failed with return code $ret";
 	}
 
 	open(OUT, ">", "$tempdir/version") || die "$!";
@@ -332,25 +409,168 @@ sub gendelta {
 	}
 }
 
+sub vcstype {
+	if (-d ".git") {
+		return 'git';
+	}
+	else {
+		error("cannot determine type of vcs used for the current directory");
+	}
+}
+
+sub export {
+	my $upstream=shift;
+
+	my $dest=tempdir();
+	my $id;
+	
+	my $vcs=vcstype();
+	if ($vcs eq "git") {
+		# Convert $upstream into an object id.
+		my @reflines=map { chomp; $_ } `git show-ref \Q$upstream\E`;
+		if (! @reflines) {
+			error "failed to find ref using: git show-ref $upstream"
+		}
+		if (@reflines > 1) {
+			error "more than one ref matches \"$upstream\":\n".
+				join("\n", @reflines);
+		}
+		($id)=$reflines[0]=~/^([A-Za-z0-9]+)\s/;
+
+		doit("git archive --format=tar \Q$id\E | (cd '$dest' && tar x)");
+	}
+	else {
+		die "unsupported vcs $vcs";
+	}
+
+	return ($dest, $id);
+}
+
+sub savedelta {
+	my $delta=shift;
+	my $tarball=shift;
+	my $id=shift;
+	
+	my $branch="pristine-tar";
+	my $deltafile=basename($tarball).".delta";
+	my $idfile=basename($tarball).".id";
+	my $commit_message="pristine-tar data for ".basename($tarball);
+
+	my $vcs=vcstype();
+	if ($vcs eq "git") {
+		my $tempdir=tempdir();
+		open(OUT, ">$tempdir/$deltafile") || die "$tempdir/$deltafile: $!";
+		print OUT $delta;
+		close OUT;
+		open(OUT, ">$tempdir/$idfile") || die "$tempdir/$idfile: $!";
+		print OUT $id;
+		close OUT;
+			
+		# Commit the delta to a branch in git without affecting the
+		# index, and without touching the working tree. Aka deep 
+		# git magick.
+		$ENV{GIT_INDEX_FILE}="$tempdir/index";
+		$ENV{GIT_DIR}=getcwd."/.git";
+		chdir($tempdir) || die "chdir: $!";
+		my $branch_exists=(system("git show-ref --quiet --verify refs/heads/$branch") == 0);
+		if ($branch_exists) {
+			print "prepop\n";
+			doit("git ls-tree -r --full-name $branch | git update-index --index-info");
+		}
+		doit("git", "update-index", "--add", $deltafile, $idfile);
+		my $sha=`git write-tree`;
+		if ($?) {
+			error("git write-tree failed");
+		}
+		$sha=~s/\n//sg;
+		if (! length $sha) {
+			error("git write-tree did not return a sha");
+		}
+		my $pid = open(COMMIT, "|-");
+		if (! $pid) {
+			# child
+			my $commitopts=$branch_exists ? "-p $branch" : "";
+			my $commitsha=`git commit-tree $sha $commitopts`;
+			if ($?) {
+				error("git commit-tree failed");
+			}
+			$commitsha=~s/\n//sg;
+			if (! length $commitsha) {
+				error("git commit-tree did not return a sha");
+			}
+			doit("git", "update-ref", "refs/heads/$branch", $commitsha);
+			exit 0;
+		}
+		else {
+			# parent
+			print COMMIT $commit_message."\n";
+			close COMMIT || error("git commit-tree failed");
+		}
+		
+		message("committed $deltafile to branch $branch");
+	}
+	else {
+		die "unsupported vcs $vcs";
+	}
+}
+
+sub commit {
+	my $tarball=shift;
+	my $upstream=(@_ ? shift : "upstream");
+
+	my ($sourcedir, $id)=export($upstream);
+	my $tempdir=tempdir();
+	genmanifest($tarball, "$tempdir/manifest");
+	recreatetarball($tempdir, $sourcedir, clobber_source => 1,
+		# Set this because revision control systems may
+		# omit empty directories or the like.
+		# (A side effect is that, if $upstream is incomplete,
+		# the delta may become large.)
+		create_missing => 1);
+	my $pid = open(GENDELTA, "-|");
+	if (! $pid) {
+		# child
+		gendelta($tarball, "-");
+		exit 0;
+	}
+	local $/=undef;
+	my $delta=<GENDELTA>;
+	close GENDELTA || error "failed to generate delta";
+	savedelta($delta, $tarball, $id);
+}
+
+sub checkout {
+	my $tarball=shift;
+	
+	my $tempdir=tempdir();
+}
+
 Getopt::Long::Configure("bundling");
 if (! GetOptions(
 	"v|verbose!" => \$verbose,
 	"d|debug!" => \$debug,
-	"k|keep!" => \$keep,
-   ) || @ARGV != 3) {
+	"k|keep!" => \$keep)) {
 	usage();
-	exit 1;
 }
 
 my $command=shift;
 if ($command eq 'gentar') {
+	usage unless @ARGV == 3;
 	gentar(@ARGV);
 }
 elsif ($command eq 'gendelta') {
+	usage unless @ARGV == 3;
 	gendelta(@ARGV);
+}
+elsif ($command eq 'commit') {
+	usage unless @ARGV >= 1;
+	commit(@ARGV);
+}
+elsif ($command eq 'checkout') {
+	usage unless @ARGV == 1;
+	checkout(@ARGV);
 }
 else {
 	print STDERR "Unknown subcommand \"$command\"\n";
 	usage();
-	exit 1;
 }
