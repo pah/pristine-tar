@@ -1,9 +1,9 @@
-pristine-tar (0.7) UNRELEASED; urgency=low
+pristine-tar (0.7) unstable; urgency=low
 
   * Improve/fix handling when there is no local pristine-tar branch.
   * Add a newline to the .id files committed to git.
 
- -- Joey Hess <joeyh@debian.org>  Fri, 01 Feb 2008 22:11:43 -0500
+ -- Joey Hess <joeyh@debian.org>  Fri, 01 Feb 2008 22:13:06 -0500
 
 pristine-tar (0.6) unstable; urgency=low
 
