@@ -1,4 +1,4 @@
-pristine-tar (0.8) UNRELEASED; urgency=low
+pristine-tar (0.8) unstable; urgency=low
 
   * If a tarball contains files all in one subdirectory, and the source
     tree it's being generated from already has that subdirectory, don't
@@ -8,7 +8,7 @@ pristine-tar (0.8) UNRELEASED; urgency=low
   * Recommends bzip2 and pbzip2, which both might be needed when dealing
     with bz2 files due to differences in their output.
 
- -- Joey Hess <joeyh@debian.org>  Fri, 01 Feb 2008 22:36:54 -0500
+ -- Joey Hess <joeyh@debian.org>  Sat, 02 Feb 2008 17:28:17 -0500
 
 pristine-tar (0.7) unstable; urgency=low
 
