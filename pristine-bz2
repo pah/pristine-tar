@@ -263,11 +263,9 @@ sub genbz2 {
 	}
 	close IN;
 
-	# arbitrary?
-	my $filename='arbitrary';
-	doit("cp", $file, "$tempdir/$filename");
-	doit($program, @params, "$tempdir/$filename");
-	doit("mv", "-f", "$tempdir/$filename.bz2", "$file.bz2");
+	# compress only
+	doit($program, @params, $file);
+	# with other bzip2 programs, the original might stay, making sure
 	doit("rm", "-f", $file);
 }
 
