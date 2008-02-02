@@ -3,7 +3,7 @@ Section: utils
 Priority: optional
 Build-Depends: debhelper (>= 5), dpkg-dev (>= 1.9.0), zlib1g-dev
 Maintainer: Joey Hess <joeyh@debian.org>
-Standards-Version: 3.7.2
+Standards-Version: 3.7.3
 Vcs-Git: git://git.kitenet.net/pristine-tar/
 Vcs-Browser: http://git.kitenet.net/?p=pristine-tar
 Homepage: http://kitenet.net/~joey/code/pristine-tar/
