@@ -4,6 +4,7 @@ pristine-tar (0.8) UNRELEASED; urgency=low
     tree it's being generated from already has that subdirectory, don't
     try to create the subdir, which would fail. OTOH, if the subdirectory
     isn't there, proceed with creating it as before.
+  * Add support for bz2 files (Cyril Brulebois)
 
  -- Joey Hess <joeyh@debian.org>  Fri, 01 Feb 2008 22:36:54 -0500
 
