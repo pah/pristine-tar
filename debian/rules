@@ -3,14 +3,15 @@
 build:
 	$(MAKE)
 	pod2man -c pristine-tar pristine-tar > pristine-tar.1
-	pod2man -c pristine-gz pristine-gz > pristine-gz.1
+	pod2man -c pristine-gz  pristine-gz  > pristine-gz.1
+	pod2man -c pristine-bz2 pristine-bz2 > pristine-bz2.1
 	pod2man -c zgz zgz.pod > zgz.1
 
 clean:
 	dh_testdir
 	dh_testroot
 	$(MAKE) clean
-	dh_clean pristine-tar.1 pristine-gz.1 zgz.1
+	dh_clean pristine-tar.1 pristine-gz.1 pristine-bz2.1 zgz.1
 
 binary-indep: build
 
@@ -18,7 +19,7 @@ binary-arch: build
 	dh_testdir
 	dh_testroot
 	dh_clean -k
-	dh_install pristine-tar pristine-gz zgz usr/bin
+	dh_install pristine-tar pristine-gz pristine-bz2 zgz usr/bin
 	dh_installdocs TODO delta-format.txt
 	dh_installman *.1
 	dh_installchangelogs
