@@ -1,3 +1,12 @@
+pristine-tar (0.8) UNRELEASED; urgency=low
+
+  * If a tarball contains files all in one subdirectory, and the source
+    tree it's being generates from already has that subdirectory, don't
+    try to create the subdir, which would fail. OTOH, if the subdirectory
+    isn't there, proceed with creating it as before.
+
+ -- Joey Hess <joeyh@debian.org>  Fri, 01 Feb 2008 22:36:54 -0500
+
 pristine-tar (0.7) unstable; urgency=low
 
   * Improve/fix handling when there is no local pristine-tar branch.
