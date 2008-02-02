@@ -5,6 +5,8 @@ pristine-tar (0.8) UNRELEASED; urgency=low
     try to create the subdir, which would fail. OTOH, if the subdirectory
     isn't there, proceed with creating it as before.
   * Add support for bz2 files (Cyril Brulebois)
+  * Recommends bzip2 and pbzip2, which both might be needed when dealing
+    with bz2 files due to differences in their output.
 
  -- Joey Hess <joeyh@debian.org>  Fri, 01 Feb 2008 22:36:54 -0500
 
