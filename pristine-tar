@@ -482,16 +482,20 @@ sub checkoutdelta {
 	if ($vcs eq "git") {
 		# Check that a local $branch exists
 		my @reflines=map { chomp; $_ } `git show-ref \Q$branch\E`;
-		if (! grep { "refs/heads/$branch" eq $_ } @reflines) {
-			if (scalar @reflines == 0) {
+		my @remotes=grep { ! m/ refs\/heads\/\Q$branch\E$/ } @reflines;
+		if ($#reflines != $#remotes) {
+			$branch="refs/heads/$branch";
+		}
+		else {
+			if (@reflines == 0) {
 				error "no $branch branch found, use \"pristine-tar commit\" first";
 			}
-			elsif (scalar @reflines == 1) {
-				($branch)=$reflines[0]=~/^[A-Za-z0-9]+\s(.*)/;
+			elsif (@remotes == 1) {
+				($branch)=$remotes[0]=~/^[A-Za-z0-9]+\s(.*)/;
 			}
 			else {
 				error "Several remote $branch branches exist. Run \"git branch --track $branch <remote>\" to create a local $branch branch\n".
-					join("\n", @reflines);
+					join("\n", @remotes);
 			}
 		}
 
