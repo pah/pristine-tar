@@ -510,7 +510,7 @@ sub checkoutdelta {
 		if ($?) {
 			error "git show $branch:$idfile failed";
 		}
-		chomp $id; # just in case..
+		chomp $id;
 		if (! length $id) {
 			error "git show $branch:$idfile returned no id";
 		}
@@ -539,7 +539,7 @@ sub commitdelta {
 		print OUT $delta;
 		close OUT;
 		open(OUT, ">$tempdir/$idfile") || die "$tempdir/$idfile: $!";
-		print OUT $id;
+		print OUT "$id\n";
 		close OUT;
 			
 		# Commit the delta to a branch in git without affecting the
