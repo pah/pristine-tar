@@ -341,7 +341,7 @@ sub gentar {
 	doit("xdelta", "patch", "$tempdir/delta", "$tempdir/recreatetarball", $out);
 
 	if (-e "$tempdir/wrapper") {
-		my $type=`tar xOzf $tempdir/wrapper`;
+		my $type=`tar xOzf $tempdir/wrapper type`;
 		chomp $type;
 		if ($type eq 'gz') {
 			doit("pristine-gz", 
