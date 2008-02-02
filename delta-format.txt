@@ -3,7 +3,7 @@ The delta file is a compressed tarball, containing the following files:
 version
 	Currently "2.0".
 type
-	Type of file this is a delta for ("tar", "gz", or "bzip2").
+	Type of file this is a delta for ("tar", "gz", or "bz2").
 
 
 For tar files, it contains:
@@ -33,7 +33,7 @@ filename
 	Filename of the original input file.
 
 
-For bzip2 files, wrapper-bz2 contains:
+For bzip2 files the wrapper contains:
 
 params
 	Currently, only the compression level is detected (4th byte of the

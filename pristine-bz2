@@ -233,8 +233,8 @@ sub genbz2 {
 	if (open (IN, "$tempdir/type")) {
 		my $type=<IN>;
 		chomp $type;
-		if ($type ne "bzip2") {
-			die "delta is for a $type, not a bzip2\n";
+		if ($type ne "bz2") {
+			die "delta is for a $type, not a bz2\n";
 		}
 		close IN;
 	}
@@ -287,7 +287,7 @@ sub gendelta {
 	print OUT "2.0\n";
 	close OUT;
 	open(OUT, ">", "$tempdir/type") || die "$!";
-	print OUT "bzip2\n";
+	print OUT "bz2\n";
 	close OUT;
 	open(OUT, ">", "$tempdir/params") || die "$!";
 	print OUT "@params\n";
