@@ -79,7 +79,6 @@ use constant BZIP2_ID2		 => 0x5a;
 # compression methods, 'h' for Bzip2 ('H'uffman coding), '0' for Bzip1 (deprecated)
 use constant BZIP2_METHOD_HUFFMAN => 0x68;
 
-# only used in the paranoia check, not in reproducebzip2()
 my @supported_bzip2_programs = qw(bzip2 pbzip2);
 
 my $verbose=0;
@@ -194,13 +193,10 @@ sub reproducebzip2 {
 	# header information
 	my @args = predictbzip2args($level);
 
-	# fixme: we might be iterating using @supported_bzip2_programs
-
-	# bzip2 -9 in *many* cases
-	testvariant($orig, $new, 'bzip2', @args)
-		&& return 'bzip2', @args;
-	testvariant($orig, $new, 'pbzip2', @args)
-		&& return 'pbzip2', @args;
+	foreach my $program (@supported_bzip2_programs) {
+		testvariant($orig, $new, $program, @args)
+			&& return $program, @args;
+	}
 	# More to come?
 
 	print STDERR "pristine-bz2 failed to reproduce build of $orig\n";
