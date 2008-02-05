@@ -595,6 +595,30 @@ sub commitdelta {
 		$ENV{GIT_INDEX_FILE}="$tempdir/index";
 		$ENV{GIT_DIR}=getcwd."/.git";
 		chdir($tempdir) || die "chdir: $!";
+
+		# Check the availability of pristine-tar branches.
+		my @reflines=split(/\n/, `git show-ref \Q$branch\E`);
+		my @remotes=grep { ! m/ refs\/heads\/\Q$branch\E$/ } @reflines;
+		if ($#reflines != $#remotes) {
+			# Use the local one.
+		}
+		else {
+			if (@reflines == 0) {
+				# The branch will be created from scratch.
+			}
+			elsif (@remotes == 1) {
+				# Using the unique remote to branch from.
+				my ($remote_branch)=$remotes[0]=~/^[A-Za-z0-9]+\s(.*)/;
+				doit("git branch --track $branch $remote_branch");
+			}
+			else {
+				# Can't default.
+				error "There's no local $branch branch. Several remote $branch branches exist.\n".
+					"Run \"git branch --track $branch <remote>\" to create a local $branch branch\n".
+					join("\n", @remotes);
+			}
+		}
+
 		my $branch_exists=(system("git show-ref --quiet --verify refs/heads/$branch") == 0);
 		if ($branch_exists) {
 			doit("git ls-tree -r --full-name $branch | git update-index --index-info");
