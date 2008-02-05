@@ -516,6 +516,35 @@ sub export {
 	return ($dest, $id);
 }
 
+sub git_findbranch {
+	# Looks for a branch with the given name. If a local branch exists,
+	# returns it. Otherwise, looks for a remote branch, and if exactly
+	# one exists, returns that. If there's no such branch at all, returns
+	# undef. Finally, if there are multiple remote branches and no
+	# local branch, fails with an error.
+	my $branch=shift;
+
+	my @reflines=split(/\n/, `git show-ref \Q$branch\E`);
+	my @remotes=grep { ! m/ refs\/heads\/\Q$branch\E$/ } @reflines;
+	if ($#reflines != $#remotes) {
+		return $branch;
+	}
+	else {
+		if (@reflines == 0) {
+			return undef;
+		}
+		elsif (@remotes == 1) {
+			my ($remote_branch)=$remotes[0]=~/^[A-Za-z0-9]+\s(.*)/;
+			return $remote_branch;
+		}
+		else {
+			error "There's no local $branch branch. Several remote $branch branches exist.\n".
+				"Run \"git branch --track $branch <remote>\" to create a local $branch branch\n".
+				join("\n", @remotes);
+		}
+	}
+}
+
 sub checkoutdelta {
 	my $tarball=shift;
 
@@ -527,23 +556,16 @@ sub checkoutdelta {
 
 	my $vcs=vcstype();
 	if ($vcs eq "git") {
-		# Check that a local $branch exists
-		my @reflines=map { chomp; $_ } `git show-ref \Q$branch\E`;
-		my @remotes=grep { ! m/ refs\/heads\/\Q$branch\E$/ } @reflines;
-		if ($#reflines != $#remotes) {
+		my $b=git_findbranch($branch);
+		if (! defined $b) {
+			error "no $branch branch found, use \"pristine-tar commit\" first";
+		}
+		elsif ($b eq $branch) {
 			$branch="refs/heads/$branch";
 		}
 		else {
-			if (@reflines == 0) {
-				error "no $branch branch found, use \"pristine-tar commit\" first";
-			}
-			elsif (@remotes == 1) {
-				($branch)=$remotes[0]=~/^[A-Za-z0-9]+\s(.*)/;
-			}
-			else {
-				error "Several remote $branch branches exist. Run \"git branch --track $branch <remote>\" to create a local $branch branch\n".
-					join("\n", @remotes);
-			}
+			# use remote branch
+			$branch=$b;
 		}
 
 		$delta=`git show $branch:\Q$deltafile\E`;
@@ -596,27 +618,12 @@ sub commitdelta {
 		$ENV{GIT_DIR}=getcwd."/.git";
 		chdir($tempdir) || die "chdir: $!";
 
-		# Check the availability of pristine-tar branches.
-		my @reflines=split(/\n/, `git show-ref \Q$branch\E`);
-		my @remotes=grep { ! m/ refs\/heads\/\Q$branch\E$/ } @reflines;
-		if ($#reflines != $#remotes) {
-			# Use the local one.
-		}
-		else {
-			if (@reflines == 0) {
-				# The branch will be created from scratch.
-			}
-			elsif (@remotes == 1) {
-				# Using the unique remote to branch from.
-				my ($remote_branch)=$remotes[0]=~/^[A-Za-z0-9]+\s(.*)/;
-				doit("git branch --track $branch $remote_branch");
-			}
-			else {
-				# Can't default.
-				error "There's no local $branch branch. Several remote $branch branches exist.\n".
-					"Run \"git branch --track $branch <remote>\" to create a local $branch branch\n".
-					join("\n", @remotes);
-			}
+		# If there's no local branch, branch from a remote branch
+		# if one exists. If there's no remote branch either, the
+		# code below will create the local branch.
+		my $b=git_findbranch($branch);
+		if (defined $b && $b ne $branch) {
+			doit("git branch --track \Q$branch\E \Q$b\E");
 		}
 
 		my $branch_exists=(system("git show-ref --quiet --verify refs/heads/$branch") == 0);
