@@ -482,28 +482,32 @@ sub export {
 			$id=$upstream;
 		}
 		else {
-			my @totry;
 			if (! defined $upstream) {
-				# try a specific name first, if that's not
-				# present fall back to any upstream branch
-				@totry=("refs/heads/upstream", "upstream")
+				$upstream='upstream';
 			}
-			else {
-				@totry=($upstream);
+
+			my @reflines=map { chomp; $_ } `git show-ref \Q$upstream\E`;
+			if (! @reflines) {
+				error "failed to find ref using: git show-ref $upstream";
 			}
-			foreach my $branch (@totry) {
-				my @reflines=map { chomp; $_ } `git show-ref \Q$branch\E`;
-				if (@reflines > 1) {
-					error "more than one ref matches \"$branch\":\n".
-						join("\n", @reflines);
-				}
-				elsif (@reflines) {
-					($id)=$reflines[0]=~/^([A-Za-z0-9]+)\s/;
+
+			# if one line's ref matches exactly, use it
+			foreach my $line (@reflines) {
+				my ($b)=$line=~/^[A-Za-z0-9]+\s(.*)/;
+				if ($b eq $upstream || $b eq "refs/heads/$upstream") {
+					($id)=$line=~/^([A-Za-z0-9]+)\s/;
 					last;
 				}
 			}
+
 			if (! defined $id) {
-				error "failed to find ref using: git show-ref @totry";
+				if (@reflines == 1) {
+					($id)=$reflines[0]=~/^([A-Za-z0-9]+)\s/;
+				}
+				else {
+					error "more than one ref matches \"$upstream\":\n".
+						join("\n", @reflines);
+				}
 			}
 		}
 
