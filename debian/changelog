@@ -1,3 +1,9 @@
+pristine-tar (0.9) UNRELEASED; urgency=low
+
+  * Add smart branching for commits. (Cyril Brulebois)
+
+ -- Joey Hess <joeyh@debian.org>  Tue, 05 Feb 2008 12:54:27 -0500
+
 pristine-tar (0.8) unstable; urgency=low
 
   * If a tarball contains files all in one subdirectory, and the source
