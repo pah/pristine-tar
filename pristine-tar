@@ -434,24 +434,24 @@ sub gendelta {
 		$tarball="$tempdir/origtarball";
 	}
 
-	my $sourcedir="$tempdir/tmp";
-	doit("mkdir", $sourcedir);
-	doit("tar", "xf", File::Spec->rel2abs($tarball), "-C", $sourcedir);
-	# if all files were in a subdir, use the subdir as the sourcedir
-	my @out=grep { $_ ne "$sourcedir/.." && $_ ne "$sourcedir/." }
-		(glob("$sourcedir/*"), glob("$sourcedir/.*"));
-	if ($#out == 0 && -d $out[0]) {
-		$sourcedir=$out[0];
-	}
-
-	genmanifest($tarball, "$tempdir/manifest");
 	my $recreatetarball;
 	if (! exists $opts{recreatetarball}) {
+		my $sourcedir="$tempdir/tmp";
+		doit("mkdir", $sourcedir);
+		doit("tar", "xf", File::Spec->rel2abs($tarball), "-C", $sourcedir);
+		# if all files were in a subdir, use the subdir as the sourcedir
+		my @out=grep { $_ ne "$sourcedir/.." && $_ ne "$sourcedir/." }
+			(glob("$sourcedir/*"), glob("$sourcedir/.*"));
+		if ($#out == 0 && -d $out[0]) {
+			$sourcedir=$out[0];
+		}
 		my $recreatetarball=recreatetarball($tempdir, $sourcedir, clobber_source => 1);
 	}
 	else {
 		$recreatetarball=$opts{recreatetarball};
 	}
+	
+	genmanifest($tarball, "$tempdir/manifest");
 
 	my $ret=system("xdelta delta -0 --pristine $recreatetarball $tarball $tempdir/delta") >> 8;
 	# xdelta exits 1 on success if there were differences
