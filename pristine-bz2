@@ -91,11 +91,11 @@ sub usage {
 }
 
 sub debug {
-	print "debug: @_\n" if $debug;
+	print STDERR "debug: @_\n" if $debug;
 }
 
 sub vprint {
-	print "pristine-bz2: @_\n" if $verbose;
+	print STDERR "pristine-bz2: @_\n" if $verbose;
 }
 
 sub doit {

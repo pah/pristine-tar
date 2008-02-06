@@ -131,7 +131,7 @@ use constant BZIP2_METHOD_HUFFMAN => 0x68;
 
 my $verbose=0;
 my $debug=0;
-my $keep=0;
+my $keep=1;
 	
 # Force locale to C since tar may output utf-8 filenames differently
 # depending on the locale.
@@ -150,7 +150,7 @@ sub error {
 }
 
 sub message {
-	print "pristine-tar: @_\n";
+	print STDERR "pristine-tar: @_\n";
 }
 
 sub debug {
@@ -294,10 +294,14 @@ sub recreatetarball {
 		}, "$tempdir/workdir");
 	}
 
-	doit("tar", "cf", "$tempdir/recreatetarball", "--owner", 0, "--group", 0, 
+	my $ret="$tempdir/recreatetarball";
+
+	doit("tar", "cf", $ret, "--owner", 0, "--group", 0, 
 		"--numeric-owner", "-C", "$tempdir/workdir",
 		"--no-recursion", "--mode", "0644", 
-		"--files-from", "$tempdir/manifest"); 
+		"--files-from", "$tempdir/manifest");
+
+	return $ret;
 }
 
 sub gentar {
@@ -336,9 +340,9 @@ sub gentar {
 		close IN;
 	}
 
-	recreatetarball($tempdir, getcwd, clobber_source => 0, %opts);
+	my $recreatetarball=recreatetarball($tempdir, getcwd, clobber_source => 0, %opts);
 	my $out=(-e "$tempdir/wrapper") ? $tarball.".tmp" : $tarball;
-	doit("xdelta", "patch", "$tempdir/delta", "$tempdir/recreatetarball", $out);
+	doit("xdelta", "patch", "$tempdir/delta", $recreatetarball, $out);
 
 	if (-e "$tempdir/wrapper") {
 		my $type=`tar xOzf $tempdir/wrapper type`;
@@ -384,9 +388,10 @@ sub genmanifest {
 sub gendelta {
 	my $tarball=shift;
 	my $delta=shift;
+	my %opts=@_;
 
 	my $tempdir=tempdir();
-
+	
 	my $stdout=0;
 	if ($delta eq "-") {
 		$stdout=1;
@@ -440,8 +445,15 @@ sub gendelta {
 	}
 
 	genmanifest($tarball, "$tempdir/manifest");
-	recreatetarball($tempdir, $sourcedir, clobber_source => 1);
-	my $ret=system("xdelta delta -0 --pristine $tempdir/recreatetarball $tarball $tempdir/delta") >> 8;
+	my $recreatetarball;
+	if (! exists $opts{recreatetarball}) {
+		my $recreatetarball=recreatetarball($tempdir, $sourcedir, clobber_source => 1);
+	}
+	else {
+		$recreatetarball=$opts{recreatetarball};
+	}
+
+	my $ret=system("xdelta delta -0 --pristine $recreatetarball $tarball $tempdir/delta") >> 8;
 	# xdelta exits 1 on success if there were differences
 	if ($ret != 1 && $ret != 0) {
 		error "xdelta failed with return code $ret";
@@ -678,12 +690,12 @@ sub commit {
 	my $tempdir=tempdir();
 	my ($sourcedir, $id)=export($upstream);
 	genmanifest($tarball, "$tempdir/manifest");
-	recreatetarball($tempdir, $sourcedir, clobber_source => 1,
-		create_missing => 1);
+	my $recreatetarball=recreatetarball($tempdir, $sourcedir,
+		clobber_source => 1, create_missing => 1);
 	my $pid = open(GENDELTA, "-|");
 	if (! $pid) {
 		# child
-		gendelta($tarball, "-");
+		gendelta($tarball, "-", recreatetarball => $recreatetarball);
 		exit 0;
 	}
 	local $/=undef;
