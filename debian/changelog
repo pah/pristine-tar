@@ -1,4 +1,4 @@
-pristine-tar (0.9) UNRELEASED; urgency=low
+pristine-tar (0.9) unstable; urgency=low
 
   * Add smart branching for commits. (Cyril Brulebois)
   * Prefer to commit to the ref that exactly matches what is specified at the
@@ -10,7 +10,7 @@ pristine-tar (0.9) UNRELEASED; urgency=low
     Fix it to use the upstream branch, ensuring that no matter what branch is
     given, the delta that is created can always recreate the source tarball.
 
- -- Joey Hess <joeyh@debian.org>  Tue, 05 Feb 2008 12:54:27 -0500
+ -- Joey Hess <joeyh@debian.org>  Wed, 06 Feb 2008 14:31:29 -0500
 
 pristine-tar (0.8) unstable; urgency=low
 
