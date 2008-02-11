@@ -1,6 +1,6 @@
 pristine-tar (0.10) UNRELEASED; urgency=low
 
-  * pristine-tar: Add -m option to specify a commit message.
+  * pristine-tar: Add -m option to specify a commit message. Closes: #465231
 
  -- Joey Hess <joeyh@debian.org>  Mon, 11 Feb 2008 12:04:45 -0500
 
