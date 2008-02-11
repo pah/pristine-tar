@@ -10,7 +10,7 @@ B<pristine-tar> [-vdk] gentar delta tarball
 
 B<pristine-tar> [-vdk] gendelta tarball delta
 
-B<pristine-tar> [-vdk] commit tarball [upstream]
+B<pristine-tar> [-vdk] [-m message] commit tarball [upstream]
 
 B<pristine-tar> [-vdk] checkout tarball
 
@@ -88,6 +88,10 @@ Debug mode.
 
 Don't clean up the temporary directory on exit.
 
+=item -m message
+
+Use this option to specify a custom commit message to pristine-tar commit.
+
 =head1 LIMITATIONS
 
 Only .tar, .tar.gz, and .tar.bz2 files are currently supported.
@@ -132,6 +136,7 @@ use constant BZIP2_METHOD_HUFFMAN => 0x68;
 my $verbose=0;
 my $debug=0;
 my $keep=1;
+my $message;
 	
 # Force locale to C since tar may output utf-8 filenames differently
 # depending on the locale.
@@ -140,7 +145,7 @@ $ENV{LANG}='C';
 sub usage {
 	print STDERR "Usage: pristine-tar [-vdk] gentar delta tarball\n";
 	print STDERR "       pristine-tar [-vdk] gendelta tarball delta\n";
-	print STDERR "       pristine-tar [-vdk] commit tarball [upstream]\n";
+	print STDERR "       pristine-tar [-vdk] [-m message] commit tarball [upstream]\n";
 	print STDERR "       pristine-tar [-vdk] checkout tarball\n";
 	exit 1;
 }
@@ -615,7 +620,8 @@ sub commitdelta {
 	my $branch="pristine-tar";
 	my $deltafile=basename($tarball).".delta";
 	my $idfile=basename($tarball).".id";
-	my $commit_message="pristine-tar data for ".basename($tarball);
+	my $commit_message=defined $message ? $message :
+		"pristine-tar data for ".basename($tarball);
 
 	my $vcs=vcstype();
 	if ($vcs eq "git") {
@@ -726,6 +732,7 @@ sub checkout {
 
 Getopt::Long::Configure("bundling");
 if (! GetOptions(
+	"m|message=s" => \$message,
 	"v|verbose!" => \$verbose,
 	"d|debug!" => \$debug,
 	"k|keep!" => \$keep)) {

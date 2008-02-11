@@ -1,3 +1,9 @@
+pristine-tar (0.10) UNRELEASED; urgency=low
+
+  * pristine-tar: Add -m option to specify a commit message.
+
+ -- Joey Hess <joeyh@debian.org>  Mon, 11 Feb 2008 12:04:45 -0500
+
 pristine-tar (0.9) unstable; urgency=low
 
   * Add smart branching for commits. (Cyril Brulebois)
