@@ -135,7 +135,7 @@ use constant BZIP2_METHOD_HUFFMAN => 0x68;
 
 my $verbose=0;
 my $debug=0;
-my $keep=1;
+my $keep=0;
 my $message;
 	
 # Force locale to C since tar may output utf-8 filenames differently
