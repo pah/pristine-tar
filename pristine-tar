@@ -49,7 +49,7 @@ If the delta filename is "-", it is read from standard input.
 
 =item pristine-tar commit
 
-B<pristine-tar commit> generatess a pristine-tar delta file for the specified
+B<pristine-tar commit> generates a pristine-tar delta file for the specified
 tarball, and commits it to version control. The B<pristine-tar checkout>
 command can later be used to recreate the original tarball based only
 on the information stored in version control.
