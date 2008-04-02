@@ -305,7 +305,7 @@ sub recreatetarball {
 		"--numeric-owner", "-C", "$tempdir/workdir",
 		"--no-recursion", "--mode", "0644", 
 		"--files-from", "$tempdir/manifest");
-
+	
 	return $ret;
 }
 
@@ -439,6 +439,7 @@ sub gendelta {
 		$tarball="$tempdir/origtarball";
 	}
 
+	genmanifest($tarball, "$tempdir/manifest");
 	my $recreatetarball;
 	if (! exists $opts{recreatetarball}) {
 		my $sourcedir="$tempdir/tmp";
@@ -450,13 +451,11 @@ sub gendelta {
 		if ($#out == 0 && -d $out[0]) {
 			$sourcedir=$out[0];
 		}
-		my $recreatetarball=recreatetarball($tempdir, $sourcedir, clobber_source => 1);
+		$recreatetarball=recreatetarball($tempdir, $sourcedir, clobber_source => 1);
 	}
 	else {
 		$recreatetarball=$opts{recreatetarball};
 	}
-	
-	genmanifest($tarball, "$tempdir/manifest");
 
 	my $ret=system("xdelta delta -0 --pristine $recreatetarball $tarball $tempdir/delta") >> 8;
 	# xdelta exits 1 on success if there were differences
