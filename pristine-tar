@@ -62,7 +62,7 @@ branch matching "upstream". The name of the tree it points to will be
 recorded for later use by B<pristine-tar checkout>.
 
 The delta files are stored in a branch named "pristine-tar", with filenames
-corresponding to the input tarball, with ".delta" prepended. This
+corresponding to the input tarball, with ".delta" appended. This
 branch is created or updated as needed to add each new delta.
 
 =item pristine-tar checkout

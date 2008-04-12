@@ -1,3 +1,9 @@
+pristine-tar (0.13) UNRELEASED; urgency=low
+
+  * Man page typo fix. Closes: #475698
+
+ -- Joey Hess <joeyh@debian.org>  Sat, 12 Apr 2008 11:46:12 -0400
+
 pristine-tar (0.12) unstable; urgency=low
 
   * pristine-tar: Fix some bugs when run on an uncompressed tarball.
