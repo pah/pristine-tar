@@ -1,3 +1,9 @@
+pristine-tar (0.14) UNRELEASED; urgency=low
+
+  * Use debhelper v7; rules file minimisation.
+
+ -- Joey Hess <joeyh@debian.org>  Thu, 24 Apr 2008 02:05:47 -0400
+
 pristine-tar (0.13) unstable; urgency=low
 
   * Man page typo fix. Closes: #475698
