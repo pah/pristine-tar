@@ -178,6 +178,11 @@ sub tempdir {
 		TMPDIR => 1, CLEANUP => !$keep);
 }
 
+# Workaround for bug #479317 in perl 5.10.
+sub END {
+	chdir("/");
+}
+
 sub recreatetarball {
 	my $tempdir=shift;
 	my $source=shift;
@@ -240,7 +245,7 @@ sub recreatetarball {
 		doit("cp", "-a", $source, "$tempdir/workdir$subdir");
 	}
 	else {
-		doit("cp", "-a", $source, "$tempdir/workdir$subdir");
+		doit("mv", $source, "$tempdir/workdir$subdir");
 	}
 
 	# It's important that this create an identical tarball each time
@@ -712,7 +717,6 @@ sub commit {
 sub checkout {
 	my $tarball=shift;
 	
-	my $tempdir=tempdir();
 	my ($delta, $id)=checkoutdelta($tarball);
 	my ($sourcedir, undef)=export($id);
 	my $pid = open(GENTAR, "|-");
