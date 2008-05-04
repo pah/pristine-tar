@@ -1,6 +1,7 @@
 pristine-tar (0.14) UNRELEASED; urgency=low
 
   * Use debhelper v7; rules file minimisation.
+  * Add build and install targets to Makefile.
 
  -- Joey Hess <joeyh@debian.org>  Thu, 24 Apr 2008 02:05:47 -0400
 

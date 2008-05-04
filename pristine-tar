@@ -240,7 +240,7 @@ sub recreatetarball {
 		doit("cp", "-a", $source, "$tempdir/workdir$subdir");
 	}
 	else {
-		doit("mv", $source, "$tempdir/workdir$subdir");
+		doit("cp", "-a", $source, "$tempdir/workdir$subdir");
 	}
 
 	# It's important that this create an identical tarball each time
