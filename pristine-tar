@@ -92,6 +92,8 @@ Don't clean up the temporary directory on exit.
 
 Use this option to specify a custom commit message to pristine-tar commit.
 
+=back
+
 =head1 LIMITATIONS
 
 Only .tar, .tar.gz, and .tar.bz2 files are currently supported.

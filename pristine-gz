@@ -55,6 +55,8 @@ Debug mode.
 
 Don't clean up the temporary directory on exit.
 
+=back
+
 =head1 AUTHOR
 
 Joey Hess <joeyh@debian.org>,
