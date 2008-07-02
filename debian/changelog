@@ -1,6 +1,9 @@
 pristine-tar (0.15) UNRELEASED; urgency=low
 
   * Fix POD issues. Closes: #484165
+  * zgz: Remove support for a GZIP env variable. We don't need this in
+    pristine-tar, and if could screw things up if a user set it.
+    Closes: #488986
 
  -- Joey Hess <joeyh@debian.org>  Mon, 02 Jun 2008 15:37:47 -0400
 

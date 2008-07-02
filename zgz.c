@@ -189,7 +189,6 @@ static	void	display_version(void);
 static	void	display_license(void);
 static	const suffixes_t *check_suffix(char *, int);
 
-static	void	prepend_gzip(char *, int *, char ***);
 static	void	print_verbage(const char *, const char *, off_t, off_t);
 static	void	copymodes(int fd, const struct stat *, const char *file);
 static	int	check_outfile(const char *outfile);
@@ -234,9 +233,6 @@ main(int argc, char **argv)
 	char *gzip;
 	int len;
 	int ch;
-
-	if ((gzip = getenv("GZIP")) != NULL)
-		prepend_gzip(gzip, &argc, &argv);
 
 	if (strcmp(progname, "gunzip") == 0 ||
 	    strcmp(progname, "zcat") == 0 ||
@@ -423,70 +419,6 @@ maybe_err(const char *fmt, ...)
 		va_end(ap);
 	}
 	exit(2);
-}
-
-/* split up $GZIP and prepend it to the argument list */
-static void
-prepend_gzip(char *gzip, int *argc, char ***argv)
-{
-	char *s, **nargv, **ac;
-	int nenvarg = 0, i;
-
-	/* scan how many arguments there are */
-	for (s = gzip;;) {
-		while (*s == ' ' || *s == '\t')
-			s++;
-		if (*s == 0)
-			goto count_done;
-		nenvarg++;
-		while (*s != ' ' && *s != '\t')
-			if (*s++ == 0)
-				goto count_done;
-	}
-count_done:
-	/* punt early */
-	if (nenvarg == 0)
-		return;
-
-	*argc += nenvarg;
-	ac = *argv;
-
-	nargv = (char **)malloc((*argc + 1) * sizeof(char *));
-	if (nargv == NULL)
-		maybe_err("malloc");
-
-	/* stash this away */
-	*argv = nargv;
-
-	/* copy the program name first */
-	i = 0;
-	nargv[i++] = *(ac++);
-
-	/* take a copy of $GZIP and add it to the array */
-	s = strdup(gzip);
-	if (s == NULL)
-		maybe_err("strdup");
-	for (;;) {
-		/* Skip whitespaces. */
-		while (*s == ' ' || *s == '\t')
-			s++;
-		if (*s == 0)
-			goto copy_done;
-		nargv[i++] = s;
-		/* Find the end of this argument. */
-		while (*s != ' ' && *s != '\t')
-			if (*s++ == 0)
-				/* Argument followed by NUL. */
-				goto copy_done;
-		/* Terminate by overwriting ' ' or '\t' with NUL. */
-		*s++ = 0;
-	}
-copy_done:
-
-	/* copy the original arguments and a NULL */
-	while (*ac)
-		nargv[i++] = *(ac++);
-	nargv[i] = NULL;
 }
 
 /* compress input to output. Return bytes read, -1 on error */
