@@ -1,3 +1,13 @@
+pristine-tar (0.16) UNRELEASED; urgency=low
+
+  * pristine-gz: Always pass -f to zgz, to support cases where
+    the gzip header claims that the original input file had an extension
+    that suggests it was itself already compressed. (Although it can't really
+    be.) Not doing the same for gzip because -f doesn't cause it to ignore
+    extensions. See #475778
+
+ -- Joey Hess <joeyh@debian.org>  Fri, 04 Jul 2008 14:25:06 -0400
+
 pristine-tar (0.15) unstable; urgency=low
 
   * Fix POD issues. Closes: #484165

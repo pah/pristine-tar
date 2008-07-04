@@ -226,7 +226,7 @@ sub testvariant {
 	}
 
 	# try gzipping with the arguments passed
-	doit('zgz', @args, $new);
+	doit('zgz', '-f', @args, $new);
 	$new .= '.gz';
 	unless (-e $new) {
 		die("zgz failed, aborting");
