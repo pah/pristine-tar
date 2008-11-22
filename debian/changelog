@@ -1,3 +1,10 @@
+pristine-tar (0.18) UNRELEASED; urgency=low
+
+  * pristine-gz: Avoid uncompressing the original file more than once.
+    Closes: #506490 
+
+ -- Joey Hess <joeyh@debian.org>  Fri, 21 Nov 2008 20:23:52 -0500
+
 pristine-tar (0.17) unstable; urgency=low
 
   * Correct -f order to come after --gnu.

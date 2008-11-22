@@ -209,28 +209,40 @@ sub comparefiles {
 sub testvariant {
 	my ($old, $new, $origname, @args) = @_;
 
-	# Unzip attempt of the previous run (or the original on the first run)
-	doit('gunzip', '-N', $new);
-	if (-e $new) {
-		die "gunzip failed, aborting";
+	# We need an uncompressed file to test the compressor with.
+	# See if one already exists.
+	my $uncompressed = $new;
+	$uncompressed =~ s/\.gz$//;
+	if ($origname && -e $origname) {
+		$uncompressed = $origname;
 	}
-	elsif ($origname && -e $origname) {
-		# original new because we passed -N to gunzip
-		$new = $origname;
-	}
-	else {
-		$new =~ s/\.gz$//;
-		unless (-e $new) {
-			die("gunzip succeded but I can't find the new file");
+	elsif (! -e $uncompressed) {
+		# Generate the uncompressed file.
+		doit('gunzip', '-N', $new);
+		if (-e $new) {
+			die "gunzip failed, aborting";
+		}
+		elsif ($origname && -e $origname) {
+			$uncompressed = $origname;
+		}
+		elsif (! -e $uncompressed) {
+			die("gunzip succeded but I can't find the uncompressed file");
 		}
 	}
+		
+	# Cache a copy of the uncompressed file to avoid needing to
+	# uncompress it again. (By hard linking, we avoid an
+	# expensive copy, but need to pass -f when gzipping.)
+	doit("ln", "-f", $uncompressed, "$uncompressed.cached");
 
 	# try gzipping with the arguments passed
-	doit('zgz', @args, "-f", $new);
-	$new .= '.gz';
+	doit('zgz', @args, "-f", $uncompressed);
+	$new = "$uncompressed.gz";
 	unless (-e $new) {
 		die("zgz failed, aborting");
 	}
+	# move cached uncompressed file into place for later use
+	doit("mv", "-f", "$uncompressed.cached", $uncompressed);
 
 	# and compare the generated with the original
 	return !comparefiles($old, $new);
