@@ -154,7 +154,6 @@ static	int	Nflag;			/* restore name/timestamp */
 static	int	mflag;			/* undocumented: don't save timestamp */
 static	int	qflag;			/* quiet mode */
 static	int	tflag;			/* test */
-static	int	vflag;			/* verbose mode */
 static	int	xflag = -1;		/* don't set Extra Flags (i.e. compression level)
 					   binary compatibility with an older, buggy version */
 static	int	osflag = GZIP_OS_UNIX;	/* Unix or otherwise */
@@ -177,13 +176,11 @@ static	off_t	file_compress(char *, char *, char *, size_t);
 static	void	handle_pathname(char *, char *);
 static	void	handle_file(char *, char *, struct stat *);
 static	void	handle_stdout(char *);
-static	void	print_ratio(off_t, off_t, FILE *);
 static	void	usage(void);
 static	void	display_version(void);
 static	void	display_license(void);
 static	const suffixes_t *check_suffix(char *, int);
 
-static	void	print_verbage(const char *, const char *, off_t, off_t);
 static	void	copymodes(int fd, const struct stat *, const char *file);
 static	int	check_outfile(const char *outfile);
 
@@ -202,7 +199,6 @@ static const struct option longopts[] = {
 	{ "recursive",		no_argument,		0,	'r' },
 	{ "suffix",		required_argument,	0,	'S' },
 	{ "test",		no_argument,		0,	't' },
-	{ "verbose",		no_argument,		0,	'v' },
 	{ "fast",		no_argument,		0,	'1' },
 	{ "best",		no_argument,		0,	'9' },
 	{ "ascii",		no_argument,		0,	'a' },
@@ -249,7 +245,7 @@ main(int argc, char **argv)
 		argv++;
 	}
 
-#define OPT_LIST "123456789acdfhLNnMmqrS:tVvo:k:s:"
+#define OPT_LIST "123456789acdfhLNnMmqrS:tVo:k:s:"
 
 	while ((ch = getopt_long(argc, argv, OPT_LIST, longopts, NULL)) != -1) {
 		switch (ch) {
@@ -294,9 +290,6 @@ main(int argc, char **argv)
 		case 't':
 			cflag = 1;
 			tflag = 1;
-			break;
-		case 'v':
-			vflag = 1;
 			break;
 		case 's':
 			osflag = atoi(optarg);
@@ -832,8 +825,6 @@ handle_stdout(char *origname)
 	}
 	 		
 	usize = gz_compress(STDIN_FILENO, STDOUT_FILENO, &gsize, origname, mtime);
-        if (vflag && !tflag && usize != -1 && gsize != -1)
-		print_verbage(NULL, NULL, usize, gsize);
 }
 
 /* do what is asked for, for the path name */
@@ -877,61 +868,6 @@ handle_file(char *file, char *origname, struct stat *sbp)
 	if (gsize == -1)
 		return;
 	usize = sbp->st_size;
-
-	if (vflag && !tflag)
-		print_verbage(file, (cflag) ? NULL : outfile, usize, gsize);
-}
-
-/* print a ratio - size reduction as a fraction of uncompressed size */
-static void
-print_ratio(off_t in, off_t out, FILE *where)
-{
-	int percent10;	/* 10 * percent */
-	off_t diff;
-	char buff[8];
-	int len;
-
-	diff = in - out/2;
-	if (diff <= 0)
-		/*
-		 * Output is more than double size of input! print -99.9%
-		 * Quite possibly we've failed to get the original size.
-		 */
-		percent10 = -999;
-	else {
-		/*
-		 * We only need 12 bits of result from the final division,
-		 * so reduce the values until a 32bit division will suffice.
-		 */
-		while (in > 0x100000) {
-			diff >>= 1;
-			in >>= 1;
-		}
-		if (in != 0)
-			percent10 = ((u_int)diff * 2000) / (u_int)in - 1000;
-		else
-			percent10 = 0;
-	}
-
-	len = snprintf(buff, sizeof buff, "%2.2d.", percent10);
-	/* Move the '.' to before the last digit */
-	buff[len - 1] = buff[len - 2];
-	buff[len - 2] = '.';
-	fprintf(where, "%5s%%", buff);
-}
-
-/* print compression statistics, and the new name (if there is one!) */
-static void
-print_verbage(const char *file, const char *nfile, off_t usize, off_t gsize)
-{
-	if (file)
-		fprintf(stderr, "%s:%s  ", file,
-		    strlen(file) < 7 ? "\t\t" : "\t");
-	print_ratio(usize, gsize, stderr);
-	if (nfile)
-		fprintf(stderr, " -- replaced with %s", nfile);
-	fprintf(stderr, "\n");
-	fflush(stderr);
 }
 
 /* display the usage of NetBSD gzip */
@@ -959,7 +895,6 @@ usage(void)
     " -t --test                test compressed file\n"
     " -q --quiet               output no warnings\n"
     " -V --version             display program version\n"
-    " -v --verbose             print extra statistics\n"
     " -h --help                display this help\n"
     " \nzlib-specific options:\n"
     " -o NAME\n"
