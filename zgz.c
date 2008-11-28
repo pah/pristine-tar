@@ -836,14 +836,14 @@ handle_file(char *file, char *origname, struct stat *sbp)
 	usize = sbp->st_size;
 }
 
-/* display the usage of NetBSD gzip */
+/* display usage */
 static void
 usage(void)
 {
 
 	fprintf(stderr, "%s\n", gzip_version);
 	fprintf(stderr,
-    "usage: %s [--gnu | --zlib] [-" OPT_LIST "] [<file> [<file> ...]]\n"
+    "usage: zgz [--gnu | --zlib] [-" OPT_LIST "] [<file> [<file> ...]]\n"
     " --gnu                    use GNU gzip (/bin/gzip)\n"
     " --zlib                   use zlib's implementation (default)\n"
     " -1 --fast                fastest (worst) compression\n"
@@ -865,8 +865,7 @@ usage(void)
     " -o NAME\n"
     "    --original-name NAME  use NAME as the original file name\n"
     " -k --quirk QUIRK         enable a format quirk (buggy-bsd, ntfs)\n"
-    " -s --osflag              set the OS flag to something different than 03 (Unix)\n",
-	    "gzip");
+    " -s --osflag              set the OS flag to something different than 03 (Unix)\n");
 	exit(0);
 }
 
