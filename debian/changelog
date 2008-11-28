@@ -1,3 +1,9 @@
+pristine-tar (0.19) unstable; urgency=low
+
+  * Add a .gitignore file
+
+ -- Josh Triplett <josh@freedesktop.org>  Thu, 27 Nov 2008 19:54:29 -0800
+
 pristine-tar (0.18) unstable; urgency=low
 
   * pristine-gz: Avoid uncompressing the original file more than once.
