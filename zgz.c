@@ -67,23 +67,12 @@
 #include <getopt.h>
 #include <time.h>
 
-/* what type of file are we dealing with */
-enum filetype {
-	FT_GZIP,
-	FT_LAST,
-	FT_UNKNOWN
-};
-
 #define GZ_SUFFIX	".gz"
 
 #define BUFLEN		(64 * 1024)
 
 #define GZIP_MAGIC0	0x1F
 #define GZIP_MAGIC1	0x8B
-#define GZIP_OMAGIC1	0x9E
-
-#define GZIP_TIMESTAMP	(off_t)4
-#define GZIP_ORIGNAME	(off_t)10
 
 #define HEAD_CRC	0x02
 #define EXTRA_FIELD	0x04
@@ -168,9 +157,6 @@ static	void	maybe_warn(const char *fmt, ...)
     __attribute__((__format__(__printf__, 1, 2)));
 static	void	maybe_warnx(const char *fmt, ...)
     __attribute__((__format__(__printf__, 1, 2)));
-#if XXX_INPUT
-static	enum filetype file_gettype(u_char *);
-#endif
 static	off_t	gz_compress(int, int, off_t *, const char *, uint32_t);
 static	off_t	file_compress(char *, char *, char *, size_t);
 static	void	handle_pathname(char *, char *);
@@ -609,20 +595,6 @@ copymodes(int fd, const struct stat *sbp, const char *file)
 	if (fchmod(fd, sb.st_mode) < 0)
 		maybe_warn("couldn't fchmod: %s", file);
 }
-
-#if INPUT
-/* what sort of file is this? */
-static enum filetype
-file_gettype(u_char *buf)
-{
-
-	if (buf[0] == GZIP_MAGIC0 &&
-	    (buf[1] == GZIP_MAGIC1 || buf[1] == GZIP_OMAGIC1))
-		return FT_GZIP;
-	else
-		return FT_UNKNOWN;
-}
-#endif
 
 /* check the outfile is OK. */
 static int
