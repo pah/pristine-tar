@@ -22,6 +22,7 @@ reproducing builds of gz files that are bit-identical to the originals.
 =head1 AUTHOR
 
 Matthew R. Green,
-Faidon Liambotis
+Faidon Liambotis,
+Josh Triplett
 
 =cut

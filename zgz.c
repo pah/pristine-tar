@@ -1,5 +1,6 @@
 /*
- * Author: Faidon Liambotis <paravoid@debian.org>
+ * Authors: Faidon Liambotis <paravoid@debian.org>
+ *          Josh Triplett <josh@joshtriplett.org>
  *
  * This is a zlib-based gzip that is heavily based on NetBSD's gzip,
  * developed by Matthew R. Green.
@@ -11,6 +12,7 @@
  *
  * Copyright (c) 1997, 1998, 2003, 2004, 2006 Matthew R. Green
  * Copyright (c) 2007 Faidon Liambotis
+ * Copyright (c) 2008 Josh Triplett
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -101,10 +103,12 @@ static suffixes_t suffixes[] = {
 static	const char	gzip_version[] = "zgz 20071002 based on NetBSD gzip 20060927";
 
 static	const char	gzip_copyright[] = \
-" Author: Faidon Liambotis <paravoid@debian.org>\n"
+" Authors: Faidon Liambotis <paravoid@debian.org>\n"
+"          Josh Triplett <josh@joshtriplett.org>\n"
 "\n"
 " Copyright (c) 1997, 1998, 2003, 2004, 2006 Matthew R. Green\n"
 " Copyright (c) 2007 Faidon Liambotis\n"
+" Copyright (c) 2008 Josh Triplett\n"
 " * All rights reserved.\n"
 " *\n"
 " * Redistribution and use in source and binary forms, with or without\n"
@@ -138,6 +142,8 @@ static	int	nflag;			/* don't save name (impiles -m) */
 static	int	Nflag;			/* restore name/timestamp */
 static	int	mflag;			/* undocumented: don't save timestamp */
 static	int	qflag;			/* quiet mode */
+static	int	Tflag;			/* force timestamp */
+static	uint32_t	timestamp;	/* forced timestamp */
 static	int	xflag = -1;		/* don't set Extra Flags (i.e. compression level)
 					   binary compatibility with an older, buggy version */
 static	int	osflag = GZIP_OS_UNIX;	/* Unix or otherwise */
@@ -184,6 +190,7 @@ static const struct option longopts[] = {
 	/* new options */
 	{ "no-timestamp",	no_argument,		0,	'm' },
 	{ "force-timestamp",	no_argument,		0,	'M' },
+	{ "timestamp",		required_argument,	0,	'T' },
 	{ "osflag",		required_argument,	0,	's' },
 	{ "original-name",	required_argument,	0,	'o' },
 	{ "quirk",		required_argument,	0,	'k' },
@@ -223,7 +230,7 @@ main(int argc, char **argv)
 		argv++;
 	}
 
-#define OPT_LIST "123456789acdfhLNnMmqrVo:k:s:"
+#define OPT_LIST "123456789acdfhLNnMmqrT:Vo:k:s:"
 
 	while ((ch = getopt_long(argc, argv, OPT_LIST, longopts, NULL)) != -1) {
 		switch (ch) {
@@ -285,6 +292,10 @@ main(int argc, char **argv)
 				fprintf(stderr, "%s: unknown quirk!\n", progname);
 				usage();
 			}
+			break;
+		case 'T':
+			timestamp = atoi(optarg);
+			Tflag = 1;
 			break;
 		case 'r':
 			fprintf(stderr, "%s: recursive is not supported on this version\n", progname);
@@ -698,7 +709,8 @@ file_compress(char *file, char *origname, char *outfile, size_t outsize)
 		out = STDOUT_FILENO;
 	}
 
-	insize = gz_compress(in, out, &size, origname, (uint32_t)isb.st_mtime);
+	insize = gz_compress(in, out, &size, origname,
+	                     Tflag ? timestamp : (uint32_t)isb.st_mtime);
 
 	(void)close(in);
 
@@ -755,25 +767,30 @@ handle_stdout(char *origname)
 		maybe_warnx("standard output is a terminal -- ignoring");
 		return;
 	}
-	/* If stdin is a file use it's mtime, otherwise use current time */
-	ret = fstat(STDIN_FILENO, &sb);
 
-	if (ret < 0) {
-		maybe_warn("Can't stat stdin");
-		return;
-	}
-
-	if (S_ISREG(sb.st_mode))
-		mtime = (uint32_t)sb.st_mtime;
+	if (Tflag)
+		mtime = timestamp;
 	else {
-		systime = time(NULL);
-		if (systime == -1) {
-			maybe_warn("time");
+		/* If stdin is a file use it's mtime, otherwise use current time */
+		ret = fstat(STDIN_FILENO, &sb);
+
+		if (ret < 0) {
+			maybe_warn("Can't stat stdin");
 			return;
-		} 
-		mtime = (uint32_t)systime;
+		}
+
+		if (S_ISREG(sb.st_mode))
+			mtime = (uint32_t)sb.st_mtime;
+		else {
+			systime = time(NULL);
+			if (systime == -1) {
+				maybe_warn("time");
+				return;
+			}
+			mtime = (uint32_t)systime;
+		}
 	}
-	 		
+
 	usize = gz_compress(STDIN_FILENO, STDOUT_FILENO, &gsize, origname, mtime);
 }
 
@@ -847,7 +864,8 @@ usage(void)
     " -o NAME\n"
     "    --original-name NAME  use NAME as the original file name\n"
     " -k --quirk QUIRK         enable a format quirk (buggy-bsd, ntfs)\n"
-    " -s --osflag              set the OS flag to something different than 03 (Unix)\n");
+    " -s --osflag              set the OS flag to something different than 03 (Unix)\n"
+    " -T --timestamp SECONDS   set the timestamp to the specified number of seconds\n");
 	exit(0);
 }
 

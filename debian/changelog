@@ -6,6 +6,9 @@ pristine-tar (0.19) unstable; urgency=low
   * Allow the empty string as an original filename in zgz, rather than
     treating the empty string as a flag to not store an original filename.
   * Fix zgz's usage message to stop identifying the program as gzip.
+  * Add a new -T,--timestamp flag to zgz, to explicitly set the timestamp
+    stored in the gzip file, rather than taking the timestamp of the input
+    file.
 
  -- Josh Triplett <josh@freedesktop.org>  Thu, 27 Nov 2008 19:54:29 -0800
 
