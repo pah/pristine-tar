@@ -146,7 +146,6 @@ static	const char	gzip_copyright[] = \
 " * SUCH DAMAGE.";
 
 static	int	cflag;			/* stdout mode */
-static	int	lflag;			/* list mode */
 static	int	numflag = 6;		/* gzip -1..-9 value */
 
 static	int	fflag;			/* force mode */
@@ -179,7 +178,6 @@ static	void	handle_pathname(char *, char *);
 static	void	handle_file(char *, char *, struct stat *);
 static	void	handle_stdout(char *);
 static	void	print_ratio(off_t, off_t, FILE *);
-static	void	print_list(int fd, off_t, const char *, time_t);
 static	void	usage(void);
 static	void	display_version(void);
 static	void	display_license(void);
@@ -198,7 +196,6 @@ static const struct option longopts[] = {
 	{ "uncompress",		no_argument,		0,	'd' },
 	{ "force",		no_argument,		0,	'f' },
 	{ "help",		no_argument,		0,	'h' },
-	{ "list",		no_argument,		0,	'l' },
 	{ "no-name",		no_argument,		0,	'n' },
 	{ "name",		no_argument,		0,	'N' },
 	{ "quiet",		no_argument,		0,	'q' },
@@ -252,7 +249,7 @@ main(int argc, char **argv)
 		argv++;
 	}
 
-#define OPT_LIST "123456789acdfhlLNnMmqrS:tVvo:k:s:"
+#define OPT_LIST "123456789acdfhLNnMmqrS:tVvo:k:s:"
 
 	while ((ch = getopt_long(argc, argv, OPT_LIST, longopts, NULL)) != -1) {
 		switch (ch) {
@@ -263,9 +260,6 @@ main(int argc, char **argv)
 			break;
 		case 'c':
 			cflag = 1;
-			break;
-		case 'l':
-			lflag = 1;
 			break;
 		case 'f':
 			fflag = 1;
@@ -367,8 +361,6 @@ main(int argc, char **argv)
 			handle_pathname(argv[0], origname);
 		} while (*++argv);
 	}
-	if (qflag == 0 && lflag && argc > 1)
-		print_list(-1, 0, "(totals)", 0);
 	exit(exit_value);
 }
 
@@ -646,7 +638,7 @@ check_outfile(const char *outfile)
 	struct stat sb;
 	int ok = 1;
 
-	if (lflag == 0 && stat(outfile, &sb) == 0) {
+	if (stat(outfile, &sb) == 0) {
 		if (fflag)
 			unlink(outfile);
 		else if (isatty(STDIN_FILENO)) {
@@ -942,73 +934,6 @@ print_verbage(const char *file, const char *nfile, off_t usize, off_t gsize)
 	fflush(stderr);
 }
 
-/* print a file's info ala --list */
-/* eg:
-  compressed uncompressed  ratio uncompressed_name
-      354841      1679360  78.8% /usr/pkgsrc/distfiles/libglade-2.0.1.tar
-*/
-static void
-print_list(int fd, off_t out, const char *outfile, time_t ts)
-{
-	static int first = 1;
-	static off_t in_tot, out_tot;
-	uint32_t crc = 0;
-	off_t in = 0, rv;
-
-	if (first) {
-		if (vflag)
-			printf("method  crc     date  time  ");
-		if (qflag == 0)
-			printf("  compressed uncompressed  "
-			       "ratio uncompressed_name\n");
-	}
-	first = 0;
-
-	/* print totals? */
-	if (fd == -1) {
-		in = in_tot;
-		out = out_tot;
-	} else {
-		/* read the last 4 bytes - this is the uncompressed size */
-		rv = lseek(fd, (off_t)(-8), SEEK_END);
-		if (rv != -1) {
-			unsigned char buf[8];
-			uint32_t usize;
-
-			rv = read(fd, (char *)buf, sizeof(buf));
-			if (rv == -1)
-				maybe_warn("read of uncompressed size");
-			else if (rv != sizeof(buf))
-				maybe_warnx("read of uncompressed size");
-
-			else {
-				usize = buf[4] | buf[5] << 8 |
-					buf[6] << 16 | buf[7] << 24;
-				in = (off_t)usize;
-				crc = buf[0] | buf[1] << 8 |
-				      buf[2] << 16 | buf[3] << 24;
-			}
-		}
-	}
-
-	if (vflag && fd == -1)
-		printf("                            ");
-	else if (vflag) {
-		char *date = ctime(&ts);
-
-		/* skip the day, 1/100th second, and year */
-		date += 4;
-		date[12] = 0;
-		printf("%5s %08x %11s ", "defla"/*XXX*/, crc, date);
-	}
-	in_tot += in;
-	out_tot += out;
-
-	printf("%12llu %12llu ", (unsigned long long)out, (unsigned long long)in);
-	print_ratio(in, out, stdout);
-	printf(" %s\n", outfile);
-}
-
 /* display the usage of NetBSD gzip */
 static void
 usage(void)
@@ -1025,7 +950,6 @@ usage(void)
     " -c --stdout              write to stdout, keep original files\n"
     "    --to-stdout\n"
     " -f --force               force overwriting & compress links\n"
-    " -l --list                list compressed file contents\n"
     " -N --name                save or restore original file name and time stamp\n"
     " -n --no-name             don't save original file name or time stamp\n"
     " -m --no-timestamp        don't save original time stamp\n"
