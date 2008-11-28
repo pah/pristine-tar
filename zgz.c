@@ -67,10 +67,6 @@
 #include <getopt.h>
 #include <time.h>
 
-#ifndef PRIdOFF
-#define PRIdOFF PRId64
-#endif
-
 /* what type of file are we dealing with */
 enum filetype {
 	FT_GZIP,
@@ -729,8 +725,9 @@ file_compress(char *file, char *origname, char *outfile, size_t outsize)
 	if (cflag == 0) {
 		if (fstat(in, &isb) == 0) {
 			if (isb.st_nlink > 1 && fflag == 0) {
-				maybe_warnx("%s has %d other link%s -- "
-					    "skipping", file, isb.st_nlink - 1,
+				maybe_warnx("%s has %lu other link%s -- "
+				            "skipping", file,
+					    (unsigned long)(isb.st_nlink - 1),
 					    isb.st_nlink == 1 ? "" : "s");
 				close(in);
 				return -1;
@@ -786,10 +783,10 @@ file_compress(char *file, char *origname, char *outfile, size_t outsize)
 	}
 
 	if (osb.st_size != size) {
-		maybe_warnx("output file: %s wrong size (%" PRIdOFF
-				" != %" PRIdOFF "), deleting",
-				outfile, (long long)osb.st_size,
-				(long long)size);
+		maybe_warnx("output file: %s wrong size (%" PRId64
+				" != %" PRId64 "), deleting",
+				outfile, (int64_t)osb.st_size,
+				(int64_t)size);
 		goto bad_outfile;
 	}
 
