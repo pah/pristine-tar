@@ -2,7 +2,7 @@ pristine-tar (0.19) unstable; urgency=low
 
   * Add a .gitignore file
   * Various cleanups to zgz.
-  * Remove the unnecessary -l, -t, and -v flags from zgz.
+  * Remove the unnecessary -l, -S, -t, and -v flags from zgz.
   * Allow the empty string as an original filename in zgz, rather than
     treating the empty string as a flag to not store an original filename.
   * Fix zgz's usage message to stop identifying the program as gzip.

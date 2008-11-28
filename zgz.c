@@ -67,8 +67,6 @@
 #include <getopt.h>
 #include <time.h>
 
-#define GZ_SUFFIX	".gz"
-
 #define BUFLEN		(64 * 1024)
 
 #define GZIP_MAGIC0	0x1F
@@ -89,15 +87,13 @@ typedef struct {
 } suffixes_t;
 static suffixes_t suffixes[] = {
 #define	SUFFIX(Z, N) {Z, sizeof Z - 1, N}
-	SUFFIX(GZ_SUFFIX,	""),	/* Overwritten by -S .xxx */
-	SUFFIX(GZ_SUFFIX,	""),
+	SUFFIX(".gz",           ""),
 	SUFFIX(".z",		""),
 	SUFFIX("-gz",		""),
 	SUFFIX("-z",		""),
 	SUFFIX("_z",		""),
 	SUFFIX(".taz",		".tar"),
 	SUFFIX(".tgz",		".tar"),
-	SUFFIX(GZ_SUFFIX,	""),	/* Overwritten by -S "" */
 #undef SUFFIX
 };
 #define NUM_SUFFIXES (sizeof suffixes / sizeof suffixes[0])
@@ -182,7 +178,6 @@ static const struct option longopts[] = {
 	{ "name",		no_argument,		0,	'N' },
 	{ "quiet",		no_argument,		0,	'q' },
 	{ "recursive",		no_argument,		0,	'r' },
-	{ "suffix",		required_argument,	0,	'S' },
 	{ "fast",		no_argument,		0,	'1' },
 	{ "best",		no_argument,		0,	'9' },
 	{ "ascii",		no_argument,		0,	'a' },
@@ -203,7 +198,6 @@ main(int argc, char **argv)
 {
 	const char *progname = argv[0];
 	char *origname = NULL;
-	int len;
 	int ch;
 
 	if (strcmp(progname, "gunzip") == 0 ||
@@ -229,7 +223,7 @@ main(int argc, char **argv)
 		argv++;
 	}
 
-#define OPT_LIST "123456789acdfhLNnMmqrS:Vo:k:s:"
+#define OPT_LIST "123456789acdfhLNnMmqrVo:k:s:"
 
 	while ((ch = getopt_long(argc, argv, OPT_LIST, longopts, NULL)) != -1) {
 		switch (ch) {
@@ -260,16 +254,6 @@ main(int argc, char **argv)
 			break;
 		case 'q':
 			qflag = 1;
-			break;
-		case 'S':
-			len = strlen(optarg);
-			if (len != 0) {
-				suffixes[0].zipped = optarg;
-				suffixes[0].ziplen = len;
-			} else {
-				suffixes[NUM_SUFFIXES - 1].zipped = "";
-				suffixes[NUM_SUFFIXES - 1].ziplen = 0;
-			}
 			break;
 		case 's':
 			osflag = atoi(optarg);
@@ -856,8 +840,6 @@ usage(void)
     " -n --no-name             don't save original file name or time stamp\n"
     " -m --no-timestamp        don't save original time stamp\n"
     " -M --force-timestemp     save the timestamp even if -n was passed\n"
-    " -S .suf                  use suffix .suf instead of .gz\n"
-    "    --suffix .suf\n"
     " -q --quiet               output no warnings\n"
     " -V --version             display program version\n"
     " -h --help                display this help\n"
