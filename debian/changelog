@@ -1,6 +1,7 @@
 pristine-tar (0.19) unstable; urgency=low
 
   * Add a .gitignore file
+  * Various cleanups to zgz.
 
  -- Josh Triplett <josh@freedesktop.org>  Thu, 27 Nov 2008 19:54:29 -0800
 

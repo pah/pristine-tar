@@ -230,7 +230,6 @@ main(int argc, char **argv)
 {
 	const char *progname = argv[0];
 	char origname[BUFLEN] = { 0 };
-	char *gzip;
 	int len;
 	int ch;
 
