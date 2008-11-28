@@ -202,7 +202,7 @@ int
 main(int argc, char **argv)
 {
 	const char *progname = argv[0];
-	char origname[BUFLEN] = { 0 };
+	char *origname = NULL;
 	int len;
 	int ch;
 
@@ -277,7 +277,7 @@ main(int argc, char **argv)
 		case 'o':
 			if (nflag)
 				fprintf(stderr, "%s: ignoring original-name because no-name was passed\n", progname);
-			strncpy(origname, optarg, BUFLEN);
+			origname = optarg;
 			break;
 		case 'k':
 			if (strcmp(optarg, "buggy-bsd") == 0) {
@@ -407,22 +407,22 @@ gz_compress(int in, int out, off_t *gsizep, const char *origname, uint32_t mtime
 	if (mflag != 0)
 		mtime = 0;
 	if (nflag != 0)
-		origname = "";
+		origname = NULL;
 
 	i = snprintf(outbufp, BUFLEN, "%c%c%c%c%c%c%c%c%c%c%s", 
 		     GZIP_MAGIC0, GZIP_MAGIC1, Z_DEFLATED,
-		     *origname ? ORIG_NAME : 0,
+		     origname ? ORIG_NAME : 0,
 		     mtime & 0xff,
 		     (mtime >> 8) & 0xff,
 		     (mtime >> 16) & 0xff,
 		     (mtime >> 24) & 0xff,
 		     xflag >= 0 ? xflag :
 		     numflag == 1 ? 4 : numflag == 9 ? 2 : 0,
-		     osflag, origname);
+		     osflag, origname ? origname : "");
 	if (i >= BUFLEN)     
 		/* this need PATH_MAX > BUFLEN ... */
 		maybe_err("snprintf");
-	if (*origname)
+	if (origname)
 		i++;
 
 	z.next_out = (unsigned char *)outbufp + i;
@@ -817,7 +817,7 @@ handle_pathname(char *path, char *origname)
 	}
 
 	if (S_ISREG(sb.st_mode))
-		handle_file(path, strlen(origname) ? origname : basename(path), &sb);
+		handle_file(path, origname ? origname : basename(path), &sb);
 	else
 		maybe_warnx("%s is not a regular file", path);
 }
