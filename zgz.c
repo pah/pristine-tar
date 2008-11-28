@@ -142,7 +142,6 @@ static	int	nflag;			/* don't save name (impiles -m) */
 static	int	Nflag;			/* restore name/timestamp */
 static	int	mflag;			/* undocumented: don't save timestamp */
 static	int	qflag;			/* quiet mode */
-static	int	tflag;			/* test */
 static	int	xflag = -1;		/* don't set Extra Flags (i.e. compression level)
 					   binary compatibility with an older, buggy version */
 static	int	osflag = GZIP_OS_UNIX;	/* Unix or otherwise */
@@ -184,7 +183,6 @@ static const struct option longopts[] = {
 	{ "quiet",		no_argument,		0,	'q' },
 	{ "recursive",		no_argument,		0,	'r' },
 	{ "suffix",		required_argument,	0,	'S' },
-	{ "test",		no_argument,		0,	't' },
 	{ "fast",		no_argument,		0,	'1' },
 	{ "best",		no_argument,		0,	'9' },
 	{ "ascii",		no_argument,		0,	'a' },
@@ -231,7 +229,7 @@ main(int argc, char **argv)
 		argv++;
 	}
 
-#define OPT_LIST "123456789acdfhLNnMmqrS:tVo:k:s:"
+#define OPT_LIST "123456789acdfhLNnMmqrS:Vo:k:s:"
 
 	while ((ch = getopt_long(argc, argv, OPT_LIST, longopts, NULL)) != -1) {
 		switch (ch) {
@@ -272,10 +270,6 @@ main(int argc, char **argv)
 				suffixes[NUM_SUFFIXES - 1].zipped = "";
 				suffixes[NUM_SUFFIXES - 1].ziplen = 0;
 			}
-			break;
-		case 't':
-			cflag = 1;
-			tflag = 1;
 			break;
 		case 's':
 			osflag = atoi(optarg);
@@ -864,7 +858,6 @@ usage(void)
     " -M --force-timestemp     save the timestamp even if -n was passed\n"
     " -S .suf                  use suffix .suf instead of .gz\n"
     "    --suffix .suf\n"
-    " -t --test                test compressed file\n"
     " -q --quiet               output no warnings\n"
     " -V --version             display program version\n"
     " -h --help                display this help\n"
