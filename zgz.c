@@ -667,17 +667,20 @@ file_compress(char *file, char *origname, char *outfile, size_t outsize)
 		maybe_warn("can't open %s", file);
 		return -1;
 	}
+		
+	if (fstat(in, &isb) != 0) {
+		maybe_warn("can't fstat %s", file);
+		return -1;
+	}
 
 	if (cflag == 0) {
-		if (fstat(in, &isb) == 0) {
-			if (isb.st_nlink > 1 && fflag == 0) {
-				maybe_warnx("%s has %lu other link%s -- "
-				            "skipping", file,
-					    (unsigned long)(isb.st_nlink - 1),
-					    isb.st_nlink == 1 ? "" : "s");
-				close(in);
-				return -1;
-			}
+		if (isb.st_nlink > 1 && fflag == 0) {
+			maybe_warnx("%s has %lu other link%s -- "
+			            "skipping", file,
+				    (unsigned long)(isb.st_nlink - 1),
+				    isb.st_nlink == 1 ? "" : "s");
+			close(in);
+			return -1;
 		}
 
 		if (fflag == 0 && (suff = check_suffix(file, 0))
