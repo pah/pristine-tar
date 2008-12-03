@@ -16,6 +16,8 @@ pristine-tar (0.19) UNRELEASED; urgency=low
     Closes: #507095
   * Document existing long options. Closes: #499488
   * Avoid exposing tar file names to the shell. Closes: #500499
+  * Clarify bit in man page about what file formats are supported.
+    Closes: #507322
 
  -- Josh Triplett <josh@freedesktop.org>  Thu, 27 Nov 2008 19:54:29 -0800
 
