@@ -45,13 +45,19 @@ If the delta filename is "-", pristine-gz reads or writes it to stdio.
 
 =item -v
 
+=item --verbose
+
 Verbose mode, show each command that is run.
 
 =item -d
 
+=item --debug
+
 Debug mode.
 
 =item -k
+
+=item --keep
 
 Don't clean up the temporary directory on exit.
 

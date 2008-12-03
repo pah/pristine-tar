@@ -78,17 +78,25 @@ previously saved to revision control by B<pristine-tar commit>.
 
 =item -v
 
+=item --verbose
+
 Verbose mode, show each command that is run.
 
 =item -d
+
+=item --debug
 
 Debug mode.
 
 =item -k
 
+=item --keep
+
 Don't clean up the temporary directory on exit.
 
 =item -m message
+
+=item --message=message
 
 Use this option to specify a custom commit message to pristine-tar commit.
 

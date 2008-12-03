@@ -14,6 +14,7 @@ pristine-tar (0.19) UNRELEASED; urgency=low
   [ Joey Hess ]
   * zgz: Avoid using uninitialized data as timestamp in -c mode.
     Closes: #507095
+  * Document existing long options. Closes: #499488
 
  -- Josh Triplett <josh@freedesktop.org>  Thu, 27 Nov 2008 19:54:29 -0800
 
