@@ -4,7 +4,7 @@ zgz - libz based gz creator
 
 =head1 SYNOPSIS
 
-B<zgz> [options] file
+B<zgz> [options] < file > file.gz
 
 =head1 DESCRIPTION
 

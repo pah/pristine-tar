@@ -84,24 +84,6 @@ extern void gnuzip(int in, int out, char *origname, unsigned long timestamp, int
 #define GZIP_OS_UNIX	3	/* Unix */
 #define GZIP_OS_NTFS	11	/* NTFS */
 
-typedef struct {
-    const char	*zipped;
-    int		ziplen;
-    const char	*normal;	/* for unzip - must not be longer than zipped */
-} suffixes_t;
-static suffixes_t suffixes[] = {
-#define	SUFFIX(Z, N) {Z, sizeof Z - 1, N}
-	SUFFIX(".gz",           ""),
-	SUFFIX(".z",		""),
-	SUFFIX("-gz",		""),
-	SUFFIX("-z",		""),
-	SUFFIX("_z",		""),
-	SUFFIX(".taz",		".tar"),
-	SUFFIX(".tgz",		".tar"),
-#undef SUFFIX
-};
-#define NUM_SUFFIXES (sizeof suffixes / sizeof suffixes[0])
-
 static	const char	gzip_version[] = "zgz 20081211 based on NetBSD gzip 20060927 and GNU gzip 1.3.12";
 
 static	const char	gzip_copyright[] = \
@@ -136,42 +118,16 @@ static	const char	gzip_copyright[] = \
 " * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF\n"
 " * SUCH DAMAGE.";
 
-static	int	cflag;			/* stdout mode */
-static	int	numflag = 6;		/* gzip -1..-9 value */
-
-static	int	fflag;			/* force mode */
-static	int	nflag;			/* don't save name (impiles -m) */
-static	int	Nflag;			/* restore name/timestamp */
-static	int	mflag;			/* undocumented: don't save timestamp */
 static	int	qflag;			/* quiet mode */
-static	int	Tflag;			/* force timestamp */
-static	uint32_t	timestamp = 0;	/* forced timestamp */
-static	int	xflag = -1;		/* don't set Extra Flags (i.e. compression level)
-					   binary compatibility with an older, buggy version */
-static	int	osflag = GZIP_OS_UNIX;	/* Unix or otherwise */
-static	int	ntfs_quirk = 0;		/* whether NTFS quirk is activated */
-static	int	exit_value = 0;		/* exit value */
-
-static	char	*infile;		/* name of file coming in */
 
 static	void	maybe_err(const char *fmt, ...)
-    __attribute__((__format__(__printf__, 1, 2)));
-static	void	maybe_warn(const char *fmt, ...)
-    __attribute__((__format__(__printf__, 1, 2)));
-static	void	maybe_warnx(const char *fmt, ...)
-    __attribute__((__format__(__printf__, 1, 2)));
-static	off_t	gz_compress(int, int, off_t *, const char *, uint32_t);
-static	off_t	file_compress(char *, char *, char *, size_t);
-static	void	handle_pathname(char *, char *);
-static	void	handle_file(char *, char *, struct stat *);
-static	void	handle_stdout(char *);
+    __attribute__((__format__(__printf__, 1, 2),noreturn));
+static	void	maybe_errx(const char *fmt, ...)
+    __attribute__((__format__(__printf__, 1, 2),noreturn));
+static	void	gz_compress(int, int, const char *, uint32_t, int, int, int, int);
 static	void	usage(void);
 static	void	display_version(void);
 static	void	display_license(void);
-static	const suffixes_t *check_suffix(char *, int);
-
-static	void	copymodes(int fd, const struct stat *, const char *file);
-static	int	check_outfile(const char *outfile);
 
 int main(int, char **p);
 
@@ -212,6 +168,14 @@ main(int argc, char **argv)
 	const char *progname = argv[0];
 	int gnu = 0;
 	char *origname = NULL;
+	uint32_t timestamp = 0;
+	int nflag = 0;
+	int mflag = 0;
+	int fflag = 0;
+	int xflag = -1;
+	int ntfs_quirk = 0;
+	int level = 6;
+	int osflag = GZIP_OS_UNIX;
 	int rsync = 0;
 	int ch;
 
@@ -236,21 +200,19 @@ main(int argc, char **argv)
 		case '1': case '2': case '3':
 		case '4': case '5': case '6':
 		case '7': case '8': case '9':
-			numflag = ch - '0';
+			level = ch - '0';
 			break;
 		case 'c':
-			cflag = 1;
+			/* Ignored for compatibility; zgz always uses -c */
 			break;
 		case 'f':
 			fflag = 1;
 			break;
 		case 'N':
 			nflag = 0;
-			Nflag = 1;
 			break;
 		case 'n':
 			nflag = 1;
-			Nflag = 0;
 			/* no break, n implies m */
 		case 'm':
 			mflag = 1;
@@ -277,7 +239,7 @@ main(int argc, char **argv)
 				nflag = 1;
 				mflag = 1;
 				/* maximum compression but without indicating so */
-				numflag = 9;
+				level = 9;
 				xflag = 0;
 			} else if (strcmp(optarg, "ntfs") == 0) {
 				ntfs_quirk = 1;
@@ -293,7 +255,6 @@ main(int argc, char **argv)
 			break;
 		case 'T':
 			timestamp = atoi(optarg);
-			Tflag = 1;
 			break;
 		case 'R':
 			rsync = 1;
@@ -323,64 +284,34 @@ main(int argc, char **argv)
 	argv += optind;
 	argc -= optind;
 
+	if (argc != 0) {
+		fprintf(stderr, "%s: filenames not supported; use stdin and stdout\n", progname);
+		return 1;
+	}
+
+	if (fflag == 0 && isatty(STDOUT_FILENO))
+		maybe_errx("standard output is a terminal -- ignoring");
+
+	if (nflag)
+		origname = NULL;
+	if (mflag)
+		timestamp = 0;
+
 	if (gnu) {
 		if (ntfs_quirk || xflag >= 0) {
 			fprintf(stderr, "%s: quirks not supported with --gnu\n", progname);
 			return 1;
 		}
-		if (argc != 0) {
-			fprintf(stderr, "%s: filenames not supported with --gnu\n", progname);
-			return 1;
-		}
-		if (nflag)
-			origname = NULL;
-		if (mflag)
-			timestamp = 0;
-		gnuzip(STDIN_FILENO, STDOUT_FILENO, origname, timestamp, numflag, osflag, rsync);
+		gnuzip(STDIN_FILENO, STDOUT_FILENO, origname, timestamp, level, osflag, rsync);
 	} else {
 		if (rsync) {
 			fprintf(stderr, "%s: --rsyncable not supported with --zlib\n", progname);
 			return 1;
 		}
-		if (argc == 0) {
-			handle_stdout(origname);
-		} else {
-			do {
-				handle_pathname(argv[0], origname);
-			} while (*++argv);
-		}
+
+		gz_compress(STDIN_FILENO, STDOUT_FILENO, origname, timestamp, level, osflag, xflag, ntfs_quirk);
 	}
-	exit(exit_value);
-}
-
-/* maybe print a warning */
-void
-maybe_warn(const char *fmt, ...)
-{
-	va_list ap;
-
-	if (qflag == 0) {
-		va_start(ap, fmt);
-		vwarn(fmt, ap);
-		va_end(ap);
-	}
-	if (exit_value == 0)
-		exit_value = 1;
-}
-
-/* ... without an errno. */
-void
-maybe_warnx(const char *fmt, ...)
-{
-	va_list ap;
-
-	if (qflag == 0) {
-		va_start(ap, fmt);
-		vwarnx(fmt, ap);
-		va_end(ap);
-	}
-	if (exit_value == 0)
-		exit_value = 1;
+	return 0;
 }
 
 /* maybe print an error */
@@ -394,36 +325,43 @@ maybe_err(const char *fmt, ...)
 		vwarn(fmt, ap);
 		va_end(ap);
 	}
-	exit(2);
+	exit(1);
 }
 
-/* compress input to output. Return bytes read, -1 on error */
-static off_t
-gz_compress(int in, int out, off_t *gsizep, const char *origname, uint32_t mtime)
+/* ... without an errno. */
+void
+maybe_errx(const char *fmt, ...)
+{
+	va_list ap;
+
+	if (qflag == 0) {
+		va_start(ap, fmt);
+		vwarnx(fmt, ap);
+		va_end(ap);
+	}
+	exit(1);
+}
+
+/* compress input to output. */
+static void
+gz_compress(int in, int out, const char *origname, uint32_t mtime, int level, int osflag, int xflag, int ntfs_quirk)
 {
 	z_stream z;
 	char *outbufp, *inbufp;
-	off_t in_tot = 0, out_tot = 0;
+	off_t in_tot = 0;
 	ssize_t in_size;
 	int i, error;
 	uLong crc;
 
 	outbufp = malloc(BUFLEN);
 	inbufp = malloc(BUFLEN);
-	if (outbufp == NULL || inbufp == NULL) {
+	if (outbufp == NULL || inbufp == NULL)
 		maybe_err("malloc failed");
-		goto out;
-	}
 
 	memset(&z, 0, sizeof z);
 	z.zalloc = Z_NULL;
 	z.zfree = Z_NULL;
 	z.opaque = 0;
-
-	if (mflag != 0)
-		mtime = 0;
-	if (nflag != 0)
-		origname = NULL;
 
 	i = snprintf(outbufp, BUFLEN, "%c%c%c%c%c%c%c%c%c%c%s", 
 		     GZIP_MAGIC0, GZIP_MAGIC1, Z_DEFLATED,
@@ -433,7 +371,7 @@ gz_compress(int in, int out, off_t *gsizep, const char *origname, uint32_t mtime
 		     (mtime >> 16) & 0xff,
 		     (mtime >> 24) & 0xff,
 		     xflag >= 0 ? xflag :
-		     numflag == 1 ? 4 : numflag == 9 ? 2 : 0,
+		     level == 1 ? 4 : level == 9 ? 2 : 0,
 		     osflag, origname ? origname : "");
 	if (i >= BUFLEN)     
 		/* this need PATH_MAX > BUFLEN ... */
@@ -444,35 +382,25 @@ gz_compress(int in, int out, off_t *gsizep, const char *origname, uint32_t mtime
 	z.next_out = (unsigned char *)outbufp + i;
 	z.avail_out = BUFLEN - i;
 
-	error = deflateInit2(&z, numflag, Z_DEFLATED,
+	error = deflateInit2(&z, level, Z_DEFLATED,
 			     (-MAX_WBITS), 8, Z_DEFAULT_STRATEGY);
-	if (error != Z_OK) {
-		maybe_warnx("deflateInit2 failed");
-		in_tot = -1;
-		goto out;
-	}
+	if (error != Z_OK)
+		maybe_err("deflateInit2 failed");
 
 	crc = crc32(0L, Z_NULL, 0);
 	for (;;) {
 		if (z.avail_out == 0) {
-			if (write(out, outbufp, BUFLEN) != BUFLEN) {
-				maybe_warn("write");
-				in_tot = -1;
-				goto out;
-			}
+			if (write(out, outbufp, BUFLEN) != BUFLEN)
+				maybe_err("write");
 
-			out_tot += BUFLEN;
 			z.next_out = (unsigned char *)outbufp;
 			z.avail_out = BUFLEN;
 		}
 
 		if (z.avail_in == 0) {
 			in_size = read(in, inbufp, BUFLEN);
-			if (in_size < 0) {
-				maybe_warn("read");
-				in_tot = -1;
-				goto out;
-			}
+			if (in_size < 0)
+				maybe_err("read");
 			if (in_size == 0)
 				break;
 
@@ -483,11 +411,8 @@ gz_compress(int in, int out, off_t *gsizep, const char *origname, uint32_t mtime
 		}
 
 		error = deflate(&z, Z_NO_FLUSH);
-		if (error != Z_OK && error != Z_STREAM_END) {
-			maybe_warnx("deflate failed");
-			in_tot = -1;
-			goto out;
-		}
+		if (error != Z_OK && error != Z_STREAM_END)
+			maybe_errx("deflate failed");
 	}
 
 	/* clean up */
@@ -496,11 +421,8 @@ gz_compress(int in, int out, off_t *gsizep, const char *origname, uint32_t mtime
 		ssize_t w;
 
 		error = deflate(&z, Z_FINISH);
-		if (error != Z_OK && error != Z_STREAM_END) {
-			maybe_warnx("deflate failed");
-			in_tot = -1;
-			goto out;
-		}
+		if (error != Z_OK && error != Z_STREAM_END)
+			maybe_errx("deflate failed");
 
 		len = (char *)z.next_out - outbufp;
 
@@ -510,12 +432,8 @@ gz_compress(int in, int out, off_t *gsizep, const char *origname, uint32_t mtime
 			outbufp[10]--;
 
 		w = write(out, outbufp, len);
-		if (w == -1 || (size_t)w != len) {
-			maybe_warn("write");
-			out_tot = -1;
-			goto out;
-		}
-		out_tot += len;
+		if (w == -1 || (size_t)w != len)
+			maybe_err("write");
 		z.next_out = (unsigned char *)outbufp;
 		z.avail_out = BUFLEN;
 
@@ -523,11 +441,8 @@ gz_compress(int in, int out, off_t *gsizep, const char *origname, uint32_t mtime
 			break;
 	}
 
-	if (deflateEnd(&z) != Z_OK) {
-		maybe_warnx("deflateEnd failed");
-		in_tot = -1;
-		goto out;
-	}
+	if (deflateEnd(&z) != Z_OK)
+		maybe_errx("deflateEnd failed");
 
 	if (ntfs_quirk) {
 		/* write NTFS tail magic (?) */
@@ -535,11 +450,8 @@ gz_compress(int in, int out, off_t *gsizep, const char *origname, uint32_t mtime
 			0x00, 0x00, 0xff, 0xff, 0x03, 0x00);
 		if (i != 6)
 			maybe_err("snprintf");
-		if (write(out, outbufp, i) != i) {
-			maybe_warn("write");
-			in_tot = -1;
-		} else
-			out_tot += i;
+		if (write(out, outbufp, i) != i)
+			maybe_err("write");
 	}
 
 	/* write CRC32 and input size (ISIZE) at the tail */
@@ -554,311 +466,11 @@ gz_compress(int in, int out, off_t *gsizep, const char *origname, uint32_t mtime
 		 (int)(in_tot >> 24) & 0xff);
 	if (i != 8)
 		maybe_err("snprintf");
-	if (write(out, outbufp, i) != i) {
-		maybe_warn("write");
-		in_tot = -1;
-	} else
-		out_tot += i;
+	if (write(out, outbufp, i) != i)
+		maybe_err("write");
 
-out:
-	if (inbufp != NULL)
-		free(inbufp);
-	if (outbufp != NULL)
-		free(outbufp);
-	if (gsizep)
-		*gsizep = out_tot;
-	return in_tot;
-}
-
-
-/*
- * set the owner, mode, flags & utimes using the given file descriptor.
- * file is only used in possible warning messages.
- */
-static void
-copymodes(int fd, const struct stat *sbp, const char *file)
-{
-	struct stat sb;
-
-	/*
-	 * If we have no info on the input, give this file some
-	 * default values and return..
-	 */
-	if (sbp == NULL) {
-		mode_t mask = umask(022);
-
-		(void)fchmod(fd, DEFFILEMODE & ~mask);
-		(void)umask(mask);
-		return; 
-	}
-	sb = *sbp;
-
-	/* if the chown fails, remove set-id bits as-per compress(1) */
-	if (fchown(fd, sb.st_uid, sb.st_gid) < 0) {
-		if (errno != EPERM)
-			maybe_warn("couldn't fchown: %s", file);
-		sb.st_mode &= ~(S_ISUID|S_ISGID);
-	}
-
-	/* we only allow set-id and the 9 normal permission bits */
-	sb.st_mode &= S_ISUID | S_ISGID | S_IRWXU | S_IRWXG | S_IRWXO;
-	if (fchmod(fd, sb.st_mode) < 0)
-		maybe_warn("couldn't fchmod: %s", file);
-}
-
-/* check the outfile is OK. */
-static int
-check_outfile(const char *outfile)
-{
-	struct stat sb;
-	int ok = 1;
-
-	if (stat(outfile, &sb) == 0) {
-		if (fflag)
-			unlink(outfile);
-		else if (isatty(STDIN_FILENO)) {
-			char ans[10] = { 'n', '\0' };	/* default */
-
-			fprintf(stderr, "%s already exists -- do you wish to "
-					"overwrite (y or n)? " , outfile);
-			(void)fgets(ans, sizeof(ans) - 1, stdin);
-			if (ans[0] != 'y' && ans[0] != 'Y') {
-				fprintf(stderr, "\tnot overwritting\n");
-				ok = 0;
-			} else
-				unlink(outfile);
-		} else {
-			maybe_warnx("%s already exists -- skipping", outfile);
-			ok = 0;
-		}
-	}
-	return ok;
-}
-
-static void
-unlink_input(const char *file, const struct stat *sb)
-{
-	struct stat nsb;
-
-	if (stat(file, &nsb) != 0)
-		/* Must be gone alrady */
-		return;
-	if (nsb.st_dev != sb->st_dev || nsb.st_ino != sb->st_ino)
-		/* Definitely a different file */
-		return;
-	unlink(file);
-}
-
-static const suffixes_t *
-check_suffix(char *file, int xlate)
-{
-	const suffixes_t *s;
-	int len = strlen(file);
-	char *sp;
-
-	for (s = suffixes; s != suffixes + NUM_SUFFIXES; s++) {
-		/* if it doesn't fit in "a.suf", don't bother */
-		if (s->ziplen >= len)
-			continue;
-		sp = file + len - s->ziplen;
-		if (strcmp(s->zipped, sp) != 0)
-			continue;
-		if (xlate)
-			strcpy(sp, s->normal);
-		return s;
-	}
-	return NULL;
-}
-
-/*
- * compress the given file: create a corresponding .gz file and remove the
- * original.
- */
-static off_t
-file_compress(char *file, char *origname, char *outfile, size_t outsize)
-{
-	int in;
-	int out;
-	off_t size, insize;
-	struct stat isb, osb;
-	const suffixes_t *suff;
-
-	in = open(file, O_RDONLY);
-	if (in == -1) {
-		maybe_warn("can't open %s", file);
-		return -1;
-	}
-		
-	if (fstat(in, &isb) != 0) {
-		maybe_warn("can't fstat %s", file);
-		return -1;
-	}
-
-	if (cflag == 0) {
-		if (isb.st_nlink > 1 && fflag == 0) {
-			maybe_warnx("%s has %lu other link%s -- "
-			            "skipping", file,
-				    (unsigned long)(isb.st_nlink - 1),
-				    isb.st_nlink == 1 ? "" : "s");
-			close(in);
-			return -1;
-		}
-
-		if (fflag == 0 && (suff = check_suffix(file, 0))
-		    && suff->zipped[0] != 0) {
-			maybe_warnx("%s already has %s suffix -- unchanged",
-				    file, suff->zipped);
-			close(in);
-			return -1;
-		}
-
-		/* Add (usually) .gz to filename */
-		if ((size_t)snprintf(outfile, outsize, "%s%s",
-					file, suffixes[0].zipped) >= outsize)
-			memcpy(outfile - suffixes[0].ziplen - 1,
-				suffixes[0].zipped, suffixes[0].ziplen + 1);
-
-		if (check_outfile(outfile) == 0) {
-			close(in);
-			return -1;
-		}
-
-		out = open(outfile, O_WRONLY | O_CREAT | O_EXCL, 0600);
-		if (out == -1) {
-			maybe_warn("could not create output: %s", outfile);
-			fclose(stdin);
-			return -1;
-		}
-	} else {
-		out = STDOUT_FILENO;
-	}
-
-	insize = gz_compress(in, out, &size, origname,
-	                     Tflag ? timestamp : (uint32_t)isb.st_mtime);
-
-	(void)close(in);
-
-	/*
-	 * If there was an error, insize will be -1.
-	 * If we compressed to stdout, just return the size.
-	 * Otherwise stat the file and check it is the correct size.
-	 * We only blow away the file if we can stat the output and it
-	 * has the expected size.
-	 */
-	if (cflag != 0)
-		return insize == -1 ? -1 : size;
-
-	if (fstat(out, &osb) != 0) {
-		maybe_warn("couldn't stat: %s", outfile);
-		goto bad_outfile;
-	}
-
-	if (osb.st_size != size) {
-		maybe_warnx("output file: %s wrong size (%" PRId64
-				" != %" PRId64 "), deleting",
-				outfile, (int64_t)osb.st_size,
-				(int64_t)size);
-		goto bad_outfile;
-	}
-
-	copymodes(out, &isb, outfile);
-	if (close(out) == -1)
-		maybe_warn("couldn't close output");
-
-	/* output is good, ok to delete input */
-	unlink_input(file, &isb);
-	return size;
-
-    bad_outfile:
-	if (close(out) == -1)
-		maybe_warn("couldn't close output");
-
-	maybe_warnx("leaving original %s", file);
-	unlink(outfile);
-	return size;
-}
-
-static void
-handle_stdout(char *origname)
-{
-	off_t gsize, usize;
-	struct stat sb;
-	time_t systime;
-	uint32_t mtime;
-	int ret;
-
-	if (fflag == 0 && isatty(STDOUT_FILENO)) {
-		maybe_warnx("standard output is a terminal -- ignoring");
-		return;
-	}
-
-	if (Tflag)
-		mtime = timestamp;
-	else {
-		/* If stdin is a file use it's mtime, otherwise use current time */
-		ret = fstat(STDIN_FILENO, &sb);
-
-		if (ret < 0) {
-			maybe_warn("Can't stat stdin");
-			return;
-		}
-
-		if (S_ISREG(sb.st_mode))
-			mtime = (uint32_t)sb.st_mtime;
-		else {
-			systime = time(NULL);
-			if (systime == -1) {
-				maybe_warn("time");
-				return;
-			}
-			mtime = (uint32_t)systime;
-		}
-	}
-
-	usize = gz_compress(STDIN_FILENO, STDOUT_FILENO, &gsize, origname, mtime);
-}
-
-/* do what is asked for, for the path name */
-static void
-handle_pathname(char *path, char *origname)
-{
-	char *opath = path;
-	struct stat sb;
-
-	/* check for stdout */
-	if (path[0] == '-' && path[1] == '\0') {
-		handle_stdout(origname);
-		return;
-	}
-
-	if (stat(path, &sb) != 0) {
-		maybe_warn("can't stat: %s", opath);
-		return;
-	}
-
-	if (S_ISDIR(sb.st_mode)) {
-		maybe_warnx("%s is a directory", path);
-		return;
-	}
-
-	if (S_ISREG(sb.st_mode))
-		handle_file(path, origname ? origname : basename(path), &sb);
-	else
-		maybe_warnx("%s is not a regular file", path);
-}
-
-/* compress/decompress a file */
-static void
-handle_file(char *file, char *origname, struct stat *sbp)
-{
-	off_t usize, gsize;
-	char	outfile[PATH_MAX];
-
-	infile = file;
-	gsize = file_compress(file, origname, outfile, sizeof(outfile));
-	if (gsize == -1)
-		return;
-	usize = sbp->st_size;
+	free(inbufp);
+	free(outbufp);
 }
 
 /* display usage */
@@ -868,15 +480,13 @@ usage(void)
 
 	fprintf(stderr, "%s\n", gzip_version);
 	fprintf(stderr,
-    "usage: zgz [-" OPT_LIST "] [<file> [<file> ...]]\n"
+    "usage: zgz [-" OPT_LIST "] < <file> > <file>\n"
     " -G --gnu                 use GNU gzip implementation\n"
     " -Z --zlib                use zlib's implementation (default)\n"
     " -1 --fast                fastest (worst) compression\n"
     " -2 .. -8                 set compression level\n"
     " -9 --best                best (slowest) compression\n"
-    " -c --stdout              write to stdout, keep original files\n"
-    "    --to-stdout\n"
-    " -f --force               force overwriting & compress links\n"
+    " -f --force               force writing compressed data to a terminal\n"
     " -N --name                save or restore original file name and time stamp\n"
     " -n --no-name             don't save original file name or time stamp\n"
     " -m --no-timestamp        don't save original time stamp\n"

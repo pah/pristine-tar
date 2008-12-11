@@ -29,6 +29,8 @@ pristine-tar (0.19) UNRELEASED; urgency=low
     removes the need to create a temporary file with the original filename and
     set its timestamp, as well as the need to continuously recreate the file
     when compressed and removed.
+  * zgz: Remove support for files, making -c the default.  This removes a lot
+    of complexity and code duplication.
 
  -- Josh Triplett <josh@freedesktop.org>  Thu, 11 Dec 2008 14:22:56 -0800
 
