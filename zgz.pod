@@ -16,12 +16,16 @@ manpage for the command-line arguments.
 However, this is a modified version that removes support for some options, most
 notably decompression (-d) and recursive (-r).
 
+zgz can also build GNU gzip files with the --gnu option. zgz incorporates parts
+of GNU gzip to support this option.
+
 This version supports a variety of special options which aid pristine-gz(1) in
 reproducing builds of gz files that are bit-identical to the originals.
 
 =head1 AUTHOR
 
 Matthew R. Green,
+Jean-loup Gailly,
 Faidon Liambotis,
 Josh Triplett
 

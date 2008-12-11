@@ -69,6 +69,8 @@
 #include <getopt.h>
 #include <time.h>
 
+extern void gnuzip(int in, int out, char *origname, unsigned long timestamp, int level, int osflag, int rsync);
+
 #define BUFLEN		(64 * 1024)
 
 #define GZIP_MAGIC0	0x1F
@@ -100,7 +102,7 @@ static suffixes_t suffixes[] = {
 };
 #define NUM_SUFFIXES (sizeof suffixes / sizeof suffixes[0])
 
-static	const char	gzip_version[] = "zgz 20071002 based on NetBSD gzip 20060927";
+static	const char	gzip_version[] = "zgz 20081211 based on NetBSD gzip 20060927 and GNU gzip 1.3.12";
 
 static	const char	gzip_copyright[] = \
 " Authors: Faidon Liambotis <paravoid@debian.org>\n"
@@ -143,7 +145,7 @@ static	int	Nflag;			/* restore name/timestamp */
 static	int	mflag;			/* undocumented: don't save timestamp */
 static	int	qflag;			/* quiet mode */
 static	int	Tflag;			/* force timestamp */
-static	uint32_t	timestamp;	/* forced timestamp */
+static	uint32_t	timestamp = 0;	/* forced timestamp */
 static	int	xflag = -1;		/* don't set Extra Flags (i.e. compression level)
 					   binary compatibility with an older, buggy version */
 static	int	osflag = GZIP_OS_UNIX;	/* Unix or otherwise */
@@ -188,11 +190,15 @@ static const struct option longopts[] = {
 	{ "best",		no_argument,		0,	'9' },
 	{ "ascii",		no_argument,		0,	'a' },
 	/* new options */
+	{ "gnu",                no_argument,            0,      'G' },
+	{ "zlib",               no_argument,            0,      'Z' },
+	{ "rsyncable",          no_argument,            0,      'R' },
 	{ "no-timestamp",	no_argument,		0,	'm' },
 	{ "force-timestamp",	no_argument,		0,	'M' },
 	{ "timestamp",		required_argument,	0,	'T' },
 	{ "osflag",		required_argument,	0,	's' },
 	{ "original-name",	required_argument,	0,	'o' },
+	{ "filename",		required_argument,	0,	'F' },
 	{ "quirk",		required_argument,	0,	'k' },
 	/* end */
 	{ "version",		no_argument,		0,	'V' },
@@ -204,7 +210,9 @@ int
 main(int argc, char **argv)
 {
 	const char *progname = argv[0];
+	int gnu = 0;
 	char *origname = NULL;
+	int rsync = 0;
 	int ch;
 
 	if (strcmp(progname, "gunzip") == 0 ||
@@ -214,26 +222,17 @@ main(int argc, char **argv)
 		usage();
 	}
 
-	if (argc > 1 && strcmp(argv[1], "--gnu") == 0) {
-		/* omit first argument, i.e. --gnu */
-		argv++;
-		/* works because "--gnu" is bigger than "gzip" */
-		strcpy(argv[0], "gzip"); 
-		execv("/bin/gzip", argv);
-
-		/* NOT REACHED */
-		fprintf(stderr, "Failed to spawn /bin/gzip\n");
-		exit(1);
-	} else if (argc > 1 && strcmp(argv[1], "--zlib") == 0) {
-		/* skip --zlib argument if existent */
-		argc--;
-		argv++;
-	}
-
-#define OPT_LIST "123456789acdfhLNnMmqrT:Vo:k:s:"
+#define OPT_LIST "123456789acdfhF:GLNnMmqRrT:Vo:k:s:Z"
 
 	while ((ch = getopt_long(argc, argv, OPT_LIST, longopts, NULL)) != -1) {
 		switch (ch) {
+		case 'G':
+			gnu = 1;
+			break;
+		case 'Z':
+			if (gnu)
+				fprintf(stderr, "%s: Both --gnu and --zlib given; using --gnu\n", progname);
+			break;
 		case '1': case '2': case '3':
 		case '4': case '5': case '6':
 		case '7': case '8': case '9':
@@ -265,9 +264,8 @@ main(int argc, char **argv)
 		case 's':
 			osflag = atoi(optarg);
 			break;
+		case 'F':
 		case 'o':
-			if (nflag)
-				fprintf(stderr, "%s: ignoring original-name because no-name was passed\n", progname);
 			origname = optarg;
 			break;
 		case 'k':
@@ -297,6 +295,9 @@ main(int argc, char **argv)
 			timestamp = atoi(optarg);
 			Tflag = 1;
 			break;
+		case 'R':
+			rsync = 1;
+			break;
 		case 'r':
 			fprintf(stderr, "%s: recursive is not supported on this version\n", progname);
 			usage();
@@ -322,12 +323,32 @@ main(int argc, char **argv)
 	argv += optind;
 	argc -= optind;
 
-	if (argc == 0) {
-		handle_stdout(origname);
+	if (gnu) {
+		if (ntfs_quirk || xflag >= 0) {
+			fprintf(stderr, "%s: quirks not supported with --gnu\n", progname);
+			return 1;
+		}
+		if (argc != 0) {
+			fprintf(stderr, "%s: filenames not supported with --gnu\n", progname);
+			return 1;
+		}
+		if (nflag)
+			origname = NULL;
+		if (mflag)
+			timestamp = 0;
+		gnuzip(STDIN_FILENO, STDOUT_FILENO, origname, timestamp, numflag, osflag, rsync);
 	} else {
-		do {
-			handle_pathname(argv[0], origname);
-		} while (*++argv);
+		if (rsync) {
+			fprintf(stderr, "%s: --rsyncable not supported with --zlib\n", progname);
+			return 1;
+		}
+		if (argc == 0) {
+			handle_stdout(origname);
+		} else {
+			do {
+				handle_pathname(argv[0], origname);
+			} while (*++argv);
+		}
 	}
 	exit(exit_value);
 }
@@ -847,9 +868,9 @@ usage(void)
 
 	fprintf(stderr, "%s\n", gzip_version);
 	fprintf(stderr,
-    "usage: zgz [--gnu | --zlib] [-" OPT_LIST "] [<file> [<file> ...]]\n"
-    " --gnu                    use GNU gzip (/bin/gzip)\n"
-    " --zlib                   use zlib's implementation (default)\n"
+    "usage: zgz [-" OPT_LIST "] [<file> [<file> ...]]\n"
+    " -G --gnu                 use GNU gzip implementation\n"
+    " -Z --zlib                use zlib's implementation (default)\n"
     " -1 --fast                fastest (worst) compression\n"
     " -2 .. -8                 set compression level\n"
     " -9 --best                best (slowest) compression\n"
@@ -863,12 +884,15 @@ usage(void)
     " -q --quiet               output no warnings\n"
     " -V --version             display program version\n"
     " -h --help                display this help\n"
-    " \nzlib-specific options:\n"
     " -o NAME\n"
     "    --original-name NAME  use NAME as the original file name\n"
-    " -k --quirk QUIRK         enable a format quirk (buggy-bsd, ntfs)\n"
+    " -F NAME --filename NAME  same as --original-name\n"
     " -s --osflag              set the OS flag to something different than 03 (Unix)\n"
-    " -T --timestamp SECONDS   set the timestamp to the specified number of seconds\n");
+    " -T --timestamp SECONDS   set the timestamp to the specified number of seconds\n"
+    " \ngnu-specific options:\n"
+    " -R --rsyncable           make rsync-friendly archive\n"
+    " \nzlib-specific options:\n"
+    " -k --quirk QUIRK         enable a format quirk (buggy-bsd, ntfs)\n");
 	exit(0);
 }
 

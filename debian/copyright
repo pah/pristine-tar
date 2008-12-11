@@ -2,6 +2,7 @@ Files: *
 Copyright: © 2007-2008 Joey Hess <joeyh@debian.org>
   © 2007 Faidon Liambotis
   © 2008 Cyril Brulebois <cyril.brulebois@enst-bretagne.fr>
+  © 2008 Josh Triplett <josh@joshtriplett.org>
 License: GPL-2+
  On Debian systems, the complete text of the GPL can be found in
  /usr/share/common-licenses/GPL.
@@ -13,3 +14,11 @@ Copyright: © 1997, 1998, 2003, 2004, 2006 Matthew R. Green
 License: BSD-3
  On Debian systems, the complete text of the 3 clause BSD license can be
  found in /usr/share/common-licenses/BSD.
+
+Files: gzip.h bits.c deflate.c gzip.c trees.c util.c
+Copyright: © 1997, 1998, 1999, 2001, 2002, 2006, 2007 Free Software Foundation, Inc.
+   © 1992-1993 Jean-loup Gailly
+   © 2008 Josh Triplett
+License: GPL-2+
+ On Debian systems, the complete text of the GPL can be found in
+ /usr/share/common-licenses/GPL.

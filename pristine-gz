@@ -67,6 +67,7 @@ Don't clean up the temporary directory on exit.
 
 Joey Hess <joeyh@debian.org>,
 Faidon Liambotis <paravoid@debian.org>
+Josh Triplett <josh@joshtriplett.org>
 
 Licensed under the GPL, version 2.
 
@@ -77,6 +78,7 @@ use strict;
 use File::Temp;
 use Getopt::Long;
 use File::Basename qw/basename/;
+use IPC::Open2;
 
 use constant GZIP_DEBUG		 => 1;
 
@@ -145,6 +147,16 @@ sub doit {
 	}
 }
 
+sub doit_redir {
+	no warnings 'once';
+	my ($in, $out, @args) = @_;
+	vprint(@args, "<", $in, ">", $out);
+	open INFILE, "<", $in or die("Could not open '$in' for reading: $!\n");
+	open OUTFILE, ">", $out or die("Could not open '$out' for reading: $!\n");
+	my $pid = open2(">&OUTFILE", "<&INFILE", @args);
+	waitpid $pid, 0;
+}
+
 sub tempdir {
 	return File::Temp::tempdir("pristine-gz.XXXXXXXXXX",
 		TMPDIR => 1, CLEANUP => !$keep);
@@ -187,11 +199,8 @@ sub predictgzipargs {
 	unless ($flags[GZIP_FLAG_FNAME]) {
 		push @args, '-n';
 		push @args, '-M' if $timestamp;
-	} else { 
-		push @args, '-m'
-			unless($timestamp);
 	}
-	
+
 	if ($level == GZIP_COMPRESSION_BEST) {
 		push @args, '-9'
 	} elsif ($level == GZIP_COMPRESSION_FAST) {
@@ -213,82 +222,40 @@ sub comparefiles {
 }
 
 sub testvariant {
-	my ($old, $new, $origname, @args) = @_;
+	my ($orig, $tempin, $tempout, @args) = @_;
+	# Use the variant of gzip defined by @args to compress $tempin to
+	# $tempout and compare the result to $orig
 
-	# We need an uncompressed file to test the compressor with.
-	# See if one already exists.
-	my $uncompressed = $new;
-	$uncompressed =~ s/\.gz$//;
-	if ($origname && -e $origname) {
-		$uncompressed = $origname;
-	}
-	elsif (! -e $uncompressed) {
-		# Generate the uncompressed file.
-		doit('gunzip', '-N', $new);
-		if (-e $new) {
-			die "gunzip failed, aborting";
-		}
-		elsif ($origname && -e $origname) {
-			$uncompressed = $origname;
-		}
-		elsif (! -e $uncompressed) {
-			die("gunzip succeded but I can't find the uncompressed file");
-		}
-	}
-		
-	# Cache a copy of the uncompressed file to avoid needing to
-	# uncompress it again. (By hard linking, we avoid an
-	# expensive copy, but need to pass -f when gzipping.)
-	doit("ln", "-f", $uncompressed, "$uncompressed.cached");
-
-	# try gzipping with the arguments passed
-	doit('zgz', @args, "-f", $uncompressed);
-	$new = "$uncompressed.gz";
-	unless (-e $new) {
-		die("zgz failed, aborting");
-	}
-	# move cached uncompressed file into place for later use
-	doit("mv", "-f", "$uncompressed.cached", $uncompressed);
-
-	# and compare the generated with the original
-	return !comparefiles($old, $new);
+	doit_redir($tempin, $tempout, 'zgz', @args, '-c');
+	return !comparefiles($orig, $tempout);
 }
 
 sub reproducegz {
-	my ($wd, $orig, $new) = (shift, shift, shift);
+	my ($orig, $tempin, $tempout) = (shift, shift, shift);
+	doit_redir($orig, $tempin, "gzip", "-dc");
 
 	# read fields from gzip headers
-	my ($flags, $timestamp, $level, $os, $name) = readgzip($new);
+	my ($flags, $timestamp, $level, $os, $name) = readgzip($orig);
 	debug("flags: [".join(", ", @$flags).
 		"] timestamp: $timestamp level: $level os: $os name: $name");
 
 	# try to guess the gzip arguments that are needed by the header
 	# information
 	my @args = predictgzipargs($flags, $timestamp, $level);
+	my @extraargs = ("-F", $name, "-T", $timestamp);
 
-	if ($name !~ /\//) {
-		if ($name) {
-			$name = "$wd/$name";
-			doit("mv", "-f", $new, "$name.gz");
-			$new = "$name.gz";
-		}
-		if ($os == GZIP_OS_UNIX) {
-			# for 98% of the cases the simple heuristic above works
-			testvariant($orig, $new, $name, '--gnu', @args)
-				&& return $name, $timestamp, '--gnu', @args;
-
-			# some .gz are created using --rsyncable
-			# it is a Debian-specific option not very popular
-			testvariant($orig, $new, $name, '--gnu', @args, '--rsyncable')
-				&& return $name, $timestamp, '--gnu', @args, '--rsyncable';
-		}
+	if ($os == GZIP_OS_UNIX) {
+		# for 98% of the cases the simple heuristic above works
+		testvariant($orig, $tempin, $tempout, '--gnu', @args, @extraargs)
+			&& return $name, $timestamp, '--gnu', @args;
+		testvariant($orig, $tempin, $tempout, '--gnu', @args, @extraargs, '--rsyncable')
+			&& return $name, $timestamp, '--gnu', @args, '--rsyncable';
 	}
-	else {
+
+	if ($name =~ /\//) {
 		push @args, "--original-name", $name;
+		@extraargs = ("-T", $timestamp);
 		$name = basename($name);
-		$name = "$wd/$name";
-		doit("mv", "-f", $new, "$name.gz");
-		$new = "$name.gz";
 	}
 
 	# set the Operating System flag to the one found in the original
@@ -299,21 +266,21 @@ sub reproducegz {
 	# gzip which is using the zlib library; try with our version of
 	# bsd-gzip with added support for the undocumented GNU gzip options
 	# -m and -M
-	testvariant($orig, $new, $name, @args)
+	testvariant($orig, $tempin, $tempout, @args, @extraargs)
 		&& return $name, $timestamp, @args;
-	
+
 	# apparently, there is an old version of bsd-gzip (or a similar tool
 	# based on zlib) that creates gz using maximum compression (-9) but
 	# does not indicate so in the headers. surprisingly, there are many
 	# .gz out there.
-	testvariant($orig, $new, $name, @args, '--quirk', 'buggy-bsd')
+	testvariant($orig, $tempin, $tempout, @args, @extraargs, '--quirk', 'buggy-bsd')
 		&& return $name. $timestamp, @args, '--quirk', 'buggy-bsd';
 
 	# Windows' NTFS gzip implementation; quirk is really really evil
 	# it should be the last test: it can result in a corrupted archive!
 	if ($os == GZIP_OS_NTFS) {
 		pop @args; pop @args; # ntfs quirk implies NTFS osflag
-		testvariant($orig, $new, $name, @args, '--quirk', 'ntfs')
+		testvariant($orig, $tempin, $tempout, @args, @extraargs, '--quirk', 'ntfs')
 			&& return $name, $timestamp, @args, '--quirk', 'ntfs';
 	}
 
@@ -386,12 +353,7 @@ sub gengz {
 	chomp $timestamp;
 	close IN;
 
-	doit("cp", $file, "$tempdir/$filename");
-	utime($timestamp, $timestamp, "$tempdir/$filename") ||
-		die "utime: $!";
-	doit("zgz", @params, "-f", "$tempdir/$filename");
-	doit("mv", "-f", "$tempdir/$filename.gz", "$file.gz");
-	doit("rm", "-f", $file);
+	doit_redir("$file", "$file.gz", "zgz", @params, "-T", $timestamp, "-F", "$filename", "-c");
 }
 
 sub gendelta {
@@ -408,9 +370,8 @@ sub gendelta {
 
 	my @files=qw(version type params filename timestamp);
 
-	doit("cp", $gzfile, "$tempdir/test.gz");
 	my ($filename, $timestamp, @params)=
-		reproducegz($tempdir, $gzfile, "$tempdir/test.gz");
+		reproducegz($gzfile, "$tempdir/test", "$tempdir/test.gz");
 
 	open(OUT, ">", "$tempdir/version") || die "$!";
 	print OUT "2.0\n";

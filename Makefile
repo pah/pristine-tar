@@ -4,8 +4,9 @@ build: zgz
 	pod2man -c pristine-bz2 pristine-bz2 > pristine-bz2.1
 	pod2man -c zgz zgz.pod > zgz.1
 
-zgz: zgz.c
-	gcc -Wall -O2 -lz -o zgz zgz.c
+ZGZ_SOURCES = zgz.c bits.c deflate.c gzip.c trees.c util.c
+zgz: $(ZGZ_SOURCES) gzip.h
+	gcc -Wall -O2 -lz -o $@ $(ZGZ_SOURCES)
 
 install:
 	install -d $(DESTDIR)/usr/bin

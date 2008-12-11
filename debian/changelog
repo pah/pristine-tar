@@ -19,7 +19,18 @@ pristine-tar (0.19) UNRELEASED; urgency=low
   * Clarify bit in man page about what file formats are supported.
     Closes: #507322
 
- -- Josh Triplett <josh@freedesktop.org>  Thu, 27 Nov 2008 19:54:29 -0800
+  [ Josh Triplett ]
+  * zgz: Incorporate a cut-down version of GNU gzip to support the --gnu
+    option.  The cut-down gzip includes support for explicitly setting the
+    timestamp and original filename. Closes: #506627
+  * pristine-gz: Now that zgz supports explicitly setting the timestamp and
+    original filename with both --zlib and --gnu, use that support to do all
+    compression using -c with standard input and standard output.  This
+    removes the need to create a temporary file with the original filename and
+    set its timestamp, as well as the need to continuously recreate the file
+    when compressed and removed.
+
+ -- Josh Triplett <josh@freedesktop.org>  Thu, 11 Dec 2008 14:22:56 -0800
 
 pristine-tar (0.18) unstable; urgency=low
 
