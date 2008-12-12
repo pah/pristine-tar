@@ -1,4 +1,4 @@
-pristine-tar (0.19) UNRELEASED; urgency=low
+pristine-tar (0.19) unstable; urgency=low
 
   [ Josh Triplett ]
   * Add a .gitignore file
@@ -32,7 +32,7 @@ pristine-tar (0.19) UNRELEASED; urgency=low
   * zgz: Remove support for files, making -c the default.  This removes a lot
     of complexity and code duplication.
 
- -- Josh Triplett <josh@freedesktop.org>  Thu, 11 Dec 2008 14:22:56 -0800
+ -- Joey Hess <joeyh@debian.org>  Fri, 12 Dec 2008 16:12:27 -0500
 
 pristine-tar (0.18) unstable; urgency=low
 
