@@ -7,3 +7,6 @@
   git://git.debian.org/git/users/kibi-guest/pristine-tar.git , but I have
   not yet decided about applying it, since it would bloat the delta files
   with a list of all the files and md5sums..
+* Optimisation: Enhance zgz so it runs multiple compression alternatives
+  block-by-block in parallell, aborting compressors when they differ
+  from the target file.
