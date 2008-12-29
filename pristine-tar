@@ -362,7 +362,9 @@ sub gentar {
 	}
 
 	my $recreatetarball=recreatetarball($tempdir, getcwd, clobber_source => 0, %opts);
-	my $out=(-e "$tempdir/wrapper") ? $tarball.".tmp" : $tarball;
+	my $out=(-e "$tempdir/wrapper")
+		? $tempdir."/".basename($tarball).".tmp"
+		: $tarball;
 	doit("xdelta", "patch", "$tempdir/delta", $recreatetarball, $out);
 
 	if (-e "$tempdir/wrapper") {
