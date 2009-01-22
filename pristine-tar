@@ -504,7 +504,8 @@ sub gendelta {
 }
 
 sub vcstype {
-	if (-d ".git") {
+	if (-d ".git" ||
+	    (exists $ENV{GIT_DIR} && length $ENV{GIT_DIR})) {
 		return 'git';
 	}
 	else {
@@ -662,7 +663,12 @@ sub commitdelta {
 		# index, and without touching the working tree. Aka deep 
 		# git magick.
 		$ENV{GIT_INDEX_FILE}="$tempdir/index";
-		$ENV{GIT_DIR}=getcwd."/.git";
+		if (! exists $ENV{GIT_DIR} || ! length $ENV{GIT_DIR}) {		
+			$ENV{GIT_DIR}=getcwd."/.git";
+		}
+		else {
+			$ENV{GIT_DIR}=abs_path($ENV{GIT_DIR});
+		}
 		chdir($tempdir) || die "chdir: $!";
 
 		# If there's no local branch, branch from a remote branch
