@@ -1,8 +1,8 @@
-pristine-tar (0.21) UNRELEASED; urgency=low
+pristine-tar (0.21) unstable; urgency=low
 
   * Add support for GIT_DIR. Closes: #512619
 
- -- Joey Hess <joeyh@debian.org>  Thu, 22 Jan 2009 14:18:04 -0500
+ -- Joey Hess <joeyh@debian.org>  Thu, 22 Jan 2009 15:07:33 -0500
 
 pristine-tar (0.20) unstable; urgency=low
 
