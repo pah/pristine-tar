@@ -1,15 +1,15 @@
-Name:           pristine-tar
-Version:        0.21
-Release:        2%{?dist}
-Summary:        regenerate pristine tarballs
+Name: pristine-tar
+Version: 0.21
+Release: 2%{?dist}
+Summary: regenerate pristine tarballs
 
-Group:          System Tools
-License:        GPLv2
-Url:            http://kitenet.net/~joey/code/pristine-tar/
-Source0:        http://ftp.debian.org/debian/pool/main/p/pristine-tar/%{name}_%{version}.tar.gz
-BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
+Group: System Tools
+License: GPLv2
+Url: http://kitenet.net/~joey/code/pristine-tar/
+Source0: http://ftp.debian.org/debian/pool/main/p/pristine-tar/%{name}_%{version}.tar.gz
+BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
-Requires:       git, xdelta
+Requires: git, xdelta
 
 %description
 pristine-tar can regenerate a pristine upstream tarball using only a

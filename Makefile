@@ -1,4 +1,4 @@
-build: zgz/zgz
+build: zgz/zgz pristine-tar.spec
 	pod2man -c pristine-tar pristine-tar > pristine-tar.1
 	pod2man -c pristine-gz  pristine-gz  > pristine-gz.1
 	pod2man -c pristine-bz2 pristine-bz2 > pristine-bz2.1
@@ -14,5 +14,10 @@ install:
 	install pristine-tar pristine-gz pristine-bz2 zgz/zgz $(DESTDIR)/usr/bin
 	install -m 0644 *.1 $(DESTDIR)/usr/share/man/man1
 
-clean:
+clean: pristine-tar.spec
 	rm -f zgz/zgz *.1
+
+pristine-tar.spec:
+	sed -i "s/Version:.*/Version: $$(perl -e '$$_=<>;print m/\((.*?)\)/'<debian/changelog)/" pristine-tar.spec
+
+.PHONY: pristine-tar.spec
