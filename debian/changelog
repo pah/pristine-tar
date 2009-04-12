@@ -1,3 +1,10 @@
+pristine-tar (0.22) unstable; urgency=low
+
+  * Fix syntax mistake that could cause pristine-tar to in some cases
+    fail on tarballs containing files named "0". Closes: #523773
+
+ -- Joey Hess <joeyh@debian.org>  Sun, 12 Apr 2009 13:20:04 -0400
+
 pristine-tar (0.21) unstable; urgency=low
 
   * Add support for GIT_DIR. Closes: #512619
