@@ -290,7 +290,10 @@ sub recreatetarball {
 			chmod(0755, "$tempdir/workdir/$file") ||
 				die "chmod: $!";
 		}
-		utime(0, 0, "$tempdir/workdir/$file") || die "utime: $!";
+
+		if (-e "$tempdir/workdir/$file") {
+			utime(0, 0, "$tempdir/workdir/$file") || die "utime: $file: $!";
+		}
 	}
 	
 	# If some files couldn't be matched up with the manifest,
@@ -311,7 +314,7 @@ sub recreatetarball {
 				chmod(0755, $_) ||
 					die "chmod: $!";
 			}
-			utime(0, 0, $_) || die "utime: $!";
+			utime(0, 0, $_) || die "utime: $_: $!";
 		}, "$tempdir/workdir");
 	}
 
