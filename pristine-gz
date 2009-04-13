@@ -221,15 +221,6 @@ sub comparefiles {
 	return $? >> 8;
 }
 
-sub testvariant {
-	my ($orig, $tempin, $tempout, @args) = @_;
-	# Use the variant of gzip defined by @args to compress $tempin to
-	# $tempout and compare the result to $orig
-
-	doit_redir($tempin, $tempout, 'zgz', @args, '-c');
-	return !comparefiles($orig, $tempout);
-}
-
 sub reproducegz {
 	my ($orig, $tempin, $tempout) = (shift, shift, shift);
 	doit_redir($orig, $tempin, "gzip", "-dc");
@@ -244,12 +235,13 @@ sub reproducegz {
 	my @args = predictgzipargs($flags, $timestamp, $level);
 	my @extraargs = ("-F", $name, "-T", $timestamp);
 
+	my @try;
+
 	if ($os == GZIP_OS_UNIX) {
 		# for 98% of the cases the simple heuristic above works
-		testvariant($orig, $tempin, $tempout, '--gnu', @args, @extraargs)
-			&& return $name, $timestamp, '--gnu', @args;
-		testvariant($orig, $tempin, $tempout, '--gnu', @args, @extraargs, '--rsyncable')
-			&& return $name, $timestamp, '--gnu', @args, '--rsyncable';
+		# and it was produced by gnu gzip.
+		push @try, ['--gnu', @args];
+		push @try, ['--gnu', @args, '--rsyncable'];
 	}
 
 	if ($name =~ /\//) {
@@ -266,22 +258,26 @@ sub reproducegz {
 	# gzip which is using the zlib library; try with our version of
 	# bsd-gzip with added support for the undocumented GNU gzip options
 	# -m and -M
-	testvariant($orig, $tempin, $tempout, @args, @extraargs)
-		&& return $name, $timestamp, @args;
+	push @try, [@args];
 
 	# apparently, there is an old version of bsd-gzip (or a similar tool
 	# based on zlib) that creates gz using maximum compression (-9) but
 	# does not indicate so in the headers. surprisingly, there are many
 	# .gz out there.
-	testvariant($orig, $tempin, $tempout, @args, @extraargs, '--quirk', 'buggy-bsd')
-		&& return $name. $timestamp, @args, '--quirk', 'buggy-bsd';
+	push @try, [@args, '--quirk', 'buggy-bsd'];
 
 	# Windows' NTFS gzip implementation; quirk is really really evil
 	# it should be the last test: it can result in a corrupted archive!
 	if ($os == GZIP_OS_NTFS) {
 		pop @args; pop @args; # ntfs quirk implies NTFS osflag
-		testvariant($orig, $tempin, $tempout, @args, @extraargs, '--quirk', 'ntfs')
-			&& return $name, $timestamp, @args, '--quirk', 'ntfs';
+		push @try, [@args, '--quirk', 'ntfs'];
+	}
+
+	foreach my $variant (@try) {
+		doit_redir($tempin, $tempout, 'zgz', @$variant, @extraargs, '-c');
+		if (!comparefiles($orig, $tempout)) {
+			return $name, $timestamp, @$variant;
+		}
 	}
 
 	print STDERR "pristine-gz failed to reproduce build of $orig\n";
