@@ -5,16 +5,19 @@ pristine-tar (1.00) UNRELEASED; urgency=low
     is printed if the binary delta is not relatively small.
   * Allows generating quite small deltas for php-geoip,
     xsupplicant, libgraphics-colornames-perl, and
-    Ricoh-Aficio_2020D-Postscript.ppd.gz -- zgz gets very close to the
-    originals for all of these.
-    Closes: #518972, #506874
-  * For other things the deltas are not small, but only a few hundred
-    known tarballs fail that badly, and the total space wasted by all
-    of the oversized deltas for them would only be 100 mb. This seems
-    an accepable tradeoff to be able to reliably use it on anything.
-    Closes: #475778, #509703, #509707, #515256, #515331
+    Ricoh-Aficio_2020D-Postscript.ppd.gz, and dozens on others
+    that zgz can closely replicate. Closes: #518972, #506874
+  * For other things the deltas are not as small.
+    This seems an accepable tradeoff to be able to reliably use it on
+    anything. Closes: #475778, #509703, #509707, #515256, #515331
   * Increase gz delta version number to 3.0 if a binary delta file
     is included.
+  * pristine-tar: Avoid dying in corner case involving tar's filename
+    encoding. Fixes several failures.
+ 
+  Stats: Only 1 known failure (on star's tarball).
+  Deltas for all 14294 tarballs in the Debian archive now use XXX MB total.
+  Mean delta size:    Median:    Mode: 
 
  -- Joey Hess <joeyh@debian.org>  Mon, 13 Apr 2009 15:12:44 -0400
 
