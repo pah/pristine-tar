@@ -222,7 +222,8 @@ sub comparefiles {
 }
 
 sub reproducegz {
-	my ($orig, $tempin, $tempout) = (shift, shift, shift);
+	my ($orig, $tempdir, $tempin) = @_;
+	my $tempout="$tempdir/test.gz";
 	doit_redir($orig, $tempin, "gzip", "-dc");
 
 	# read fields from gzip headers
@@ -273,15 +274,37 @@ sub reproducegz {
 		push @try, [@args, '--quirk', 'ntfs'];
 	}
 
+	my $origsize=(stat($orig))[7];
+	my $bestvariant;
+	my $bestsize=$origsize;
+
 	foreach my $variant (@try) {
 		doit_redir($tempin, $tempout, 'zgz', @$variant, @extraargs, '-c');
 		if (!comparefiles($orig, $tempout)) {
+			# success
 			return $name, $timestamp, @$variant;
+		}
+		else {
+			# generate a binary delta and see if this is the
+			# best variant so far
+			my $ret=system("xdelta delta -0 --pristine $tempout $orig $tempdir/delta") >> 8;
+			# xdelta exits 1 on success
+			if ($ret == 1) {
+				my $size=(stat("$tempdir/delta"))[7];
+				if ($size < $bestsize) {
+					$bestvariant = $variant;
+					$bestsize=$size;
+				}
+			}
 		}
 	}
 
 	print STDERR "pristine-gz failed to reproduce build of $orig\n";
-	print STDERR "(Please file a bug report.)\n";
+	if (defined $bestvariant) {
+		my $percentsaved=(($origsize-$bestsize)/$origsize*100);
+		print STDERR "(best variant, saving $percentsaved%: @$bestvariant)\n";
+	}
+	print STDERR "Please file a bug report.\n";
 	exit 1;
 }
 
@@ -367,7 +390,7 @@ sub gendelta {
 	my @files=qw(version type params filename timestamp);
 
 	my ($filename, $timestamp, @params)=
-		reproducegz($gzfile, "$tempdir/test", "$tempdir/test.gz");
+		reproducegz($gzfile, $tempdir, "$tempdir/test");
 
 	open(OUT, ">", "$tempdir/version") || die "$!";
 	print OUT "2.0\n";

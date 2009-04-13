@@ -1,3 +1,11 @@
+pristine-tar (0.23) UNRELEASED; urgency=low
+
+  * pristine-gz: use xdelta to check if a file was closely, but not completly,
+    reproduced. This is not yet used except as a debugging aid when
+    no variants succeed.
+
+ -- Joey Hess <joeyh@debian.org>  Mon, 13 Apr 2009 15:12:44 -0400
+
 pristine-tar (0.22) unstable; urgency=low
 
   * Fix syntax mistake that could cause pristine-tar to in some cases
