@@ -7,10 +7,10 @@ test:
 
 testexternal:
 	@if [ ! -e tars ]; then echo "Create a tars file listing tarballs to test"; false; fi
-	mkdir failures
+	mkdir -p failures
 	for f in $$(cat tars); do \
 		echo $$f; \
-		base=$$(basename $$o); \
+		base=$$(basename $$f); \
 		if ! pristine-tar gendelta $$f $$base.delta; then \
 			cp $$f failures; \
 		fi; \
@@ -20,6 +20,7 @@ testexternal:
 		if ! cmp $$base $$f; then \
 			cp $$f failures; \
 		fi; \
+		rm -f $$base; \
 	done
 	echo "done; check failures directory for problem tars"
 
