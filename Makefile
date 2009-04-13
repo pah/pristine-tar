@@ -8,6 +8,7 @@ test:
 testexternal:
 	@if [ ! -e tars ]; then echo "Create a tars file listing tarballs to test"; false; fi
 	mkdir -p failures
+	rm -rf workdir
 	top=`pwd`; \
 	for f in $$(cat tars); do \
 		echo $$f; \
