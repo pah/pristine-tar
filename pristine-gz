@@ -32,10 +32,15 @@ etc, and to reproduce this build environment when regenerating the gz.
 In a few cases post-build fixups are also done to ensure that the gz is
 identical to the original.
 
-This approach will work in the vast majority of cases. If it doesn't work,
-no delta will be generated. One example of a case it cannot currently
-support is a gz file that has been produced by appending together multiple
-gz files.
+This approach will work for about 99.5% of cases. One example of a case it
+cannot currently support is a gz file that has been produced by appending
+together multiple gz files.
+
+For the few where it doesn't work, a binary diff will be included in the
+delta between the closest regneratable gz file and the original. In
+the worst case, the diff will include the entire content of the original
+gz file, resulting in a larger than usual delta. If the delta is much
+larger than usual, pristine-gz will print a warning.
 
 If the delta filename is "-", pristine-gz reads or writes it to stdio.
 
@@ -275,37 +280,45 @@ sub reproducegz {
 	}
 
 	my $origsize=(stat($orig))[7];
-	my $bestvariant;
-	my $bestsize=$origsize;
+	my ($bestvariant, $bestsize);
 
 	foreach my $variant (@try) {
 		doit_redir($tempin, $tempout, 'zgz', @$variant, @extraargs, '-c');
 		if (!comparefiles($orig, $tempout)) {
 			# success
-			return $name, $timestamp, @$variant;
+			return $name, $timestamp, undef, @$variant;
 		}
 		else {
 			# generate a binary delta and see if this is the
 			# best variant so far
-			my $ret=system("xdelta delta -0 --pristine $tempout $orig $tempdir/delta 2>/dev/null") >> 8;
+			my $ret=system("xdelta delta -0 --pristine $tempout $orig $tempdir/tmpdelta 2>/dev/null") >> 8;
 			# xdelta exits 1 on success
 			if ($ret == 1) {
-				my $size=(stat("$tempdir/delta"))[7];
-				if ($size < $bestsize) {
+				my $size=(stat("$tempdir/tmpdelta"))[7];
+				if (! defined $bestsize || $size < $bestsize) {
 					$bestvariant = $variant;
 					$bestsize=$size;
+					rename("$tempdir/tmpdelta", "$tempdir/bestdelta") || die "rename: $!";
 				}
 			}
 		}
 	}
 
-	print STDERR "pristine-gz failed to reproduce build of $orig\n";
-	if (defined $bestvariant) {
-		my $percentsaved=(($origsize-$bestsize)/$origsize*100);
-		print STDERR "(best variant, saving $percentsaved%: @$bestvariant)\n";
+	# Nothing worked perfectly, so use the delta that was generated for
+	# the best variant
+	my $percentover=100 - int (($origsize-$bestsize)/$origsize*100);
+	debug("Using delta to best variant, bloating $percentover%: @$bestvariant");
+	if ($percentover > 10) {
+		print STDERR "warning: pristine-gz cannot reproduce build of $orig; ";
+		if ($percentover >= 100) {
+			print STDERR "storing entire file in delta!\n";
+		}
+		else {
+			print STDERR "storing $percentover% size diff in delta\n";
+		}
+		print STDERR "(Please consider filing a bug report so the delta size can be improved.)\n";
 	}
-	print STDERR "Please file a bug report.\n";
-	exit 1;
+	return $name, $timestamp, "$tempdir/bestdelta", @$bestvariant;
 }
 
 sub gengz {
@@ -330,7 +343,7 @@ sub gengz {
 
 	open (IN, "$tempdir/version") || die "delta lacks version number ($!)";
 	my $version=<IN>;
-	if ($version >= 3) {
+	if ($version >= 4) {
 		die "delta is version $version, not supported\n";
 	}
 	close IN;
@@ -372,7 +385,15 @@ sub gengz {
 	chomp $timestamp;
 	close IN;
 
-	doit_redir("$file", "$file.gz", "zgz", @params, "-T", $timestamp, "-F", "$filename", "-c");
+	my @zgz=("zgz", @params, "-T", $timestamp, "-F", "$filename", "-c");
+
+	if (-e "$tempdir/delta") {
+		doit_redir($file, "$tempdir/$file.gz", @zgz);
+		doit("xdelta", "patch", "--pristine", "$tempdir/delta", "$tempdir/$file.gz", "$file.gz");
+	}
+	else {
+		doit_redir("$file", "$file.gz", @zgz);
+	}
 }
 
 sub gendelta {
@@ -389,11 +410,11 @@ sub gendelta {
 
 	my @files=qw(version type params filename timestamp);
 
-	my ($filename, $timestamp, @params)=
+	my ($filename, $timestamp, $xdelta, @params)=
 		reproducegz($gzfile, $tempdir, "$tempdir/test");
-
+	
 	open(OUT, ">", "$tempdir/version") || die "$!";
-	print OUT "2.0\n";
+	print OUT (defined $xdelta ? "3.0" : "2.0")."\n";
 	close OUT;
 	open(OUT, ">", "$tempdir/type") || die "$!";
 	print OUT "gz\n";
@@ -407,6 +428,10 @@ sub gendelta {
 	open(OUT, ">", "$tempdir/timestamp") || die "$!";
 	print OUT "$timestamp\n";
 	close OUT;
+	if (defined $xdelta) {
+		rename($xdelta, "$tempdir/delta") || die "rename: $!";
+		push @files, "delta";
+	}
 
 	doit("tar", "czf", $delta, "-C", $tempdir, @files);
 

@@ -1,7 +1,7 @@
 The delta file is a compressed tarball, containing the following files:
 
 version
-	Currently "2.0".
+	Currently "2.0" or "3.0".
 type
 	Type of file this is a delta for ("tar", "gz", or "bz2").
 
@@ -31,6 +31,9 @@ timestamp
 	Timestamp of the original input file, in seconds from epoch.
 filename
 	Filename of the original input file.
+delta
+	xdelta between the generated gz file and the original gz file.
+	(Optional; needs version "3.0".)
 
 
 For bzip2 files the wrapper contains:

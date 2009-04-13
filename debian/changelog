@@ -1,8 +1,20 @@
-pristine-tar (0.23) UNRELEASED; urgency=low
+pristine-tar (1.00) UNRELEASED; urgency=low
 
-  * pristine-gz: use xdelta to check if a file was closely, but not completly,
-    reproduced. This is not yet used except as a debugging aid when
-    no variants succeed.
+  * pristine-gz: Fall back to storing a binary delta, in the rare
+    cases where the file cannot be 100% reproduced. A warning message
+    is printed if the binary delta is not relatively small.
+  * Allows generating quite small deltas for php-geoip,
+    xsupplicant, libgraphics-colornames-perl, and
+    Ricoh-Aficio_2020D-Postscript.ppd.gz -- zgz gets very close to the
+    originals for all of these.
+    Closes: #518972, #506874
+  * For other things the deltas are not small, but only a few hundred
+    known tarballs fail that badly, and the total space wasted by all
+    of the oversized deltas for them would only be 100 mb. This seems
+    an accepable tradeoff to be able to reliably use it on anything.
+    Closes: #475778, #509703, #509707, #515256, #515331
+  * Increase gz delta version number to 3.0 if a binary delta file
+    is included.
 
  -- Joey Hess <joeyh@debian.org>  Mon, 13 Apr 2009 15:12:44 -0400
 
