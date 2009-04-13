@@ -7,12 +7,8 @@ test:
 	@mkdir empty
 	@for f in *.gz; do \
 		cd empty; \
-		printf "$$f: "; \
-		if ! pristine-tar gendelta "../$$f" delta >/dev/null 2>&1; then \
-			echo "failed to reproduce"; \
-		else \
-			echo "succeeded to reproduce"; \
-		fi; \
+		echo "$$f: "; \
+		pristine-tar gendelta "../$$f" delta 2>&1 | sed 's/^/    /'; \
 		cd .. ; \
 	done
 	@rm -rf empty
