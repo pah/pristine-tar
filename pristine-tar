@@ -407,7 +407,7 @@ sub genmanifest {
 		s/^\.?\/+//;
 		print OUT "$_\n" if length $_;
 	}
-	close IN || error "tar tf exited nonzero";
+	close IN;
 	close OUT;
 }
 

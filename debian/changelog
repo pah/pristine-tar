@@ -14,6 +14,9 @@ pristine-tar (1.00) UNRELEASED; urgency=low
     is included.
   * pristine-tar: Avoid dying in corner case involving tar's filename
     encoding. Fixes several failures.
+  * pristine-tar: Avoid dying if tar tv exits nonzero. This makes
+    reproducing star's tarball work, even though tar gets upset
+    while listing it and decides to die at the end.
  
   Stats: Only 1 known failure (on star's tarball).
   Deltas for all 14294 tarballs in the Debian archive now use XXX MB total.
