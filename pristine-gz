@@ -385,7 +385,11 @@ sub gengz {
 	chomp $timestamp;
 	close IN;
 
-	my @zgz=("zgz", @params, "-T", $timestamp, "-F", "$filename", "-c");
+	my @zgz=("zgz", @params, "-T", $timestamp);
+	if (! grep { $_ eq "--original-name" } @params) {
+		push @zgz, "-F", "$filename";
+	}
+	push @zgz, "-c";
 
 	if (-e "$tempdir/delta") {
 		doit_redir($file, "$tempdir/$file.gz", @zgz);

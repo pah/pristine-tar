@@ -17,7 +17,10 @@ pristine-tar (1.00) UNRELEASED; urgency=low
   * pristine-tar: Avoid dying if tar tv exits nonzero. This makes
     reproducing star's tarball work, even though tar gets upset
     while listing it and decides to die at the end.
- 
+  * pristine-gz: Avoid passing -F to zgz if --original-name
+    is passed. This bug prevented pristine-gz gengz from
+    recreating the gz in some cases. 
+
   Stats: Only 1 known failure (on star's tarball).
   Deltas for all 14294 tarballs in the Debian archive now use XXX MB total.
   Mean delta size:    Median:    Mode: 
