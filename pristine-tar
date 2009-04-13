@@ -783,11 +783,11 @@ elsif ($command eq 'gendelta') {
 	usage unless @ARGV == 2;
 	gendelta(@ARGV);
 }
-elsif ($command eq 'commit') {
+elsif ($command eq 'commit' || $command eq 'ci') {
 	usage unless @ARGV >= 1;
 	commit(@ARGV);
 }
-elsif ($command eq 'checkout') {
+elsif ($command eq 'checkout' || $command eq 'co') {
 	usage unless @ARGV == 1;
 	checkout(@ARGV);
 }
