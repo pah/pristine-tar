@@ -1,4 +1,4 @@
-I store entire tarballs here that pristine-tar currently fails to
+I store entire tarballs here that zgz currently fails to
 reproduce, and the makefile tests them. I don't want to lose track of any
 negative test cases like these. Perhaps in the future, this can also be
 used as a regression test suite..

@@ -1,6 +1,6 @@
 test:
 	@rm -rf empty
-	@for f in *.gz; do \
+	@for f in knownproblems/*.gz; do \
 		echo "$$f: "; \
 		pristine-gz gendelta "$$f" $$f.delta 2>&1 | sed 's/^/    /'; \
 	done
@@ -10,7 +10,7 @@ testexternal:
 	mkdir failures
 	for f in $$(cat tars); do \
 		echo $$f; \
-		base=$$(basename $o)
+		base=$$(basename $$o); \
 		if ! pristine-tar gendelta $$f $$base.delta; then \
 			cp $$f failures; \
 		fi; \
