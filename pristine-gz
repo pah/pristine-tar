@@ -376,9 +376,6 @@ sub gengz {
 	my $filename=<IN>;
 	chomp $filename;
 	$filename=~s/^.*\///; # basename isn't strong enough
-	if (! length $filename) {
-		$filename="input";
-	}
 	close IN;
 	open (IN, "$tempdir/timestamp") || die "delta lacks timestamp file ($!)";
 	my $timestamp=<IN>;

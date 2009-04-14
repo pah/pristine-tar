@@ -21,6 +21,7 @@ pristine-tar (1.00) UNRELEASED; urgency=low
     is passed. This bug prevented pristine-gz gengz from
     recreating the gz in some cases. 
   * Add aliases ci and co for commit and checkout. Closes: #500388
+  * pristine-gz: Fix generation of gz files that have a null filename field.
 
   Stats:
   Deltas for all 14294 tarballs in the Debian archive now use XXX MB total.
