@@ -7,8 +7,8 @@ test:
 
 testexternal:
 	@if [ ! -e tars ]; then echo "Create a tars file listing tarballs to test"; false; fi
+	rm -rf workdir failures
 	mkdir -p failures
-	rm -rf workdir
 	top=`pwd`; \
 	for f in $$(cat tars); do \
 		echo $$f; \
@@ -18,7 +18,8 @@ testexternal:
 		fi; \
 		mkdir workdir; \
 		tar xf $$f -C workdir; \
-		cd workdir; cd * >/dev/null 2>&1; \
+		cd workdir; \
+		if [ $$(ls -1 | wc -l) == 1 ]; then cd * >/dev/null 2>&1; fi; \
 		if ! pristine-tar gentar $$top/$$base.delta $$top/$$base; then \
 			cp $$f $$top/failures; \
 		fi; \
