@@ -389,8 +389,9 @@ sub gengz {
 	push @zgz, "-c";
 
 	if (-e "$tempdir/delta") {
-		doit_redir($file, "$tempdir/$file.gz", @zgz);
-		doit("xdelta", "patch", "--pristine", "$tempdir/delta", "$tempdir/$file.gz", "$file.gz");
+		my $tfile="$tempdir/".basename($file).".gz";
+		doit_redir($file, $tfile, @zgz);
+		doit("xdelta", "patch", "--pristine", "$tempdir/delta", $tfile, "$file.gz");
 	}
 	else {
 		doit_redir("$file", "$file.gz", @zgz);
