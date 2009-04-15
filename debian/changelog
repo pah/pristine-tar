@@ -23,9 +23,9 @@ pristine-tar (1.00) UNRELEASED; urgency=low
   * Add aliases ci and co for commit and checkout. Closes: #500388
   * pristine-gz: Fix generation of gz files that have a null filename field.
 
-  Stats:
-  Deltas for all 14294 tarballs in the Debian archive now use XXX MB total.
-  Mean delta size:    Median:    Mode: 
+  Stats: 1 failure
+  Deltas for all 14446 tarballs in the Debian archive now use 305 MB total.
+  Mean delta size: 19K  Median: 2.6K  Mode: 1.5K
 
  -- Joey Hess <joeyh@debian.org>  Mon, 13 Apr 2009 15:12:44 -0400
 
