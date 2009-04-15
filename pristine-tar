@@ -107,10 +107,6 @@ Use this option to specify a custom commit message to pristine-tar commit.
 Only tarballs, gzipped tarballs, and bzip2ed tarballs are currently
 supported.
 
-It could fail on certain spectacularly strange files. If it fails, it will
-fail during creation of the delta, since the delta is tested to make sure it
-reproduces the pristine tarball.
-
 Currently only the git revision control system is supported by the
 "checkout" and "commit" commands. It's ok if the working copy
 is not clean or has uncommitted changes, or has changes staged in the

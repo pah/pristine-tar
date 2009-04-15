@@ -26,9 +26,8 @@ pristine-tar (1.00) UNRELEASED; urgency=low
     puts all files in a subdir, but does not contain the subdir's directory
     entry.
 
-  Stats: 1 failure
-  Deltas for all 14446 tarballs in the Debian archive now use 305 MB total.
-  Mean delta size: 19K  Median: 2.6K  Mode: 1.5K
+  Stats: Successfully generates deltas for all 14446 tarballs in the
+  Debian archive. Mean delta size: 19K  Median: 2.6K  Mode: 1.5K
 
  -- Joey Hess <joeyh@debian.org>  Mon, 13 Apr 2009 15:12:44 -0400
 

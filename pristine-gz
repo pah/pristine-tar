@@ -27,10 +27,9 @@ original gz file.
 
 The approach used to regenerate the original gz file is to figure out how
 it was produced -- what compression level was used, whether it was built
-with gzip(1) or with bsd-gzip(1), whether the --rsyncable option was used,
-etc, and to reproduce this build environment when regenerating the gz.
-In a few cases post-build fixups are also done to ensure that the gz is
-identical to the original.
+with GNU gzip(1) or with a library or BSD version, whether the --rsyncable
+option was used, etc, and to reproduce this build environment when
+regenerating the gz.
 
 This approach will work for about 99.5% of cases. One example of a case it
 cannot currently support is a gz file that has been produced by appending
