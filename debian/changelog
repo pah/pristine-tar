@@ -22,6 +22,9 @@ pristine-tar (1.00) UNRELEASED; urgency=low
     recreating the gz in some cases. 
   * Add aliases ci and co for commit and checkout. Closes: #500388
   * pristine-gz: Fix generation of gz files that have a null filename field.
+  * pristine-tar: Fix behavior in the corner case where the tarball
+    puts all files in a subdir, but does not contain the subdir's directory
+    entry.
 
   Stats: 1 failure
   Deltas for all 14446 tarballs in the Debian archive now use 305 MB total.

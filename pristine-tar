@@ -231,21 +231,6 @@ sub recreatetarball {
 		}
 	}
 		
-	if (length $subdir && -d "$source/$subdir") {
-		my $all_in_subdir=1;
-		foreach my $file (@manifest) {
-			if (! -e "$source/$file" &&
-			    ! -l "$source/$file") {
-				$all_in_subdir=0;
-				last;
-			}
-		}
-		if ($all_in_subdir) {
-			debug("source already in subdir $subdir");
-			$subdir="";
-		}
-	}
-
 	if (length $subdir) {
 		debug("subdir is $subdir");
 		doit("mkdir", "$tempdir/workdir");
