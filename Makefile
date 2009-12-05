@@ -1,8 +1,8 @@
 test:
 	@rm -rf empty
-	@for f in knownproblems/*.gz; do \
+	@for f in knownproblems/*; do \
 		echo "$$f: "; \
-		pristine-gz gendelta "$$f" $$f.delta 2>&1 | sed 's/^/    /'; \
+		pristine-tar gendelta "$$f" $$f.delta 2>&1 | sed 's/^/    /'; \
 	done
 
 testexternal:
