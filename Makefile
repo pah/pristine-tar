@@ -1,6 +1,6 @@
 test:
 	@rm -rf empty
-	@for f in knownproblems/*; do \
+	@for f in knownproblems/*.gz knownproblems/*.bz2; do \
 		echo "$$f: "; \
 		pristine-tar gendelta "$$f" $$f.delta 2>&1 | sed 's/^/    /'; \
 	done
