@@ -208,7 +208,8 @@ sub predictgzipargs {
 
 	if ($level == GZIP_COMPRESSION_BEST) {
 		push @args, '-9'
-	} elsif ($level == GZIP_COMPRESSION_FAST) {
+	}
+	elsif ($level == GZIP_COMPRESSION_FAST) {
 		push @args, '-1'
 	}
 
