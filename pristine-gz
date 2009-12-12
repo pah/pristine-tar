@@ -124,6 +124,7 @@ use constant {
 	GZIP_OS_NTFS		 => 11,
 	GZIP_OS_QDOS		 => 12,
 	GZIP_OS_RISCOS		 => 13,
+	GZIP_OS_VFAT             => 14,
 	GZIP_OS_UNKNOWN		 => 255,
 };
 
