@@ -103,6 +103,38 @@ Use this option to specify a custom commit message to pristine-tar commit.
 
 =back
 
+=head1 EXAMPLES
+
+Suppose you maintain the hello package, in a git repository. You have
+just created a tarball of the release, I<hello-1.0.tar.gz>, which you
+will upload to a "forge" site.
+
+You want to ensure that, if the "forge" loses the tarball, you can always
+recreate exactly that same tarball. And you'd prefer not to keep copies 
+of tarballs for every release, as that could use a lot of disk space
+when hello gets the background mp3s and user-contributed levels you
+are planning for version 2.0.
+
+The solution is to use pristine-tar to commit a delta file that efficiently
+stores enough information to reproduce the tarball later.
+
+	cd hello
+	git tag -s 1.0
+	pristine-tar commit ../hello-1.0.tar.gz 1.0
+
+Remember to tell git to push both the pristine-tar branch, and your tag:
+
+	git push --all --tags
+
+Now it is a year later. The worst has come to pass; the "forge" lost
+all its data, you deleted the tarballs to make room for bug report emails,
+and you want to regenerate them. Happily, the git repository is still
+available.
+
+	git clone git://github.com/joeyh/hello.git
+	cd hello
+	pristine-tar checkout ../hello-1.0.tar.gz
+
 =head1 LIMITATIONS
 
 Only tarballs, gzipped tarballs, and bzip2ed tarballs are currently
