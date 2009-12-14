@@ -6,22 +6,23 @@ pristine-tar - regenerate pristine tarballs
 
 =head1 SYNOPSIS
 
-B<pristine-tar> [-vdk] gentar delta tarball
+B<pristine-tar> [-vdk] gendelta I<tarball> I<delta>
 
-B<pristine-tar> [-vdk] gendelta tarball delta
+B<pristine-tar> [-vdk] gentar I<delta> I<tarball>
 
-B<pristine-tar> [-vdk] [-m message] commit tarball [upstream]
+B<pristine-tar> [-vdk] [-m message] commit I<tarball> [I<upstream>]
 
-B<pristine-tar> [-vdk] checkout tarball
+B<pristine-tar> [-vdk] checkout I<tarball>
 
 =head1 DESCRIPTION
 
-pristine-tar can regenerate a pristine upstream tarball using only a small
-binary delta file and a revision control checkout of the upstream branch.
+pristine-tar can regenerate an exact copy of a pristine upstream tarball
+using only a small binary I<delta> file and the contents of the tarball,
+which are typically kept in an I<upstream> branch in version control.
  
-The delta file is designed to be checked into revision control along-side
-the upstream branch, thus allowing Debian packages to be built entirely
-using sources in revision control, without the need to keep copies of
+The I<delta> file is designed to be checked into version control along-side
+the I<upstream> branch, thus allowing Debian packages to be built entirely
+using sources in version control, without the need to keep copies of
 upstream tarballs.
 
 pristine-tar supports compressed tarballs, calling out to pristine-gz(1)
@@ -31,32 +32,32 @@ and pristine-bz2(1) to produce the pristine gzip and bzip2 files.
 
 =over 4
 
-=item pristine-tar gendelta
+=item pristine-tar gendelta I<tarball> I<delta>
 
-This takes the specified upstream tarball, and generates a small binary
+This takes the specified upstream I<tarball>, and generates a small binary
 delta file that can later be used by pristine-tar gentar to recreate the
 tarball.
 
 If the delta filename is "-", it is written to standard output.
 
-=item pristine-tar gentar 
+=item pristine-tar gentar I<delta> I<tarball>
 
-This takes the specified delta file, and the files in the current
+This takes the specified I<delta> file, and the files in the current
 directory, which must have identical content to those in the upstream
-tarball, and uses these to regenerate the pristine upstream tarball.
+tarball, and uses these to regenerate the pristine upstream I<tarball>.
 
 If the delta filename is "-", it is read from standard input.
 
-=item pristine-tar commit
+=item pristine-tar commit I<tarball> [I<upstream>]
 
 B<pristine-tar commit> generates a pristine-tar delta file for the specified
-tarball, and commits it to version control. The B<pristine-tar checkout>
+I<tarball>, and commits it to version control. The B<pristine-tar checkout>
 command can later be used to recreate the original tarball based only
 on the information stored in version control.
 
 For B<pristine-tar checkout> to work, you also need to store the precise
 contents of the tarball in version control. To specify in which tag (or
-branch or other treeish object) it's stored, use the B<upstream> parameter.
+branch or other treeish object) it's stored, use the I<upstream> parameter.
 This defaults to "refs/heads/upstream", or if there's no such branch, any
 branch matching "upstream". The name of the tree it points to will be
 recorded for later use by B<pristine-tar checkout>.
@@ -65,10 +66,10 @@ The delta files are stored in a branch named "pristine-tar", with filenames
 corresponding to the input tarball, with ".delta" appended. This
 branch is created or updated as needed to add each new delta.
 
-=item pristine-tar checkout
+=item pristine-tar checkout I<tarball>
 
-This regenerates a copy of the specified tarball using information
-previously saved to revision control by B<pristine-tar commit>.
+This regenerates a copy of the specified I<tarball> using information
+previously saved in version control by B<pristine-tar commit>.
 
 =back
 
@@ -150,8 +151,8 @@ my $message;
 $ENV{LANG}='C';
 
 sub usage {
-	print STDERR "Usage: pristine-tar [-vdk] gentar delta tarball\n";
-	print STDERR "       pristine-tar [-vdk] gendelta tarball delta\n";
+	print STDERR "Usage: pristine-tar [-vdk] gendelta tarball delta\n";
+	print STDERR "       pristine-tar [-vdk] gentar delta tarball\n";
 	print STDERR "       pristine-tar [-vdk] [-m message] commit tarball [upstream]\n";
 	print STDERR "       pristine-tar [-vdk] checkout tarball\n";
 	exit 1;

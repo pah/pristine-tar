@@ -6,9 +6,9 @@ pristine-bz2 - regenerate pristine bz2 files
 
 =head1 SYNOPSIS
 
-B<pristine-bz2> [-vdk] genbz2 delta file
+B<pristine-bz2> [-vdk] gendelta I<file.bz2> I<delta>
 
-B<pristine-bz2> [-vdk] gendelta file.bz2 delta
+B<pristine-bz2> [-vdk] genbz2 I<delta> I<file>
 
 =head1 DESCRIPTION
 
@@ -16,14 +16,14 @@ This is a complement to the pristine-tar(1) command. Normally you
 don't need to run it by hand, since pristine-tar calls it as necessary
 to handle .tar.bz2 files.
 
-pristine-bz2 gendelta takes the specified bz2 file, and generates a
-small binary delta file that can later be used by pristine-bz2 genbz2
+pristine-bz2 gendelta takes the specified I<bz2> file, and generates a
+small binary I<delta> file that can later be used by pristine-bz2 genbz2
 to recreate the original file.
 
-pristine-bz2 genbz2 takes the specified delta file, and compresses the
-specified input file (which must be identical to the contents of the
-original bz2 file). The resulting bz2 file will be identical to the
-original bz2 file.
+pristine-bz2 genbz2 takes the specified I<delta> file, and compresses the
+specified input I<file> (which must be identical to the contents of the
+original bz2 file). The resulting file will be identical to
+the original gz file used to create the delta.
 
 The approach used to regenerate the original bz2 file is to figure out
 how it was produced -- what compression level was used, whether it was
@@ -88,8 +88,8 @@ my $debug=0;
 my $keep=0;
 
 sub usage {
-	print STDERR "Usage: pristine-bz2 [-vdk] genbz2 delta file\n";
-	print STDERR "       pristine-bz2 [-vdk] gendelta file.bz2 delta\n";
+	print STDERR "Usage: pristine-bz2 [-vdk] gendelta file.bz2 delta\n";
+	print STDERR "       pristine-bz2 [-vdk] genbz2 delta file\n";
 }
 
 sub debug {

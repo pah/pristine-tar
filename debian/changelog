@@ -1,3 +1,10 @@
+pristine-tar (1.01) UNRELEASED; urgency=low
+
+  * Use italics in man pages to highlight which parts of command
+    lines are file names. Closes: #561015
+
+ -- Joey Hess <joeyh@debian.org>  Mon, 14 Dec 2009 14:07:44 -0500
+
 pristine-tar (1.00) unstable; urgency=low
 
   * pristine-gz: Fall back to storing a binary delta, in the rare
