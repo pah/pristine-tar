@@ -14,3 +14,5 @@
 * Optimisation: Enhance zgz so it runs multiple compression alternatives
   block-by-block in parallell, aborting compressors when they differ
   from the target file.
+
+* Add binary deltas for unreproducible bz2 files.
