@@ -2,3 +2,6 @@ I store entire tarballs here that pristine-tar currently fails to
 reproduce, and the Makefile tests them. I don't want to lose track of any
 negative test cases like these. Perhaps in the future, this can also be
 used as a regression test suite..
+
+The testexternal target can be called to test a set of externally-provided
+tarballs. I use this to test against the entire Debian source archive, etc.
