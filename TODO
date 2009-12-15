@@ -1,4 +1,4 @@
-* Investigate gz files that zgz cannot reproduce. Such files are stored
+* Investigate files that the programs cannot reproduce. Such files are stored
   in the testsuite git branch.
 
 * Would be nice to keep a md5sums list of the files in the manifest and
