@@ -3,6 +3,7 @@ pristine-tar (1.01) UNRELEASED; urgency=low
   * Use italics in man pages to highlight which parts of command
     lines are file names. Closes: #561015
   * Added an example. Closes: #561016
+  * Document TMPDIR in man pages. Closes: #558266
 
  -- Joey Hess <joeyh@debian.org>  Mon, 14 Dec 2009 14:07:44 -0500
 

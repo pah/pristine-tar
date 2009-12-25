@@ -145,6 +145,16 @@ Currently only the git revision control system is supported by the
 is not clean or has uncommitted changes, or has changes staged in the
 index; none of that will be touched by "checkout" or "commit".
 
+=head1 ENVIRONMENT
+
+=over 4
+
+=item B<TMPDIR>
+
+Specifies a location to place temporary files, other than the default.
+
+=back
+
 =head1 AUTHOR
 
 Joey Hess <joeyh@debian.org>
