@@ -1,11 +1,11 @@
-pristine-tar (1.01) UNRELEASED; urgency=low
+pristine-tar (1.01) unstable; urgency=low
 
   * Use italics in man pages to highlight which parts of command
     lines are file names. Closes: #561015
   * Added an example. Closes: #561016
   * Document TMPDIR in man pages. Closes: #558266
 
- -- Joey Hess <joeyh@debian.org>  Mon, 14 Dec 2009 14:07:44 -0500
+ -- Joey Hess <joeyh@debian.org>  Fri, 05 Feb 2010 16:41:07 -0500
 
 pristine-tar (1.00) unstable; urgency=low
 
