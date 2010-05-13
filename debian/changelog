@@ -1,5 +1,10 @@
 pristine-tar (1.02) UNRELEASED; urgency=low
 
+  * zgz now includes a trimmed down copy of the compressor from bzip2 0.9.5d.
+    That old version of bzip2 generated different compression results,
+    and is the overwhelming reason for failures to reproduce bz2 files
+    in the Debian archive. Closes: #560170, #579657, #525128, #576119
+    (Special thanks to Laszlo Ersek for tracking this down.)
   * Faster generation of bzip2 deltas: Do not repeatedly decompress
     input file.
   * pristine-bz2 -t can be used to make it try harder to generate
