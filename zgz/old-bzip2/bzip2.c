@@ -167,11 +167,9 @@ void compressStream ( FILE *stream, FILE *zStream )
    /*notreached*/
 }
 
-int main () {
-	/* tunables */
-	workFactor              = 30;
-	blockSize100k 		= 9;
+void old_bzip2(int level) {
+	workFactor = 30;
+	blockSize100k = level;
 
 	compressStream(stdin, stdout);
-	exit(0);
 }

@@ -10,9 +10,12 @@
  * reproduce the gzips out there and removes features of the original
  * implementation that were not relevant (e.g. decompression)
  *
+ * It also has a mode to generate old bzip2 files.
+ *
  * Copyright (c) 1997, 1998, 2003, 2004, 2006 Matthew R. Green
  * Copyright (c) 2007 Faidon Liambotis
  * Copyright (c) 2008 Josh Triplett
+ * Copyright (c) 2010 Joey Hess
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -70,6 +73,7 @@
 #include <time.h>
 
 extern void gnuzip(int in, int out, char *origname, unsigned long timestamp, int level, int osflag, int rsync);
+extern void old_bzip2(int level);
 
 #define BUFLEN		(64 * 1024)
 
@@ -147,6 +151,7 @@ static const struct option longopts[] = {
 	{ "ascii",		no_argument,		0,	'a' },
 	/* new options */
 	{ "gnu",                no_argument,            0,      'G' },
+	{ "old-bzip2",          no_argument,            0,      'O' },
 	{ "zlib",               no_argument,            0,      'Z' },
 	{ "rsyncable",          no_argument,            0,      'R' },
 	{ "no-timestamp",	no_argument,		0,	'm' },
@@ -167,6 +172,7 @@ main(int argc, char **argv)
 {
 	const char *progname = argv[0];
 	int gnu = 0;
+	int bzold = 0;
 	char *origname = NULL;
 	uint32_t timestamp = 0;
 	int nflag = 0;
@@ -193,9 +199,10 @@ main(int argc, char **argv)
 		case 'G':
 			gnu = 1;
 			break;
+		case 'O':
+			bzold = 1;
+			break;
 		case 'Z':
-			if (gnu)
-				fprintf(stderr, "%s: Both --gnu and --zlib given; using --gnu\n", progname);
 			break;
 		case '1': case '2': case '3':
 		case '4': case '5': case '6':
@@ -303,6 +310,12 @@ main(int argc, char **argv)
 			return 1;
 		}
 		gnuzip(STDIN_FILENO, STDOUT_FILENO, origname, timestamp, level, osflag, rsync);
+	} else if (bzold) {
+		if (ntfs_quirk || xflag >= 0) {
+			fprintf(stderr, "%s: quirks not supported with --old-bzip\n", progname);
+			return 1;
+		}
+		old_bzip2(level);
 	} else {
 		if (rsync) {
 			fprintf(stderr, "%s: --rsyncable not supported with --zlib\n", progname);
