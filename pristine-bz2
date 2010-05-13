@@ -189,9 +189,10 @@ sub testvariant {
 	my ($old, $tmpin, $bzip2_program, @args) = @_;
 
 	# some compressors eat the uncompressed file, some
-	# do not; restore as needed
+	# do not; restore as needed. (Note that file name,
+	# mode, mtime do not matter to bzip2.)
 	if (! -e $tmpin) {
-		doit("cp", "-a", "$tmpin.bak", "$tmpin");
+		doit("cp", "$tmpin.bak", "$tmpin");
 	}
 
 	my $new=$tmpin.'.bz2';
