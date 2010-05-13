@@ -8,7 +8,6 @@ OBJS= blocksort.o  \
       crctable.o   \
       randtable.o  \
       compress.o   \
-      decompress.o \
       bzlib.o
 
 all: libbz2.a bzip2 bzip2recover test
