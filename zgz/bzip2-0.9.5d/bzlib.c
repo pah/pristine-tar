@@ -80,27 +80,6 @@
 /*--- Compression stuff                           ---*/
 /*---------------------------------------------------*/
 
-
-/*---------------------------------------------------*/
-#ifndef BZ_NO_STDIO
-void bz__AssertH__fail ( int errcode )
-{
-   fprintf(stderr, 
-      "\n\nbzip2/libbzip2, v0.9.5d: internal error number %d.\n"
-      "This is a bug in bzip2/libbzip2, v0.9.5d.  Please report\n"
-      "it to me at: jseward@acm.org.  If this happened when\n"
-      "you were using some program which uses libbzip2 as a\n"
-      "component, you should also report this bug to the author(s)\n"
-      "of that program.  Please make an effort to report this bug;\n"
-      "timely and accurate bug reports eventually lead to higher\n"
-      "quality software.  Thanks.  Julian Seward, 4 Sept 1999.\n\n",
-      errcode
-   );
-   exit(3);
-}
-#endif
-
-
 /*---------------------------------------------------*/
 static
 void* default_bzalloc ( void* opaque, Int32 items, Int32 size )
@@ -504,16 +483,6 @@ typedef
    bzFile;
 
 
-/*---------------------------------------------*/
-static Bool myfeof ( FILE* f )
-{
-   Int32 c = fgetc ( f );
-   if (c == EOF) return True;
-   ungetc ( c, f );
-   return False;
-}
-
-
 /*---------------------------------------------------*/
 BZFILE* BZ_API(bzWriteOpen) 
                     ( int*  bzerror,      
@@ -660,140 +629,6 @@ void BZ_API(bzWriteClose)
    BZ_SETERR(BZ_OK);
    bzCompressEnd ( &(bzf->strm) );
    free ( bzf );
-}
-
-
-/*---------------------------------------------------*/
-BZFILE* BZ_API(bzReadOpen) 
-                   ( int*  bzerror, 
-                     FILE* f, 
-                     int   verbosity,
-                     int   small,
-                     void* unused,
-                     int   nUnused )
-{
-   bzFile* bzf = NULL;
-   int     ret;
-
-   BZ_SETERR(BZ_OK);
-
-   if (f == NULL || 
-       (small != 0 && small != 1) ||
-       (verbosity < 0 || verbosity > 4) ||
-       (unused == NULL && nUnused != 0) ||
-       (unused != NULL && (nUnused < 0 || nUnused > BZ_MAX_UNUSED)))
-      { BZ_SETERR(BZ_PARAM_ERROR); return NULL; };
-
-   if (ferror(f))
-      { BZ_SETERR(BZ_IO_ERROR); return NULL; };
-
-   bzf = malloc ( sizeof(bzFile) );
-   if (bzf == NULL) 
-      { BZ_SETERR(BZ_MEM_ERROR); return NULL; };
-
-   BZ_SETERR(BZ_OK);
-
-   bzf->initialisedOk = False;
-   bzf->handle        = f;
-   bzf->bufN          = 0;
-   bzf->writing       = False;
-   bzf->strm.bzalloc  = NULL;
-   bzf->strm.bzfree   = NULL;
-   bzf->strm.opaque   = NULL;
-   
-   while (nUnused > 0) {
-      bzf->buf[bzf->bufN] = *((UChar*)(unused)); bzf->bufN++;
-      unused = ((void*)( 1 + ((UChar*)(unused))  ));
-      nUnused--;
-   }
-
-   ret = bzDecompressInit ( &(bzf->strm), verbosity, small );
-   if (ret != BZ_OK)
-      { BZ_SETERR(ret); free(bzf); return NULL; };
-
-   bzf->strm.avail_in = bzf->bufN;
-   bzf->strm.next_in  = bzf->buf;
-
-   bzf->initialisedOk = True;
-   return bzf;   
-}
-
-
-/*---------------------------------------------------*/
-void BZ_API(bzReadClose) ( int *bzerror, BZFILE *b )
-{
-   bzFile* bzf = (bzFile*)b;
-
-   BZ_SETERR(BZ_OK);
-   if (bzf == NULL)
-      { BZ_SETERR(BZ_OK); return; };
-
-   if (bzf->writing)
-      { BZ_SETERR(BZ_SEQUENCE_ERROR); return; };
-
-   if (bzf->initialisedOk)
-      (void)bzDecompressEnd ( &(bzf->strm) );
-   free ( bzf );
-}
-
-
-/*---------------------------------------------------*/
-int BZ_API(bzRead) 
-           ( int*    bzerror, 
-             BZFILE* b, 
-             void*   buf, 
-             int     len )
-{
-   Int32   n, ret;
-   bzFile* bzf = (bzFile*)b;
-
-   BZ_SETERR(BZ_OK);
-
-   if (bzf == NULL || buf == NULL || len < 0)
-      { BZ_SETERR(BZ_PARAM_ERROR); return 0; };
-
-   if (bzf->writing)
-      { BZ_SETERR(BZ_SEQUENCE_ERROR); return 0; };
-
-   if (len == 0)
-      { BZ_SETERR(BZ_OK); return 0; };
-
-   bzf->strm.avail_out = len;
-   bzf->strm.next_out = buf;
-
-   while (True) {
-
-      if (ferror(bzf->handle)) 
-         { BZ_SETERR(BZ_IO_ERROR); return 0; };
-
-      if (bzf->strm.avail_in == 0 && !myfeof(bzf->handle)) {
-         n = fread ( bzf->buf, sizeof(UChar), 
-                     BZ_MAX_UNUSED, bzf->handle );
-         if (ferror(bzf->handle))
-            { BZ_SETERR(BZ_IO_ERROR); return 0; };
-         bzf->bufN = n;
-         bzf->strm.avail_in = bzf->bufN;
-         bzf->strm.next_in = bzf->buf;
-      }
-
-      ret = bzDecompress ( &(bzf->strm) );
-
-      if (ret != BZ_OK && ret != BZ_STREAM_END)
-         { BZ_SETERR(ret); return 0; };
-
-      if (ret == BZ_OK && myfeof(bzf->handle) && 
-          bzf->strm.avail_in == 0 && bzf->strm.avail_out > 0)
-         { BZ_SETERR(BZ_UNEXPECTED_EOF); return 0; };
-
-      if (ret == BZ_STREAM_END)
-         { BZ_SETERR(BZ_STREAM_END);
-           return len - bzf->strm.avail_out; };
-      if (bzf->strm.avail_out == 0)
-         { BZ_SETERR(BZ_OK); return len; };
-      
-   }
-
-   return 0; /*not reached*/
 }
 
 
