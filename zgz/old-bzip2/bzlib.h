@@ -4,6 +4,9 @@
 /*---                                               bzlib.h ---*/
 /*-------------------------------------------------------------*/
 
+/* This has been heavily hacked to be part of zgz. Decompression
+ * support has been ripped out. */
+
 /*--
   This file is a part of bzip2 and/or libbzip2, a program and
   library for lossless, block-sorting data compression.

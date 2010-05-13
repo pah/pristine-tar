@@ -39,6 +39,9 @@
   jseward@acm.org
   bzip2/libbzip2 version 0.9.5 of 24 May 1999
 
+  (Now heavily hacked to be part of zgz; decompression and
+  portability ripped out.)
+
   This program is based on (at least) the work of:
      Mike Burrows
      David Wheeler
