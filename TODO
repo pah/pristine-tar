@@ -16,3 +16,9 @@
   from the target file.
 
 * Add binary deltas for unreproducible bz2 files.
+
+* Support checkout/checkin using other VCS than git.
+
+  bzr-builddeb stores pristine-tar data in bzr repositories.
+  The delta is stored in a bzr revprop named "deb-pristine-delta"
+  or "deb-pristine-delta-bz2".
