@@ -9,7 +9,7 @@ B<zgz> [options] < file > file.gz
 =head1 DESCRIPTION
 
 This program is an unholy combination of the BSD gzip program, a modified
-GNU L<gzip>(1) that supports setting an arbitrary file name and timestamp,
+GNU gzip that supports setting an arbitrary file name and timestamp,
 and an old, rotting version of bzip2 that we dug up somewhere at midnight.
 Only the bits to do with file compression were kept.
 
