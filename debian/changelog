@@ -5,6 +5,7 @@ pristine-tar (1.02) unstable; urgency=low
     and is the overwhelming reason for failures to reproduce bz2 files
     in the Debian archive. Closes: #560170, #579657, #525128, #576119
     (Special thanks to Laszlo Ersek for tracking this down.)
+  * Awesome new zgz man page!
   * Faster generation of bzip2 deltas: Do not repeatedly decompress
     input file.
   * pristine-bz2 -t can be used to make it try harder to generate
