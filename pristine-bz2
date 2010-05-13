@@ -226,6 +226,10 @@ sub reproducebzip2 {
 			&& return $program, @args;
 	}
 
+	# 7z has a weird syntax, not supported yet, as not seen in the wild
+	#testvariant($orig, $tmpin, "7z", "-mx$level", "a", "$tmpin.bz2")
+	#	&& return "7z", "-mx$level", "a" ; # XXX need to include outfile
+
 	# pbzip2 -b option affects output, but cannot be detected from a 
 	# header.
 	if ($try) {
