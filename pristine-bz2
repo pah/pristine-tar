@@ -81,6 +81,7 @@ use strict;
 use File::Temp;
 use Getopt::Long;
 use File::Basename qw/basename/;
+use IPC::Open2;
 
 use constant BZIP2_DEBUG	 => 1;
 
@@ -115,6 +116,16 @@ sub doit {
 	if (system(@_) != 0) {
 		die "command failed: @_\n";
 	}
+}
+
+sub doit_redir {
+	no warnings 'once';
+	my ($in, $out, @args) = @_;
+	vprint(@args, "<", $in, ">", $out);
+	open INFILE, "<", $in or die("Could not open '$in' for reading: $!\n");
+	open OUTFILE, ">", $out or die("Could not open '$out' for reading: $!\n");
+	my $pid = open2(">&OUTFILE", "<&INFILE", @args);
+	waitpid $pid, 0;
 }
 
 sub tempdir {
@@ -169,36 +180,27 @@ sub comparefiles {
 }
 
 sub testvariant {
-	my ($old, $new, $bzip2_program, @args) = @_;
-
-	# Unzip attempt of the previous run (or the original on the first run)
-	doit('bunzip2', $new);
-	if (-e $new) {
-		die "bunzip2 failed, aborting";
-	}
-	else {
-		$new =~ s/\.bz2$//;
-		unless (-e $new) {
-			die("bunzip2 succeeded but I can't find the new file");
-		}
-	}
+	my ($old, $tmpin, $bzip2_program, @args) = @_;
 
 	# try bzip2'ing with the arguments passed
-	doit($bzip2_program, @args, $new);
-	$new .= '.bz2';
-	unless (-e $new) {
+	doit($bzip2_program, @args, $tmpin);
+	$tmpin .= '.bz2';
+	unless (-e $tmpin) {
 		die("$bzip2_program failed, aborting");
 	}
 
 	# and compare the generated with the original
-	return !comparefiles($old, $new);
+	return !comparefiles($old, $tmpin);
 }
 
 sub reproducebzip2 {
-	my ($wd, $orig, $new) = (shift, shift, shift);
+	my ($wd, $orig) = (shift, shift);
+	
+	my $tmpin="$wd/test";
+	doit_redir($orig, "$tmpin.bak", "bzip2", "-dc");
 
 	# read fields from bzip2 headers
-	my ($level) = readbzip2($new);
+	my ($level) = readbzip2($orig);
 	debug("level: $level");
 
 	# try to guess the bzip2 arguments that are needed by the
@@ -206,7 +208,14 @@ sub reproducebzip2 {
 	my @args = predictbzip2args($level);
 
 	foreach my $program (@supported_bzip2_programs) {
-		testvariant($orig, $new, $program, @args)
+		# some compressors eat the uncompressed file, some
+		# do not; restore as needed
+		if (! -e $tmpin) {
+			doit("cp", "-a", "$tmpin.bak", "$tmpin");
+
+		}
+
+		testvariant($orig, $tmpin, $program, @args)
 			&& return $program, @args;
 	}
 	# More to come?
@@ -291,9 +300,8 @@ sub gendelta {
 
 	my @files=qw(version type params program);
 
-	doit("cp", $bzip2file, "$tempdir/test.bz2");
 	my ($program, @params)=
-		reproducebzip2($tempdir, $bzip2file, "$tempdir/test.bz2");
+		reproducebzip2($tempdir, $bzip2file);
 
 	open(OUT, ">", "$tempdir/version") || die "$!";
 	print OUT "2.0\n";
