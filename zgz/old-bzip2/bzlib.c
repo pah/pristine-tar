@@ -754,7 +754,6 @@ BZFILE * bzopen_or_bzdopen
                  int open_mode)      /* bzopen: 0, bzdopen:1 */
 {
    int    bzerr;
-   char   unused[BZ_MAX_UNUSED];
    int    blockSize100k = 9;
    int    writing       = 0;
    char   mode2[10]     = "";
@@ -763,7 +762,6 @@ BZFILE * bzopen_or_bzdopen
    int    verbosity     = 0;
    int    workFactor    = 30;
    int    smallMode     = 0;
-   int    nUnused       = 0; 
 
    if (mode == NULL) return NULL;
    while (*mode) {
