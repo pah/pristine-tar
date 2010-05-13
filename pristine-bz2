@@ -54,11 +54,11 @@ Debug mode.
 
 Don't clean up the temporary directory on exit.
 
-=back
-
 =item -t
 
 Try harder to determine how to generate deltas of difficult bz2 files.
+
+=back
 
 =head1 ENVIRONMENT
 

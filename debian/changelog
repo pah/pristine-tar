@@ -1,4 +1,4 @@
-pristine-tar (1.02) UNRELEASED; urgency=low
+pristine-tar (1.02) unstable; urgency=low
 
   * zgz now includes a trimmed down copy of the compressor from bzip2 0.9.5d.
     That old version of bzip2 generated different compression results,
@@ -12,7 +12,7 @@ pristine-tar (1.02) UNRELEASED; urgency=low
     Not the default because it's slow and I don't have any bzip2 files
     from the wild that were built that way.
 
- -- Joey Hess <joeyh@debian.org>  Wed, 12 May 2010 21:12:58 -0400
+ -- Joey Hess <joeyh@debian.org>  Thu, 13 May 2010 02:19:32 -0400
 
 pristine-tar (1.01) unstable; urgency=low
 
