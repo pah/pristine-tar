@@ -8,10 +8,10 @@ B<zgz> [options] < file > file.gz
 
 =head1 DESCRIPTION
 
-This program is an unholy combination of the BSD gzip program (using libz for
-compression), a modified GNU L<gzip>(1) that supports setting an arbitrary file
-name and timestamp, and an old, rotting version of bzip2 that we dug up
-somewhere at midnight. Only the bits to do with file compression were kept.
+This program is an unholy combination of the BSD gzip program, a modified
+GNU L<gzip>(1) that supports setting an arbitrary file name and timestamp,
+and an old, rotting version of bzip2 that we dug up somewhere at midnight.
+Only the bits to do with file compression were kept.
 
 There are many arcane options which aid L<pristine-gz>(1) in re-animating
 files. Use --help to see all the gory details.
