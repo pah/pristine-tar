@@ -88,7 +88,7 @@ extern void old_bzip2(int level);
 #define GZIP_OS_UNIX	3	/* Unix */
 #define GZIP_OS_NTFS	11	/* NTFS */
 
-static	const char	gzip_version[] = "zgz 20081211 based on NetBSD gzip 20060927 and GNU gzip 1.3.12";
+static	const char	gzip_version[] = "zgz 20100613 based on NetBSD gzip 20060927, GNU gzip 1.3.12, and bzip2 0.9.5d";
 
 static	const char	gzip_copyright[] = \
 " Authors: Faidon Liambotis <paravoid@debian.org>\n"

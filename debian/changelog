@@ -1,4 +1,4 @@
-pristine-tar (1.02) unstable; urgency=low
+pristine-tar (1.03) unstable; urgency=low
 
   * zgz now includes a trimmed down copy of the compressor from bzip2 0.9.5d.
     That old version of bzip2 generated different compression results,
