@@ -2,6 +2,10 @@ pristine-tar (1.02) UNRELEASED; urgency=low
 
   * Faster generation of bzip2 deltas: Do not repeatedly decompress
     input file.
+  * pristine-bz2 -t can be used to make it try harder to generate
+    a delta. Currently, this tries pbzip2 -b with various numbers.
+    Not the default because it's slow and I don't have any bzip2 files
+    from the wild that were built that way.
 
  -- Joey Hess <joeyh@debian.org>  Wed, 12 May 2010 21:12:58 -0400
 

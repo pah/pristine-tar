@@ -56,6 +56,10 @@ Don't clean up the temporary directory on exit.
 
 =back
 
+=item -t
+
+Try harder to determine how to generate deltas of difficult bz2 files.
+
 =head1 ENVIRONMENT
 
 =over 4
@@ -82,6 +86,7 @@ use File::Temp;
 use Getopt::Long;
 use File::Basename qw/basename/;
 use IPC::Open2;
+use IO::Handle;
 
 use constant BZIP2_DEBUG	 => 1;
 
@@ -97,10 +102,11 @@ my @supported_bzip2_programs = qw(bzip2 pbzip2);
 my $verbose=0;
 my $debug=0;
 my $keep=0;
+my $try=0;
 
 sub usage {
-	print STDERR "Usage: pristine-bz2 [-vdk] gendelta file.bz2 delta\n";
-	print STDERR "       pristine-bz2 [-vdk] genbz2 delta file\n";
+	print STDERR "Usage: pristine-bz2 [-vdkt] gendelta file.bz2 delta\n";
+	print STDERR "       pristine-bz2 [-vdkt] genbz2 delta file\n";
 }
 
 sub debug {
@@ -182,15 +188,23 @@ sub comparefiles {
 sub testvariant {
 	my ($old, $tmpin, $bzip2_program, @args) = @_;
 
+	# some compressors eat the uncompressed file, some
+	# do not; restore as needed
+	if (! -e $tmpin) {
+		doit("cp", "-a", "$tmpin.bak", "$tmpin");
+	}
+
+	my $new=$tmpin.'.bz2';
+	unlink($new);
+
 	# try bzip2'ing with the arguments passed
 	doit($bzip2_program, @args, $tmpin);
-	$tmpin .= '.bz2';
-	unless (-e $tmpin) {
+	unless (-e $new) {
 		die("$bzip2_program failed, aborting");
 	}
 
 	# and compare the generated with the original
-	return !comparefiles($old, $tmpin);
+	return !comparefiles($old, $new);
 }
 
 sub reproducebzip2 {
@@ -208,17 +222,31 @@ sub reproducebzip2 {
 	my @args = predictbzip2args($level);
 
 	foreach my $program (@supported_bzip2_programs) {
-		# some compressors eat the uncompressed file, some
-		# do not; restore as needed
-		if (! -e $tmpin) {
-			doit("cp", "-a", "$tmpin.bak", "$tmpin");
-
-		}
-
 		testvariant($orig, $tmpin, $program, @args)
 			&& return $program, @args;
 	}
-	# More to come?
+
+	# pbzip2 -b option affects output, but cannot be detected from a 
+	# header.
+	if ($try) {
+		print STDERR "pristine-bz2 will have to try especially hard to reproduce $orig\n";
+		print STDERR "(This could take a long time.)\n";
+		my %tried;
+		$tried{9}=1; # default
+ 		# Try searching for likely candidates first, and fill in.
+		# It could go higher than 100, but have to stop somewhere.
+		STDERR->autoflush(1);
+		foreach my $try (1..10, 
+		                 15, 20, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95,
+				 1..100) {
+			next if $tried{$try};
+			$tried{$try}=1;
+			print STDERR "\r\tblock size: $try   ";
+			testvariant($orig, $tmpin, "pbzip2", "-b${try}", @args) &&
+				return "pbzip2", "-b${try}", @args;
+		}
+		print STDERR "\n";
+	}
 
 	print STDERR "pristine-bz2 failed to reproduce build of $orig\n";
 	print STDERR "(Please file a bug report.)\n";
@@ -328,6 +356,7 @@ if (! GetOptions(
 	"v|verbose!" => \$verbose,
 	"d|debug!" => \$debug,
 	"k|keep!" => \$keep,
+	"t|try!" => \$try,
    ) || @ARGV != 3) {
 	usage();
 	exit 1;
