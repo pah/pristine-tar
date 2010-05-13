@@ -97,7 +97,7 @@ use constant BZIP2_ID2		 => 0x5a;
 # compression methods, 'h' for Bzip2 ('H'uffman coding), '0' for Bzip1 (deprecated)
 use constant BZIP2_METHOD_HUFFMAN => 0x68;
 
-my @supported_bzip2_programs = qw(bzip2 pbzip2);
+my @supported_bzip2_programs = qw(bzip2 pbzip2 zgz);
 
 my $verbose=0;
 my $debug=0;
@@ -165,11 +165,14 @@ sub readbzip2 {
 }
 
 sub predictbzip2args {
-	my ($level) = @_;
+	my ($level, $program) = @_;
 
-	# Need anything else?
 	my @args;
 	push @args, "-$level";
+
+	if ($program eq 'zgz') {
+		push @args, '--old-bzip2';
+	}
 
 	return @args;
 }
@@ -199,7 +202,12 @@ sub testvariant {
 	unlink($new);
 
 	# try bzip2'ing with the arguments passed
-	doit($bzip2_program, @args, $tmpin);
+	if ($bzip2_program ne 'zgz') {
+		doit($bzip2_program, @args, $tmpin);
+	}
+	else {
+		doit_redir($tmpin, $new, $bzip2_program, @args);
+	}
 	unless (-e $new) {
 		die("$bzip2_program failed, aborting");
 	}
@@ -218,11 +226,11 @@ sub reproducebzip2 {
 	my ($level) = readbzip2($orig);
 	debug("level: $level");
 
-	# try to guess the bzip2 arguments that are needed by the
-	# header information
-	my @args = predictbzip2args($level);
-
 	foreach my $program (@supported_bzip2_programs) {
+		# try to guess the bzip2 arguments that are needed by the
+		# header information
+		my @args = predictbzip2args($level, $program);
+
 		testvariant($orig, $tmpin, $program, @args)
 			&& return $program, @args;
 	}
@@ -234,6 +242,7 @@ sub reproducebzip2 {
 	# pbzip2 -b option affects output, but cannot be detected from a 
 	# header.
 	if ($try) {
+		my @args = predictbzip2args($level, "pbzip2");
 		print STDERR "pristine-bz2 will have to try especially hard to reproduce $orig\n";
 		print STDERR "(This could take a long time.)\n";
 		my %tried;
@@ -313,9 +322,13 @@ sub genbz2 {
 	}
 	close IN;
 
-	# compress only
-	doit($program, @params, $file);
-	# with other bzip2 programs, the original might stay, making sure
+	if ($program eq 'zgz') {
+		# unlike bzip2, zgz only uses sdio
+		doit_redir($file, "$file.bz2", $program, @params);
+	}
+	else {
+		doit($program, @params, $file);
+	}
 	doit("rm", "-f", $file);
 }
 
