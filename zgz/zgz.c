@@ -192,7 +192,7 @@ main(int argc, char **argv)
 		usage();
 	}
 
-#define OPT_LIST "123456789acdfhF:GLNnMmqRrT:Vo:k:s:Z"
+#define OPT_LIST "123456789acdfhF:GLNnMmqRrT:Vo:k:s:ZO"
 
 	while ((ch = getopt_long(argc, argv, OPT_LIST, longopts, NULL)) != -1) {
 		switch (ch) {
@@ -496,6 +496,7 @@ usage(void)
     "usage: zgz [-" OPT_LIST "] < <file> > <file>\n"
     " -G --gnu                 use GNU gzip implementation\n"
     " -Z --zlib                use zlib's implementation (default)\n"
+    " -O --old-bzip2           generate bzip2 (0.9.5d) output\n"
     " -1 --fast                fastest (worst) compression\n"
     " -2 .. -8                 set compression level\n"
     " -9 --best                best (slowest) compression\n"
