@@ -75,6 +75,10 @@
 
 #include "bzlib_private.h"
 
+void bz__AssertH__fail ( int errcode ) {
+	fprintf(stderr, "bzip2 compressor internal error\n");
+	exit(1);
+}
 
 /*---------------------------------------------------*/
 /*--- Compression stuff                           ---*/
@@ -711,59 +715,6 @@ int BZ_API(bzBuffToBuffCompress)
 
 
 /*---------------------------------------------------*/
-int BZ_API(bzBuffToBuffDecompress) 
-                           ( char*         dest, 
-                             unsigned int* destLen,
-                             char*         source, 
-                             unsigned int  sourceLen,
-                             int           small,
-                             int           verbosity )
-{
-   bz_stream strm;
-   int ret;
-
-   if (dest == NULL || destLen == NULL || 
-       source == NULL ||
-       (small != 0 && small != 1) ||
-       verbosity < 0 || verbosity > 4) 
-          return BZ_PARAM_ERROR;
-
-   strm.bzalloc = NULL;
-   strm.bzfree = NULL;
-   strm.opaque = NULL;
-   ret = bzDecompressInit ( &strm, verbosity, small );
-   if (ret != BZ_OK) return ret;
-
-   strm.next_in = source;
-   strm.next_out = dest;
-   strm.avail_in = sourceLen;
-   strm.avail_out = *destLen;
-
-   ret = bzDecompress ( &strm );
-   if (ret == BZ_OK) goto output_overflow_or_eof;
-   if (ret != BZ_STREAM_END) goto errhandler;
-
-   /* normal termination */
-   *destLen -= strm.avail_out;
-   bzDecompressEnd ( &strm );
-   return BZ_OK;
-
-   output_overflow_or_eof:
-   if (strm.avail_out > 0) {
-      bzDecompressEnd ( &strm );
-      return BZ_UNEXPECTED_EOF;
-   } else {
-      bzDecompressEnd ( &strm );
-      return BZ_OUTBUFF_FULL;
-   };      
-
-   errhandler:
-   bzDecompressEnd ( &strm );
-   return ret; 
-}
-
-
-/*---------------------------------------------------*/
 /*--
    Code contributed by Yoshioka Tsuneo
    (QWF00133@niftyserve.or.jp/tsuneo-y@is.aist-nara.ac.jp),
@@ -854,8 +805,6 @@ BZFILE * bzopen_or_bzdopen
       if (blockSize100k < 1) blockSize100k = 1;
       if (blockSize100k > 9) blockSize100k = 9; 
       bzfp = bzWriteOpen(&bzerr,fp,blockSize100k,verbosity,workFactor);
-   } else {
-      bzfp = bzReadOpen(&bzerr,fp,verbosity,smallMode,unused,nUnused);
    }
    if (bzfp == NULL) {
       if (fp != stdin && fp != stdout) fclose(fp);
@@ -885,20 +834,6 @@ BZFILE * BZ_API(bzdopen)
                  const char *mode )
 {
    return bzopen_or_bzdopen(NULL,fd,mode,/*bzdopen*/1);
-}
-
-
-/*---------------------------------------------------*/
-int BZ_API(bzread) (BZFILE* b, void* buf, int len )
-{
-   int bzerr, nread;
-   if (((bzFile*)b)->lastErr == BZ_STREAM_END) return 0;
-   nread = bzRead(&bzerr,b,buf,len);
-   if (bzerr == BZ_OK || bzerr == BZ_STREAM_END) {
-      return nread;
-   } else {
-      return -1;
-   }
 }
 
 
@@ -936,8 +871,6 @@ void BZ_API(bzclose) (BZFILE* b)
       if(bzerr != BZ_OK){
          bzWriteClose(NULL,b,1,NULL,NULL);
       }
-   }else{
-      bzReadClose(&bzerr,b);
    }
    if(fp!=stdin && fp!=stdout){
       fclose(fp);
