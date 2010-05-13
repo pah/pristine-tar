@@ -309,6 +309,7 @@ sub genbz2 {
 	while (@params) {
 		$_=shift @params;
 		next if /^(-[1-9])$/;
+		next if $_ eq '--old-bzip2';
 		die "paranoia check failed on params file from delta ($params)";
 	}
 	@params=split(' ', $params);
