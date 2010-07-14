@@ -14,12 +14,8 @@ manifest
 delta
 	xdelta between the generated tarball and the original tarball.
 wrapper
-	Encapsulated delta file for the .gz (or other) wrapper for the
+	Encapsulated delta file for the .gz or .bz2 wrapper for the
 	tarball. Optional, if not present a pristine .gz won't be generated.
-
-wrapper-bz2
-	Might be replaced with "wrapper" once the experimental bzip2
-	imeplementation reviewed.
 
 
 For gz files, wrapper contains:
@@ -39,10 +35,14 @@ delta
 For bzip2 files the wrapper contains:
 
 params
-	Currently, only the compression level is detected (4th byte of the
+	Typically, only the compression level is needed (4th byte of the
 	compressed file), and its matching parameter stored: -N.
+	In some cases a -bN parameter is detected and stored.
 
 program
 	Program used to compress. Almost everytime, it is bzip2 (or another
 	implementation producing bit-identical results). pbzip2 might also be
-	detected, but several parameters might interfere (-r, -bN, -pN).
+	detected, but several parameters might interfere (-r, -pN).
+
+	It may also be zgz (the params will include --old-bzip2 in this
+	case.)
