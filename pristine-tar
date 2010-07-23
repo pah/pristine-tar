@@ -201,17 +201,20 @@ sub usage {
 }
 
 sub recreatetarball {
-	my $tempdir=shift;
+	my $manifestfile=shift;
 	my $source=shift;
 	my %options=@_;
 	
+	my $tempdir=tempdir();
+
 	my @manifest;
-	open (IN, "$tempdir/manifest") || die "$tempdir/manifest: $!";
+	open (IN, "<", $manifestfile) || die "$manifestfile: $!";
 	while (<IN>) {
 		chomp;
 		push @manifest, $_;
 	}
 	close IN;
+	link($manifestfile, "$tempdir/manifest") || die "link $tempdir/manifest: $!";
 
 	# The manifest and source should have the same filenames,
 	# but the manifest probably has all the files under a common
@@ -320,68 +323,41 @@ sub recreatetarball {
 }
 
 sub gentar {
-	my $delta=shift;
+	my $deltafile=shift;
 	my $tarball=shift;
 	my %opts=@_;
 
-	my $tempdir=tempdir();
-	
-	if ($delta eq "-") {
-		$delta="$tempdir/in";
-		open (OUT, ">", $delta) || die "$delta: $!";
-		while (<STDIN>) {
-			print OUT $_;
-		}
-		close OUT;
-	}
+	my $delta=Pristine::Tar::Delta::read($deltafile);
+	Pristine::Tar::Delta::assert($delta, type => "tar", maxversion => 2,
+		minversion => 2, fields => [qw{manifest delta}]);
 
-	doit("tar", "xf", File::Spec->rel2abs($delta), "-C", $tempdir);
-	if (! -e "$tempdir/type") {
-		error "failed to gentar delta $delta";
-	}
+	my $recreatetarball=recreatetarball($delta->{manifest}, getcwd, clobber_source => 0, %opts);
+	my $out=(defined $delta->{wrapper}
+		? tempdir()."/".basename($tarball).".tmp"
+		: $tarball);
+	doit("xdelta", "patch", $delta->{delta}, $recreatetarball, $out);
 
-	open (IN, "$tempdir/version") || error "delta lacks version number ($!)";
-	my $version=<IN>;
-	if ($version >= 3 || $version < 2) {
-		error "delta is version $version, not supported";
-	}
-	close IN;
-	if (open (IN, "$tempdir/type")) {
-		my $type=<IN>;
-		chomp $type;
-		if ($type ne "tar") {
-			error "delta is for a $type, not a tar";
-		}
-		close IN;
-	}
-
-	my $recreatetarball=recreatetarball($tempdir, getcwd, clobber_source => 0, %opts);
-	my $out=(-e "$tempdir/wrapper")
-		? $tempdir."/".basename($tarball).".tmp"
-		: $tarball;
-	doit("xdelta", "patch", "$tempdir/delta", $recreatetarball, $out);
-
-	if (-e "$tempdir/wrapper") {
-		my $type=`tar xOzf $tempdir/wrapper type`;
-		chomp $type;
-		if ($type eq 'gz') {
+	if (defined $delta->{wrapper}) {
+		my $delta_wrapper=Pristine::Tar::Delta::read($delta->{wrapper});
+		if ($delta_wrapper->{type} eq 'gz') {
 			doit("pristine-gz", 
 				($verbose ? "-v" : "--no-verbose"),
 				($debug ? "-d" : "--no-debug"),
 				($keep ? "-k" : "--no-keep"),
-				"gengz", "$tempdir/wrapper", $out);
+				"gengz", $delta->{wrapper}, $out);
 			doit("mv", "-f", $out.".gz", $tarball);
 		}
-		elsif ($type eq 'bz2') {
+		elsif ($delta_wrapper->{type} eq 'bz2') {
 			doit("pristine-bz2",
 				($verbose ? "-v" : "--no-verbose"),
 				($debug ? "-d" : "--no-debug"),
 				($keep ? "-k" : "--no-keep"),
-				"genbz2", "$tempdir/wrapper", $out);
+				"genbz2", $delta->{wrapper}, $out);
 			doit("mv", "-f", $out.".bz2", $tarball);
 		}
 		else {
-			error "unknown wrapper file type: $type";
+			error "unknown wrapper file type: ".
+				$delta_wrapper->{type};
 		}
 	}
 }
@@ -404,18 +380,11 @@ sub genmanifest {
 
 sub gendelta {
 	my $tarball=shift;
-	my $delta=shift;
+	my $deltafile=shift;
 	my %opts=@_;
 
 	my $tempdir=tempdir();
-	
-	my $stdout=0;
-	if ($delta eq "-") {
-		$stdout=1;
-		$delta="$tempdir/out";
-	}
-
-	my @files=qw(delta manifest version type);
+	my %delta;
 
 	# Check to see if it's compressed.
 	my $compression=undef;
@@ -452,16 +421,18 @@ sub gendelta {
 	
 	# Generate a wrapper file to recreate the compressed file.
 	if (defined $compression) {
+		$delta{wrapper}="$tempdir/wrapper";
 		doit("pristine-$compression",
 			($verbose ? "-v" : "--no-verbose"),
 			($debug ? "-d" : "--no-debug"),
 			($keep ? "-k" : "--no-keep"),
-			"gendelta", $tarball, "$tempdir/wrapper");
-		push @files, "wrapper";
+			"gendelta", $tarball, $delta{wrapper});
 		$tarball="$tempdir/origtarball";
 	}
 
-	genmanifest($tarball, "$tempdir/manifest");
+	$delta{manifest}="$tempdir/manifest";
+	genmanifest($tarball, $delta{manifest});
+
 	my $recreatetarball;
 	if (! exists $opts{recreatetarball}) {
 		my $sourcedir="$tempdir/tmp";
@@ -473,30 +444,24 @@ sub gendelta {
 		if ($#out == 0 && -d $out[0]) {
 			$sourcedir=$out[0];
 		}
-		$recreatetarball=recreatetarball($tempdir, $sourcedir, clobber_source => 1);
+		$recreatetarball=recreatetarball("$tempdir/manifest", $sourcedir, clobber_source => 1);
 	}
 	else {
 		$recreatetarball=$opts{recreatetarball};
 	}
 
-	my $ret=system("xdelta delta -0 --pristine $recreatetarball $tarball $tempdir/delta") >> 8;
+	$delta{delta}="$tempdir/delta";
+	my $ret=system("xdelta delta -0 --pristine $recreatetarball $tarball $delta{delta}") >> 8;
 	# xdelta exits 1 on success if there were differences
 	if ($ret != 1 && $ret != 0) {
 		error "xdelta failed with return code $ret";
 	}
 
-	open(OUT, ">", "$tempdir/version") || die "$!";
-	print OUT "2.0\n";
-	close OUT;
-	open(OUT, ">", "$tempdir/type") || die "$!";
-	print OUT "tar\n";
-	close OUT;
-
-	doit("tar", "czf", $delta, "-C", $tempdir, @files);
-
-	if ($stdout) {
-		doit("cat", $delta);
-	}
+	Pristine::Tar::Delta::write($deltafile, {
+		version => 2,
+		type => 'tar',
+		%delta,
+	});
 }
 
 sub vcstype {
@@ -723,7 +688,7 @@ sub commit {
 	my $tempdir=tempdir();
 	my ($sourcedir, $id)=export($upstream);
 	genmanifest($tarball, "$tempdir/manifest");
-	my $recreatetarball=recreatetarball($tempdir, $sourcedir,
+	my $recreatetarball=recreatetarball("$tempdir/manifest", $sourcedir,
 		clobber_source => 1, create_missing => 1);
 	my $pid = open(GENDELTA, "-|");
 	if (! $pid) {

@@ -88,25 +88,31 @@ sub read {
 	return \%delta;
 }
 
-# Checks the type and maxversion of a delta hashref.
+# Checks the type, maxversion, minversion of a delta hashref.
 # Checks that the delta contains all specified fields.
 # Returns the hashref if it is ok.
 sub assert {
 	my $delta=shift;
 	my %params=@_;
 
+	if (! exists $delta->{version}) {
+		error "delta lacks version";
+	}
 	if (defined $params{maxversion}) {
-		if (! exists $delta->{version}) {
-			error "delta lacks version";
-		}
 		if ($delta->{version} > $params{maxversion}) {
 			error "delta is version ".$delta->{version}.", newer than maximum supported version $params{maxversion}";
 		}
 	}
-	if (defined $params{type}) {
-		if (! exists $delta->{type}) {
-			error "delta lacks type";
+	if (defined $params{minversion}) {
+		if ($delta->{version} < $params{minversion}) {
+			error "delta is version ".$delta->{version}.", older than minimum supported version $params{minversion}";
 		}
+	}
+
+	if (! exists $delta->{type}) {
+		error "delta lacks type";
+	}
+	if (defined $params{type}) {
 		if ($delta->{type} ne $params{type}) {
 			error "delta is for a ".$delta->{type}.", not a $params{type}";
 		}
