@@ -166,7 +166,7 @@ Licensed under the GPL, version 2 or above.
 use warnings;
 use strict;
 use Pristine::Tar;
-use Pristine::Delta;
+use Pristine::Tar::Delta;
 use File::Path;
 use File::Basename;
 use Cwd qw{getcwd abs_path};

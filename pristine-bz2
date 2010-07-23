@@ -83,9 +83,8 @@ Licensed under the GPL, version 2.
 use warnings;
 use strict;
 use Pristine::Tar;
-use Pristine::Delta;
+use Pristine::Tar::Delta;
 use File::Basename qw/basename/;
-use IPC::Open2;
 use IO::Handle;
 
 my @supported_bzip2_programs = qw(bzip2 pbzip2 zgz);
@@ -96,7 +95,7 @@ dispatch(
 	commands => {
 		usage => [\&usage],
 		genbz2 => [\&genbz2, 2],
-		genbdelta => [\&gendelta, 2],
+		gendelta => [\&gendelta, 2],
 	},
 	options => {
 		"t|try!" => \$try,
@@ -189,7 +188,9 @@ sub testvariant {
 }
 
 sub reproducebzip2 {
-	my ($wd, $orig) = (shift, shift);
+	my $orig=shift;
+
+	my $wd=tempdir();
 	
 	my $tmpin="$wd/test";
 	doit_redir($orig, "$tmpin.bak", "bzip2", "-dc");
@@ -240,60 +241,24 @@ sub reproducebzip2 {
 }
 
 sub genbz2 {
-	my $delta=shift;
+	my $deltafile=shift;
 	my $file=shift;
 
-	my $tempdir=tempdir();
+	my $delta=Pristine::Tar::Delta::read($deltafile);
+	Pristine::Tar::Delta::assert($delta, type => "bz2", maxversion => 2, 
+		fields => [qw{params program}]);
 
-	if ($delta eq "-") {
-		$delta="$tempdir/in";
-		open (OUT, ">", $delta) || die "$delta: $!";
-		while (<STDIN>) {
-			print OUT $_;
-		}
-		close OUT;
+	my @params=split(' ', $delta->{params});
+	foreach my $param (@params) {
+		next if $param=~/^(-[1-9])$/;
+		next if $param eq '--old-bzip2';
+		die "paranoia check failed on params from delta (@params)";
 	}
 
-	doit("tar", "xf", File::Spec->rel2abs($delta), "-C", $tempdir);
-	if (! -e "$tempdir/type") {
-		die "failed to genbz2 delta $delta\n";
-	}
-
-	open (IN, "$tempdir/version") || die "delta lacks version number ($!)";
-	my $version=<IN>;
-	if ($version >= 3) {
-		die "delta is version $version, not supported\n";
-	}
-	close IN;
-	if (open (IN, "$tempdir/type")) {
-		my $type=<IN>;
-		chomp $type;
-		if ($type ne "bz2") {
-			die "delta is for a $type, not a bz2\n";
-		}
-		close IN;
-	}
-
-	open (IN, "$tempdir/params") || die "delta lacks params file ($!)";
-	my $params=<IN>;
-	chomp $params;
-	my @params=split(' ', $params);
-	while (@params) {
-		$_=shift @params;
-		next if /^(-[1-9])$/;
-		next if $_ eq '--old-bzip2';
-		die "paranoia check failed on params file from delta ($params)";
-	}
-	@params=split(' ', $params);
-	close IN;
-
-	open (IN, "$tempdir/program") || die "delta lacks program file ($!)";
-	my $program=<IN>;
-	chomp $program;
+	my $program=$delta->{program};
 	if (! grep { $program eq $_ } @supported_bzip2_programs) {
-		die "paranoia check failed on program file from delta ($program)";
+		die "paranoia check failed on program from delta ($program)";
 	}
-	close IN;
 
 	if ($program eq 'zgz') {
 		# unlike bzip2, zgz only uses sdio
@@ -307,37 +272,14 @@ sub genbz2 {
 
 sub gendelta {
 	my $bzip2file=shift;
-	my $delta=shift;
+	my $deltafile=shift;
 
-	my $tempdir=tempdir();
+	my ($program, @params) = reproducebzip2($bzip2file);
 
-	my $stdout=0;
-	if ($delta eq "-") {
-		$stdout=1;
-		$delta="$tempdir/out";
-	}
-
-	my @files=qw(version type params program);
-
-	my ($program, @params)=
-		reproducebzip2($tempdir, $bzip2file);
-
-	open(OUT, ">", "$tempdir/version") || die "$!";
-	print OUT "2.0\n";
-	close OUT;
-	open(OUT, ">", "$tempdir/type") || die "$!";
-	print OUT "bz2\n";
-	close OUT;
-	open(OUT, ">", "$tempdir/params") || die "$!";
-	print OUT "@params\n";
-	close OUT;
-	open(OUT, ">", "$tempdir/program") || die "$!";
-	print OUT "$program\n";
-	close OUT;
-
-	doit("tar", "czf", $delta, "-C", $tempdir, @files);
-
-	if ($stdout) {
-		doit("cat", $delta);
-	}
+	Pristine::Tar::Delta::write($deltafile, {
+		version => '2.0',
+		type => 'bz2',
+		params => "@params",
+		program => $program,
+	});
 }

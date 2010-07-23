@@ -7,6 +7,7 @@ use warnings;
 use strict;
 use File::Temp;
 use Getopt::Long;
+use IPC::Open2;
 use Exporter q{import};
 
 our @EXPORT = qw(error message debug vprint doit doit_redir tempdir dispatch

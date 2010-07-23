@@ -90,9 +90,8 @@ Licensed under the GPL, version 2.
 use warnings;
 use strict;
 use Pristine::Tar;
-use Pristine::Delta;
+use Pristine::Tar::Delta;
 use File::Basename qw/basename/;
-use IPC::Open2;
 
 dispatch(
 	commands => {
