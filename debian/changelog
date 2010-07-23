@@ -1,3 +1,9 @@
+pristine-tar (1.04) UNRELEASED; urgency=low
+
+  * pristine-gz gengz: Bugfix: Always remove uncompressed input file.
+
+ -- Joey Hess <joeyh@debian.org>  Fri, 23 Jul 2010 19:16:33 -0400
+
 pristine-tar (1.03) unstable; urgency=low
 
   * zgz now includes a trimmed down copy of the compressor from bzip2 0.9.5d.
