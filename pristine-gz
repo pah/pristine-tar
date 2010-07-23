@@ -89,8 +89,8 @@ Licensed under the GPL, version 2.
 
 use warnings;
 use strict;
-use File::Temp;
-use Getopt::Long;
+use Pristine::Tar;
+use Pristine::Delta;
 use File::Basename qw/basename/;
 use IPC::Open2;
 
@@ -138,43 +138,17 @@ use constant {
 	GZIP_OS_UNKNOWN		 => 255,
 };
 
-my $verbose=0;
-my $debug=0;
-my $keep=0;
+dispatch(
+	commands => {
+		usage => [\&usage],
+		gendelta => [\&gendelta, 2],
+		gengz => [\&gengz, 2],
+	},
+);
 
 sub usage {
 	print STDERR "Usage: pristine-gz [-vdk] gendelta file.gz delta\n";
 	print STDERR "       pristine-gz [-vdk] gengz delta file\n";
-}
-
-sub debug {
-	print STDERR "debug: @_\n" if $debug;
-}
-
-sub vprint {
-	print STDERR "pristine-gz: @_\n" if $verbose;
-}
-
-sub doit {
-	vprint(@_);
-	if (system(@_) != 0) {
-		die "command failed: @_\n";
-	}
-}
-
-sub doit_redir {
-	no warnings 'once';
-	my ($in, $out, @args) = @_;
-	vprint(@args, "<", $in, ">", $out);
-	open INFILE, "<", $in or die("Could not open '$in' for reading: $!\n");
-	open OUTFILE, ">", $out or die("Could not open '$out' for reading: $!\n");
-	my $pid = open2(">&OUTFILE", "<&INFILE", @args);
-	waitpid $pid, 0;
-}
-
-sub tempdir {
-	return File::Temp::tempdir("pristine-gz.XXXXXXXXXX",
-		TMPDIR => 1, CLEANUP => !$keep);
 }
 
 sub readgzip {
@@ -453,25 +427,3 @@ sub gendelta {
 	}
 }
 
-Getopt::Long::Configure("bundling");
-if (! GetOptions(
-	"v|verbose!" => \$verbose,
-	"d|debug!" => \$debug,
-	"k|keep!" => \$keep,
-   ) || @ARGV != 3) {
-	usage();
-	exit 1;
-}
-
-my $command=shift;
-if ($command eq 'gengz') {
-	gengz(@ARGV);
-}
-elsif ($command eq 'gendelta') {
-	gendelta(@ARGV);
-}
-else {
-	print STDERR "Unknown subcommand \"$command\"\n";
-	usage();
-	exit 1;
-}

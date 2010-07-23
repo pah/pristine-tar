@@ -165,10 +165,10 @@ Licensed under the GPL, version 2 or above.
 
 use warnings;
 use strict;
-use File::Temp;
+use Pristine::Tar;
+use Pristine::Delta;
 use File::Path;
 use File::Basename;
-use Getopt::Long;
 use Cwd qw{getcwd abs_path};
 
 # magic identification
@@ -183,14 +183,26 @@ use constant GZIP_METHOD_DEFLATE => 0x08;
 # compression methods, 'h' for Bzip2 ('H'uffman coding), '0' for Bzip1 (deprecated)
 use constant BZIP2_METHOD_HUFFMAN => 0x68;
 
-my $verbose=0;
-my $debug=0;
-my $keep=0;
-my $message;
-	
 # Force locale to C since tar may output utf-8 filenames differently
 # depending on the locale.
 $ENV{LANG}='C';
+
+my $message;
+
+dispatch(
+	commands => {
+		usage => [\&usage],
+		gentar => [\&gentar, 2],
+		gendelta => [\&gendelta, 2],
+		commit => [\&commit, 1],
+		ci => [\&commit, 1],
+		checkout => [\&checkout, 1],
+		co => [\&checkout, 1],
+	},
+	options => {
+		"m|message=s" => \$message,
+	},
+);
 
 sub usage {
 	print STDERR "Usage: pristine-tar [-vdk] gendelta tarball delta\n";
@@ -198,39 +210,6 @@ sub usage {
 	print STDERR "       pristine-tar [-vdk] [-m message] commit tarball [upstream]\n";
 	print STDERR "       pristine-tar [-vdk] checkout tarball\n";
 	exit 1;
-}
-
-sub error {
-	die "pristine-tar: @_\n";
-}
-
-sub message {
-	print STDERR "pristine-tar: @_\n";
-}
-
-sub debug {
-	message(@_) if $debug;
-}
-
-sub vprint {
-	message(@_) if $verbose;
-}
-
-sub doit {
-	vprint(@_);
-	if (system(@_) != 0) {
-		error "command failed: @_";
-	}
-}
-
-sub tempdir {
-	return File::Temp::tempdir("pristine-tar.XXXXXXXXXX",
-		TMPDIR => 1, CLEANUP => !$keep);
-}
-
-# Workaround for bug #479317 in perl 5.10.
-sub END {
-	chdir("/");
 }
 
 sub recreatetarball {
@@ -785,37 +764,4 @@ sub checkout {
 	close GENTAR || error "failed to generate tarball";
 
 	message("successfully generated $tarball");
-}
-
-Getopt::Long::Configure("bundling");
-if (! GetOptions(
-	"m|message=s" => \$message,
-	"v|verbose!" => \$verbose,
-	"d|debug!" => \$debug,
-	"k|keep!" => \$keep)) {
-	usage();
-}
-
-usage unless @ARGV;
-my $command=shift;
-
-if ($command eq 'gentar') {
-	usage unless @ARGV == 2;
-	gentar(@ARGV);
-}
-elsif ($command eq 'gendelta') {
-	usage unless @ARGV == 2;
-	gendelta(@ARGV);
-}
-elsif ($command eq 'commit' || $command eq 'ci') {
-	usage unless @ARGV >= 1;
-	commit(@ARGV);
-}
-elsif ($command eq 'checkout' || $command eq 'co') {
-	usage unless @ARGV == 1;
-	checkout(@ARGV);
-}
-else {
-	print STDERR "Unknown subcommand \"$command\"\n";
-	usage();
 }

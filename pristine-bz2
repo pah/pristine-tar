@@ -82,8 +82,8 @@ Licensed under the GPL, version 2.
 
 use warnings;
 use strict;
-use File::Temp;
-use Getopt::Long;
+use Pristine::Tar;
+use Pristine::Delta;
 use File::Basename qw/basename/;
 use IPC::Open2;
 use IO::Handle;
@@ -99,44 +99,22 @@ use constant BZIP2_METHOD_HUFFMAN => 0x68;
 
 my @supported_bzip2_programs = qw(bzip2 pbzip2 zgz);
 
-my $verbose=0;
-my $debug=0;
-my $keep=0;
 my $try=0;
+
+dispatch(
+	commands => {
+		usage => [\&usage],
+		genbz2 => [\&genbz2, 2],
+		genbdelta => [\&gendelta, 2],
+	},
+	options => {
+		"t|try!" => \$try,
+	},
+);
 
 sub usage {
 	print STDERR "Usage: pristine-bz2 [-vdkt] gendelta file.bz2 delta\n";
 	print STDERR "       pristine-bz2 [-vdkt] genbz2 delta file\n";
-}
-
-sub debug {
-	print STDERR "debug: @_\n" if $debug;
-}
-
-sub vprint {
-	print STDERR "pristine-bz2: @_\n" if $verbose;
-}
-
-sub doit {
-	vprint(@_);
-	if (system(@_) != 0) {
-		die "command failed: @_\n";
-	}
-}
-
-sub doit_redir {
-	no warnings 'once';
-	my ($in, $out, @args) = @_;
-	vprint(@args, "<", $in, ">", $out);
-	open INFILE, "<", $in or die("Could not open '$in' for reading: $!\n");
-	open OUTFILE, ">", $out or die("Could not open '$out' for reading: $!\n");
-	my $pid = open2(">&OUTFILE", "<&INFILE", @args);
-	waitpid $pid, 0;
-}
-
-sub tempdir {
-	return File::Temp::tempdir("pristine-bz2.XXXXXXXXXX",
-		TMPDIR => 1, CLEANUP => !$keep);
 }
 
 sub readbzip2 {
@@ -368,28 +346,4 @@ sub gendelta {
 	if ($stdout) {
 		doit("cat", $delta);
 	}
-}
-
-Getopt::Long::Configure("bundling");
-if (! GetOptions(
-	"v|verbose!" => \$verbose,
-	"d|debug!" => \$debug,
-	"k|keep!" => \$keep,
-	"t|try!" => \$try,
-   ) || @ARGV != 3) {
-	usage();
-	exit 1;
-}
-
-my $command=shift;
-if ($command eq 'genbz2') {
-	genbz2(@ARGV);
-}
-elsif ($command eq 'gendelta') {
-	gendelta(@ARGV);
-}
-else {
-	print STDERR "Unknown subcommand \"$command\"\n";
-	usage();
-	exit 1;
 }
