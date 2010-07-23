@@ -264,45 +264,14 @@ sub reproducegz {
 }
 
 sub gengz {
-	my $delta=shift;
+	my $deltafile=shift;
 	my $file=shift;
 
-	my $tempdir=tempdir();
+	my $delta=Pristine::Tar::Delta::read($deltafile);
+	Pristine::Tar::Delta::assert($delta, type => "gz", maxversion => 3,
+		fields => [qw{params filename timestamp}]);
 
-	if ($delta eq "-") {
-		$delta="$tempdir/in";
-		open (OUT, ">", $delta) || die "$delta: $!";
-		while (<STDIN>) {
-			print OUT $_;
-		}
-		close OUT;
-	}
-	
-	doit("tar", "xf", File::Spec->rel2abs($delta), "-C", $tempdir);
-	if (! -e "$tempdir/type") {
-		die "failed to gengz delta $delta\n";
-	}
-
-	open (IN, "$tempdir/version") || die "delta lacks version number ($!)";
-	my $version=<IN>;
-	if ($version >= 4) {
-		die "delta is version $version, not supported\n";
-	}
-	close IN;
-	if (open (IN, "$tempdir/type")) {
-		my $type=<IN>;
-		chomp $type;
-		if ($type ne "gz") {
-			die "delta is for a $type, not a gz\n";
-		}
-		close IN;
-	}
-
-	
-	open (IN, "$tempdir/params") || die "delta lacks params file ($!)";
-	my $params=<IN>;
-	chomp $params;
-	my @params=split(' ', $params);
+	my @params=split(' ', $delta->{params});
 	while (@params) {
 		$_=shift @params;
 		next if /^(--gnu|--rsyncable|-[nmM1-9])$/;
@@ -310,30 +279,24 @@ sub gengz {
 			shift @params;
 			next;
 		}
-		die "paranoia check failed on params file from delta ($params)";
+		die "paranoia check failed on params from delta (@params)";
 	}
-	@params=split(' ', $params);
-	close IN;
-	open (IN, "$tempdir/filename") || die "delta lacks filename file ($!)";
-	my $filename=<IN>;
-	chomp $filename;
-	$filename=~s/^.*\///; # basename isn't strong enough
-	close IN;
-	open (IN, "$tempdir/timestamp") || die "delta lacks timestamp file ($!)";
-	my $timestamp=<IN>;
-	chomp $timestamp;
-	close IN;
+	@params=split(' ', $delta->{params});
 
-	my @zgz=("zgz", @params, "-T", $timestamp);
+	my $filename=$delta->{filename};
+	$filename=~s/^.*\///; # basename isn't strong enough
+
+	my @zgz=("zgz", @params, "-T", $delta->{timestamp});
 	if (! grep { $_ eq "--original-name" } @params) {
-		push @zgz, "-F", "$filename";
+		push @zgz, "-F", $filename;
 	}
 	push @zgz, "-c";
 
-	if (-e "$tempdir/delta") {
+	if (exists $delta->{delta}) {
+		my $tempdir=tempdir();
 		my $tfile="$tempdir/".basename($file).".gz";
 		doit_redir($file, $tfile, @zgz);
-		doit("xdelta", "patch", "--pristine", "$tempdir/delta", $tfile, "$file.gz");
+		doit("xdelta", "patch", "--pristine", $delta->{delta}, $tfile, "$file.gz");
 	}
 	else {
 		doit_redir("$file", "$file.gz", @zgz);
@@ -342,45 +305,20 @@ sub gengz {
 
 sub gendelta {
 	my $gzfile=shift;
-	my $delta=shift;
+	my $deltafile=shift;
 
 	my $tempdir=tempdir();
-	
-	my $stdout=0;
-	if ($delta eq "-") {
-		$stdout=1;
-		$delta="$tempdir/out";
-	}
-
-	my @files=qw(version type params filename timestamp);
-
 	my ($filename, $timestamp, $xdelta, @params)=
 		reproducegz($gzfile, $tempdir, "$tempdir/test");
 	
-	open(OUT, ">", "$tempdir/version") || die "$!";
-	print OUT (defined $xdelta ? "3.0" : "2.0")."\n";
-	close OUT;
-	open(OUT, ">", "$tempdir/type") || die "$!";
-	print OUT "gz\n";
-	close OUT;
-	open(OUT, ">", "$tempdir/params") || die "$!";
-	print OUT "@params\n";
-	close OUT;
-	open(OUT, ">", "$tempdir/filename") || die "$!";
-	print OUT basename($filename)."\n";
-	close OUT;
-	open(OUT, ">", "$tempdir/timestamp") || die "$!";
-	print OUT "$timestamp\n";
-	close OUT;
-	if (defined $xdelta) {
-		rename($xdelta, "$tempdir/delta") || die "rename: $!";
-		push @files, "delta";
-	}
+	Pristine::Tar::Delta::write($deltafile, {
+		version => (defined $xdelta ? "3.0" : "2.0"),
+		type => 'gz',
+		params => "@params",
+		filename => basename($filename),
+		timestamp => $timestamp,
 
-	doit("tar", "czf", $delta, "-C", $tempdir, @files);
-
-	if ($stdout) {
-		doit("cat", $delta);
-	}
+		(defined $xdelta ? (delta => $xdelta) : ()),
+	});
 }
 
