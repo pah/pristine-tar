@@ -95,4 +95,52 @@ sub dispatch {
 	$run->(@ARGV);
 }
 
+
+# magic identification
+use constant GZIP_ID1            => 0x1F;
+use constant GZIP_ID2            => 0x8B;
+use constant BZIP2_ID1           => 0x42;
+use constant BZIP2_ID2           => 0x5a;
+
+# compression methods
+# 0x00-0x07 are reserved
+use constant GZIP_METHOD_DEFLATE => 0x08;
+# 'h' for Bzip2 ('H'uffman coding)
+use constant BZIP2_METHOD_HUFFMAN => 0x68;
+
+# flags
+use constant {
+	GZIP_FLAG_FTEXT		 => 0,
+	GZIP_FLAG_FHCRC		 => 1,
+	GZIP_FLAG_FEXTRA	 => 2,
+	GZIP_FLAG_FNAME		 => 3,
+	GZIP_FLAG_FCOMMENT	 => 4,
+	# the rest are reserved
+};
+# compression level
+use constant {
+	GZIP_COMPRESSION_NORMAL	 => 0,
+	GZIP_COMPRESSION_BEST	 => 2,
+	GZIP_COMPRESSION_FAST	 => 4,
+};
+# operating systems
+use constant {
+	GZIP_OS_MSDOS		 => 0,
+	GZIP_OS_AMIGA		 => 1,
+	GZIP_OS_VMS		 => 2,
+	GZIP_OS_UNIX		 => 3,
+	GZIP_OS_VMCMS		 => 4,
+	GZIP_OS_ATARI		 => 5,
+	GZIP_OS_HPFS		 => 6,
+	GZIP_OS_MACINTOSH	 => 7,
+	GZIP_OS_ZSYSTEM		 => 8,
+	GZIP_OS_CPM		 => 9,
+	GZIP_OS_TOPS		 => 10,
+	GZIP_OS_NTFS		 => 11,
+	GZIP_OS_QDOS		 => 12,
+	GZIP_OS_RISCOS		 => 13,
+	GZIP_OS_VFAT             => 14,
+	GZIP_OS_UNKNOWN		 => 255,
+};
+
 1

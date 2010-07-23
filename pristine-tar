@@ -171,18 +171,6 @@ use File::Path;
 use File::Basename;
 use Cwd qw{getcwd abs_path};
 
-# magic identification
-use constant GZIP_ID1            => 0x1F;
-use constant GZIP_ID2            => 0x8B;
-use constant BZIP2_ID1           => 0x42;
-use constant BZIP2_ID2           => 0x5a;
-
-# compression methods, 0x00-0x07 are reserved
-use constant GZIP_METHOD_DEFLATE => 0x08;
-
-# compression methods, 'h' for Bzip2 ('H'uffman coding), '0' for Bzip1 (deprecated)
-use constant BZIP2_METHOD_HUFFMAN => 0x68;
-
 # Force locale to C since tar may output utf-8 filenames differently
 # depending on the locale.
 $ENV{LANG}='C';
@@ -435,8 +423,9 @@ sub gendelta {
 	my ($chars, $id1, $id2, $method);
 	if (read(IN, $chars, 10) == 10 &&
 	    (($id1, $id2, $method) = unpack("CCC", $chars)) &&
-    	    $id1 == GZIP_ID1 && $id2 == GZIP_ID2 &&
-	    $method == GZIP_METHOD_DEFLATE) {
+    	    $id1 == Pristine::Tar::GZIP_ID1 &&
+	    $id2 == Pristine::Tar::GZIP_ID2 &&
+	    $method == Pristine::Tar::GZIP_METHOD_DEFLATE) {
 	    	$compression='gz';
 		open(IN, "-|", "zcat", $tarball) || die "zcat: $!";
 		open(OUT, ">", "$tempdir/origtarball") || die "$tempdir/origtarball: $!";
@@ -448,8 +437,9 @@ sub gendelta {
 		seek(IN, 0, 0) || die "seek: $!";
 		if (read(IN, $chars, 3) == 3 &&
 	            (($id1, $id2, $method) = unpack("CCC", $chars)) &&
-	            $id1 == BZIP2_ID1 && $id2 == BZIP2_ID2 &&
-	            $method == BZIP2_METHOD_HUFFMAN) {
+	            $id1 == Pristine::Tar::BZIP2_ID1 &&
+		    $id2 == Pristine::Tar::BZIP2_ID2 &&
+	            $method == Pristine::Tar::BZIP2_METHOD_HUFFMAN) {
 		    	$compression='bz2';
 			open(IN, "-|", "bzcat", $tarball) || die "bzcat: $!";
 			open(OUT, ">", "$tempdir/origtarball") || die "$tempdir/origtarball: $!";
