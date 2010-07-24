@@ -182,7 +182,7 @@ dispatch(
 		usage => [\&usage],
 		gentar => [\&gentar, 2],
 		gendelta => [\&gendelta, 2],
-		commit => [\&commit, 1],
+		commit => [\&commit],
 		ci => [\&commit, 1],
 		checkout => [\&checkout, 1],
 		co => [\&checkout, 1],
@@ -603,7 +603,7 @@ sub commitdelta {
 	my $delta=shift;
 	my $id=shift;
 	my $tarball=shift;
-	
+
 	my $branch="pristine-tar";
 	my $deltafile=basename($tarball).".delta";
 	my $idfile=basename($tarball).".id";
@@ -683,7 +683,11 @@ sub commitdelta {
 
 sub commit {
 	my $tarball=shift;
-	my $upstream=shift;
+	my $upstream=shift; # optional
+	
+	if (! defined $tarball || @_) {
+		usage();
+	}
 
 	my $tempdir=tempdir();
 	my ($sourcedir, $id)=export($upstream);
