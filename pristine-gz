@@ -318,7 +318,6 @@ sub gendelta {
 		params => "@params",
 		filename => basename($filename),
 		timestamp => $timestamp,
-
 		(defined $xdelta ? (delta => $xdelta) : ()),
 	});
 }
