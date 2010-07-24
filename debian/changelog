@@ -1,6 +1,7 @@
 pristine-tar (1.04) UNRELEASED; urgency=low
 
   * pristine-gz gengz: Bugfix: Always remove uncompressed input file.
+  * Large refactoring and modularization.
 
  -- Joey Hess <joeyh@debian.org>  Fri, 23 Jul 2010 19:16:33 -0400
 

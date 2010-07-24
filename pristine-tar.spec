@@ -1,5 +1,5 @@
 Name: pristine-tar
-Version: 1.03
+Version: 1.04
 Release: 2%{?dist}
 Summary: regenerate pristine tarballs
 
@@ -31,6 +31,7 @@ pristine-tar is available in git at git://git.kitenet.net/pristine-tar/
 
 
 %build
+perl Makefile.PL INSTALLDIRS=vendor PREFIX=%{_prefix}
 make %{?_smp_mflags}
 
 

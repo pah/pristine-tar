@@ -1,0 +1,1 @@
+Run ./Makefile.PL to generate a Makefile, then run `make` and `make install`.
