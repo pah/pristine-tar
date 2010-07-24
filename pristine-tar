@@ -327,7 +327,7 @@ sub gentar {
 	my $tarball=shift;
 	my %opts=@_;
 
-	my $delta=Pristine::Tar::Delta::read($deltafile);
+	my $delta=Pristine::Tar::Delta::read(Tarball => $deltafile);
 	Pristine::Tar::Delta::assert($delta, type => "tar", maxversion => 2,
 		minversion => 2, fields => [qw{manifest delta}]);
 
@@ -338,7 +338,7 @@ sub gentar {
 	doit("xdelta", "patch", $delta->{delta}, $recreatetarball, $out);
 
 	if (defined $delta->{wrapper}) {
-		my $delta_wrapper=Pristine::Tar::Delta::read($delta->{wrapper});
+		my $delta_wrapper=Pristine::Tar::Delta::read(Tarball => $delta->{wrapper});
 		if ($delta_wrapper->{type} eq 'gz') {
 			doit("pristine-gz", 
 				($verbose ? "-v" : "--no-verbose"),
@@ -457,7 +457,7 @@ sub gendelta {
 		error "xdelta failed with return code $ret";
 	}
 
-	Pristine::Tar::Delta::write($deltafile, {
+	Pristine::Tar::Delta::write(Tarball => $deltafile, {
 		version => 2,
 		type => 'tar',
 		%delta,

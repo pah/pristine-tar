@@ -267,7 +267,7 @@ sub gengz {
 	my $deltafile=shift;
 	my $file=shift;
 
-	my $delta=Pristine::Tar::Delta::read($deltafile);
+	my $delta=Pristine::Tar::Delta::read(Tarball => $deltafile);
 	Pristine::Tar::Delta::assert($delta, type => "gz", maxversion => 3,
 		fields => [qw{params filename timestamp}]);
 
@@ -312,7 +312,7 @@ sub gendelta {
 	my ($filename, $timestamp, $xdelta, @params)=
 		reproducegz($gzfile, $tempdir, "$tempdir/test");
 	
-	Pristine::Tar::Delta::write($deltafile, {
+	Pristine::Tar::Delta::write(Tarball => $deltafile, {
 		version => (defined $xdelta ? "3.0" : "2.0"),
 		type => 'gz',
 		params => "@params",

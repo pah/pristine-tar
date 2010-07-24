@@ -1,21 +1,38 @@
 #!/usr/bin/perl
 # pristine-tar delta file library
+# See delta-format.txt for details about the contents of delta files.
 package Pristine::Tar::Delta;
 
 use Pristine::Tar;
 use warnings;
 use strict;
-use File::Basename;
 
-# See delta-format.txt for details about the contents of delta files.
-#
-# Some of the delta contents are treated as files. Things not listed here
-# are treated as fields with short values.
+# Checks if a field of a delta should be stored in the delta hash using
+# a filename. (Normally the hash stores the whole field value, but
+# using filenames makes sense for a few fields.)
 my %delta_files=map { $_ => 1 } qw(manifest delta wrapper);
+sub is_filename {
+	my $field=shift;
+	return $delta_files{$field};
+}
 
-# After the filename to create, this takes a hashref containing
-# the contents of the delta file to create.
+sub handler {
+	my $action=shift;
+	my $type=shift;
+	
+	my $class="Pristine::Tar::Delta::$type";
+	eval "use $class";
+	if ($@) {
+		error "unsupported delta file format $type";
+	}
+	$class->$action(@_);
+}
+
+# After the type of delta and the file to create (which can be "-"
+# to send it to stdout), this takes a hashref containing the contents of
+# the delta to write.
 sub write {
+	my $type=shift;
 	my $deltafile=shift;
 	my $delta=shift;
 
@@ -26,19 +43,8 @@ sub write {
 		$stdout=1;
 		$deltafile="$tempdir/tmpout";
 	}
-
-	foreach my $field (keys %$delta) {
-		if ($delta_files{$field}) {
-			link($delta->{$field}, "$tempdir/$field") || die "link $tempdir/$field: $!";
-		}
-		else {
-			open (my $out, ">", "$tempdir/$field") || die "$tempdir/$field: $!";
-			print $out $delta->{$field}."\n";
-			close $out;
-		}
-	}
-
-	doit("tar", "czf", $deltafile, "-C", $tempdir, keys %$delta);
+	
+	handler('write', $type, $deltafile, $delta);
 
 	if ($stdout) {
 		doit("cat", $deltafile);
@@ -50,6 +56,7 @@ sub write {
 
 # Returns a hashref of the contents of the delta.
 sub read {
+	my $type=shift;
 	my $deltafile=shift;
 	
 	my $tempdir=tempdir();
@@ -63,30 +70,12 @@ sub read {
 		}
 		close $out;
 	}
-	doit("tar", "xf", File::Spec->rel2abs($deltafile), "-C", $tempdir);
+
+	my $delta=handler('read', $type, $deltafile);
+	
 	unlink($deltafile) if $stdin;
 
-	my %delta;
-	foreach my $file (glob("$tempdir/*")) {
-		if (-f $file) {
-			my $field=basename($file);
-			if ($delta_files{$field}) {
-				$delta{$field}=$file;
-			}
-			else {
-				open (my $in, "<", $file) || die "$file: $!";
-				{
-					local $/=undef;
-					$delta{$field}=<$in>;
-				}
-				chomp $delta{$field};
-				close $in;
-			}
-		}
-	}
-	# TODO read all files
-	
-	return \%delta;
+	return $delta;
 }
 
 # Checks the type, maxversion, minversion of a delta hashref.

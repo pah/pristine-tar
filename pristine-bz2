@@ -244,7 +244,7 @@ sub genbz2 {
 	my $deltafile=shift;
 	my $file=shift;
 
-	my $delta=Pristine::Tar::Delta::read($deltafile);
+	my $delta=Pristine::Tar::Delta::read(Tarball => $deltafile);
 	Pristine::Tar::Delta::assert($delta, type => "bz2", maxversion => 2, 
 		fields => [qw{params program}]);
 
@@ -276,7 +276,7 @@ sub gendelta {
 
 	my ($program, @params) = reproducebzip2($bzip2file);
 
-	Pristine::Tar::Delta::write($deltafile, {
+	Pristine::Tar::Delta::write(Tarball => $deltafile, {
 		version => '2.0',
 		type => 'bz2',
 		params => "@params",
