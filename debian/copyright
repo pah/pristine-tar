@@ -7,7 +7,7 @@ License: GPL-2+
  On Debian systems, the complete text of the GPL can be found in
  /usr/share/common-licenses/GPL.
 
-Files: zgz.c
+Files: zgz/zgz.c
 Copyright: © 1997, 1998, 2003, 2004, 2006 Matthew R. Green
  © 2007 Faidon Liambotis
  © 2008 Josh Triplett
@@ -16,7 +16,7 @@ License: BSD-3
  On Debian systems, the complete text of the 3 clause BSD license can be
  found in /usr/share/common-licenses/BSD.
 
-Files: gzip.h bits.c deflate.c gzip.c trees.c util.c
+Files: zgz/gzip/*
 Copyright: © 1997, 1998, 1999, 2001, 2002, 2006, 2007 Free Software Foundation, Inc.
    © 1992-1993 Jean-loup Gailly
    © 2008 Josh Triplett
