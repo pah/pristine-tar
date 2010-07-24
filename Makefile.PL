@@ -17,9 +17,8 @@ extra_build: zgz/zgz pristine-tar.spec
 	pod2man -c pristine-bz2 pristine-bz2 > pristine-bz2.1
 	pod2man -c zgz zgz/zgz.pod > zgz.1
 
-ZGZ_SOURCES = zgz/zgz.c zgz/bits.c zgz/deflate.c zgz/gzip.c zgz/trees.c zgz/util.c \
-	      zgz/old-bzip2/*.c
-zgz/zgz: $(ZGZ_SOURCES) zgz/gzip.h
+ZGZ_SOURCES = zgz/zgz.c zgz/gzip/*.c zgz/old-bzip2/*.c
+zgz/zgz: $(ZGZ_SOURCES)
 	gcc -Wall -O2 -lz -o $@ $(ZGZ_SOURCES)
 
 extra_install:
