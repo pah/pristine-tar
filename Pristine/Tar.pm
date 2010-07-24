@@ -66,34 +66,31 @@ sub dispatch {
 	my %commands=%{$params{commands}};
 	my %options=%{$params{options}} if exists $params{options};
 
-	my $run=sub {
-		my $command=shift;
-		my $i=$commands{$command};
-		if (! defined $i) {
-			error "Unknown subcommand \"$command\"";
-		}
-
-		# Check that the right number of args were passed by user.
-		if (defined $i->[1] && @_ != $i->[1]) {
-			$command="usage";
-			$i=$commands{$command};
-		}
-
-		$i->[0]->(@_);
-
-		exit 1 if $command eq "usage";
-	};
-
+	my $command;
 	Getopt::Long::Configure("bundling");
 	if (! GetOptions(%options,
 			"v|verbose!" => \$verbose,
 			"d|debug!" => \$debug,
 			"k|keep!" => \$keep) ||
 	    ! @ARGV) {
-	    	$run->("usage");
+	    	$command="usage";
+	}
+	else {
+		$command=shift @ARGV;
 	}
 
-	$run->(@ARGV);
+	my $i=$commands{$command};
+	if (! defined $i) {
+		error "Unknown subcommand \"$command\"";
+	}
+
+	# Check that the right number of args were passed by user.
+	if (defined $i->[1] && @ARGV != $i->[1]) {
+		$command="usage";
+		$i=$commands{$command};
+	}
+
+	$i->[0]->(@ARGV);
 }
 
 
