@@ -91,6 +91,7 @@ use warnings;
 use strict;
 use Pristine::Tar;
 use Pristine::Tar::Delta;
+use Pristine::Tar::Formats;
 use File::Basename qw/basename/;
 
 dispatch(
@@ -108,26 +109,25 @@ sub usage {
 
 sub readgzip {
 	my $filename = shift;
-	my $chars;
+	
+	if (! is_gz($filename)) {
+		error "This is not a valid GZip archive.";
+	}
 
 	open(GZIP, "< $filename")
 		or die("Could not open '$filename' for reading: $!\n");
 
+	my $chars;
 	if (read(GZIP, $chars, 10) != 10) {
-		die("Unable to read from input\n");
+		die("Unable to read 10 bytes from input\n");
 	}
 
 	my ($id1, $id2, $method, $flags, $timestamp, $level, $os, $name)
 		= (unpack("CCCb8VCC", $chars), '');
 
-	if ($id1 != Pristine::Tar::GZIP_ID1 ||
-	    $id2 != Pristine::Tar::GZIP_ID2 ||
-	    $method != Pristine::Tar::GZIP_METHOD_DEFLATE) {
-		die("This is not a valid GZip archive.\n");
-	}
 	my @flags = split(//, $flags);
 	
-	if ($flags[Pristine::Tar::GZIP_FLAG_FNAME]) {
+	if ($flags[$fconstants{GZIP_FLAG_FNAME}]) {
 		# read a null-terminated string
 		$name .= $chars
 			while (read(GZIP, $chars, 1) == 1 && ord($chars) != 0);
@@ -142,15 +142,15 @@ sub predictgzipargs {
 	my @flags = @$flags;
 
 	my @args;
-	unless ($flags[Pristine::Tar::GZIP_FLAG_FNAME]) {
+	unless ($flags[$fconstants{GZIP_FLAG_FNAME}]) {
 		push @args, '-n';
 		push @args, '-M' if $timestamp;
 	}
 
-	if ($level == Pristine::Tar::GZIP_COMPRESSION_BEST) {
+	if ($level == $fconstants{GZIP_COMPRESSION_BEST}) {
 		push @args, '-9'
 	}
-	elsif ($level == Pristine::Tar::GZIP_COMPRESSION_FAST) {
+	elsif ($level == $fconstants{GZIP_COMPRESSION_FAST}) {
 		push @args, '-1'
 	}
 
@@ -185,7 +185,7 @@ sub reproducegz {
 
 	my @try;
 
-	if ($os == Pristine::Tar::GZIP_OS_UNIX) {
+	if ($os == $fconstants{GZIP_OS_UNIX}) {
 		# for 98% of the cases the simple heuristic above works
 		# and it was produced by gnu gzip.
 		push @try, ['--gnu', @args];
@@ -200,7 +200,7 @@ sub reproducegz {
 
 	# set the Operating System flag to the one found in the original
 	# archive
-	push @args, ("--osflag", $os) if $os != Pristine::Tar::GZIP_OS_UNIX;
+	push @args, ("--osflag", $os) if $os != $fconstants{GZIP_OS_UNIX};
 
 	# many of the .gz out there are created using the BSD version of
 	# gzip which is using the zlib library; try with our version of
@@ -216,7 +216,7 @@ sub reproducegz {
 
 	# Windows' NTFS gzip implementation; quirk is really really evil
 	# it should be the last test: it can result in a corrupted archive!
-	if ($os == Pristine::Tar::GZIP_OS_NTFS) {
+	if ($os == $fconstants{GZIP_OS_NTFS}) {
 		pop @args; pop @args; # ntfs quirk implies NTFS osflag
 		push @try, [@args, '--quirk', 'ntfs'];
 	}
