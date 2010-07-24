@@ -1,4 +1,5 @@
 #!/usr/bin/perl
+# pristine-tar delta file library
 package Pristine::Tar::Delta;
 
 use Pristine::Tar;
@@ -10,7 +11,7 @@ use File::Basename;
 #
 # Some of the delta contents are treated as files. Things not listed here
 # are treated as fields with short values.
-our %delta_files=map { $_ => 1 } qw(manifest delta wrapper);
+my %delta_files=map { $_ => 1 } qw(manifest delta wrapper);
 
 # After the filename to create, this takes a hashref containing
 # the contents of the delta file to create.
