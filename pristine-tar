@@ -176,6 +176,10 @@ use Cwd qw{getcwd abs_path};
 # depending on the locale.
 $ENV{LANG}='C';
 
+# Don't let environment change tar's behavior.
+delete $ENV{TAR_OPTIONS};
+delete $ENV{TAPE}
+
 my $message;
 
 dispatch(

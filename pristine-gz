@@ -94,6 +94,8 @@ use Pristine::Tar::Delta;
 use Pristine::Tar::Formats;
 use File::Basename qw/basename/;
 
+delete $ENV{GZIP};
+
 dispatch(
 	commands => {
 		usage => [\&usage],

@@ -2,6 +2,9 @@ pristine-tar (1.04) UNRELEASED; urgency=low
 
   * pristine-gz gengz: Bugfix: Always remove uncompressed input file.
   * Large refactoring and modularization.
+  * Remove environment variables used by tar, gz, and bzip2, to avoid
+    local environment settings possibly breaking things.
+    Closes: #498760 (probably; thanks Ralph Lange for analysis)
 
  -- Joey Hess <joeyh@debian.org>  Fri, 23 Jul 2010 19:16:33 -0400
 

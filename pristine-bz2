@@ -88,6 +88,9 @@ use Pristine::Tar::Formats;
 use File::Basename qw/basename/;
 use IO::Handle;
 
+delete $ENV{BZIP};
+delete $ENV{BZIP2};
+
 my @supported_bzip2_programs = qw(bzip2 pbzip2 zgz);
 
 my $try=0;
