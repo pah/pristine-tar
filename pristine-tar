@@ -178,7 +178,7 @@ $ENV{LANG}='C';
 
 # Don't let environment change tar's behavior.
 delete $ENV{TAR_OPTIONS};
-delete $ENV{TAPE}
+delete $ENV{TAPE};
 
 my $message;
 
