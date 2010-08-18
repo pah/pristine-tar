@@ -38,7 +38,7 @@ pristine-tar.spec:
 }
 
 WriteMakefile(
-	NAME		=> 'Pristine::Tar',
+	NAME		=> 'Pristine',
 	PREFIX		=> "/usr/local",
 	MAN1PODS	=> {},
 	MAN3PODS	=> {},
