@@ -9,7 +9,7 @@ testexternal:
 	@if [ ! -e tars ]; then echo "Create a tars file listing tarballs to test"; false; fi
 	rm -rf workdir failures
 	for f in $$(cat tars); do \
-		./testone $f
+		./testone $$f; \
 	done
 	echo "done; check failures directory for problem tars"
 
