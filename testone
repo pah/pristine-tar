@@ -11,7 +11,7 @@ if [ ! -e $base.delta ]; then
 		mkdir workdir.$$
 		tar xf $f -C workdir.$$
 		cd workdir.$$
-		if [ $(ls -1 | wc -l) == 1 ]; then
+		if [ $(ls -1 | wc -l) = 1 ]; then
 			cd * >/dev/null 2>&1
 		fi
 		if ! pristine-tar gentar $top/$base.delta $top/$base; then
