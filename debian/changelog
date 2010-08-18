@@ -1,7 +1,8 @@
-pristine-tar (1.04) UNRELEASED; urgency=low
+pristine-tar (1.10) UNRELEASED; urgency=low
 
   * pristine-gz gengz: Bugfix: Always remove uncompressed input file.
-  * Large refactoring and modularization.
+  * Large refactoring and modularization. (Thanks Gabriel de Perthuis
+    for inspiration for this.))
   * Remove environment variables used by tar, gz, and bzip2, to avoid
     local environment settings possibly breaking things.
     Closes: #498760 (probably; thanks Ralph Lange for analysis)
