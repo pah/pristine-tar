@@ -325,7 +325,7 @@ sub recreatetarball {
 
 sub recreatetarball_helper {
 	my $tempdir=$recreatetarball_tempdir;
-
+	
 	my $ret="$tempdir/recreatetarball";
 
 	doit("tar", "cf", $ret, "--owner", 0, "--group", 0, 
@@ -369,7 +369,7 @@ sub gentar {
 	my @try;
 	push @try, sub { recreatetarball($delta->{manifest}, getcwd,
 			clobber_source => 0, %opts) };
-	push @try, &recreatetarball_longlink_100;
+	push @try, \&recreatetarball_longlink_100;
 
 	my $ok;
 	foreach my $variant (@try) {

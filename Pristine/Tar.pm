@@ -10,7 +10,8 @@ use Getopt::Long;
 use IPC::Open2;
 use Exporter q{import};
 
-our @EXPORT = qw(error message debug vprint doit doit_redir tempdir dispatch
+our @EXPORT = qw(error message debug vprint doit try_doit doit_redir
+	tempdir dispatch
 	$verbose $debug $keep);
 
 our $verbose=0;
@@ -34,7 +35,7 @@ sub vprint {
 }
 
 sub doit {
-	if (maybe_doit(@_) != 0) {
+	if (try_doit(@_) != 0) {
 		error "command failed: @_";
 	}
 }
