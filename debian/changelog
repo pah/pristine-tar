@@ -1,3 +1,11 @@
+pristine-tar (1.11) UNRELEASED; urgency=low
+
+  * Add workaround for Debian's tar changing its output for tarballs
+    containing filenames exactly 100 bytes long. Closes: #602907
+    (Needs a tar with #603231 fixed in order to work.)
+
+ -- Joey Hess <joeyh@debian.org>  Thu, 11 Nov 2010 21:03:54 -0400
+
 pristine-tar (1.10) unstable; urgency=low
 
   * pristine-gz gengz: Bugfix: Always remove uncompressed input file.

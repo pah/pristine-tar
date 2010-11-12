@@ -205,6 +205,7 @@ sub usage {
 	exit 1;
 }
 
+my $recreatetarball_tempdir;
 sub recreatetarball {
 	my $manifestfile=shift;
 	my $source=shift;
@@ -317,6 +318,14 @@ sub recreatetarball {
 		}, "$tempdir/workdir");
 	}
 
+	delete $ENV{TAR_LONGLINK_100};
+	$recreatetarball_tempdir=$tempdir;
+	return recreatetarball_helper();
+}
+
+sub recreatetarball_helper {
+	my $tempdir=$recreatetarball_tempdir;
+
 	my $ret="$tempdir/recreatetarball";
 
 	doit("tar", "cf", $ret, "--owner", 0, "--group", 0, 
@@ -324,6 +333,23 @@ sub recreatetarball {
 		"--no-recursion", "--mode", "0644", 
 		"--files-from", "$tempdir/manifest");
 	
+	return $ret;
+}
+
+sub recreatetarball_longlink_100 {
+	# For a long time, Debian's tar had a patch that made it output
+	# larger tar files if a filename was exactly 100 bytes. Now that
+	# Debian's tar has been fixed, in order to recreate the tarball
+	# created by that version of tar, we reply on on an environment
+	# variable to turn back on the old behavior.
+	#
+	# This variable is currently only available in Debian's tar,
+	# so users of non-debian tar who want to recreate tarballs from
+	# deltas created using the old version of Debian's tar are SOL.
+	
+	$ENV{TAR_LONGLINK_100}=1;
+	my $ret=recreatetarball_helper();
+	delete $ENV{TAR_LONGLINK_100};
 	return $ret;
 }
 
@@ -335,12 +361,28 @@ sub gentar {
 	my $delta=Pristine::Tar::Delta::read(Tarball => $deltafile);
 	Pristine::Tar::Delta::assert($delta, type => "tar", maxversion => 2,
 		minversion => 2, fields => [qw{manifest delta}]);
-
-	my $recreatetarball=recreatetarball($delta->{manifest}, getcwd, clobber_source => 0, %opts);
+	
 	my $out=(defined $delta->{wrapper}
 		? tempdir()."/".basename($tarball).".tmp"
 		: $tarball);
-	doit("xdelta", "patch", $delta->{delta}, $recreatetarball, $out);
+
+	my @try;
+	push @try, sub { recreatetarball($delta->{manifest}, getcwd,
+			clobber_source => 0, %opts) };
+	push @try, &recreatetarball_longlink_100;
+
+	my $ok;
+	foreach my $variant (@try) {
+		my $recreatetarball=$variant->();
+		my $ret=try_doit("xdelta", "patch", $delta->{delta}, $recreatetarball, $out);
+		if ($ret == 0) {
+			$ok=1;
+			last;
+		}
+	}
+	if (! $ok) {
+		error "Failed to reproduce original tarball. Please file a bug report.";
+	}
 
 	if (defined $delta->{wrapper}) {
 		my $delta_wrapper=Pristine::Tar::Delta::read(Tarball => $delta->{wrapper});

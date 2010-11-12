@@ -34,10 +34,14 @@ sub vprint {
 }
 
 sub doit {
-	vprint(@_);
-	if (system(@_) != 0) {
+	if (maybe_doit(@_) != 0) {
 		error "command failed: @_";
 	}
+}
+
+sub try_doit {
+	vprint(@_);
+	return system(@_)
 }
 
 sub doit_redir {
