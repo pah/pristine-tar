@@ -1,10 +1,10 @@
-pristine-tar (1.11) UNRELEASED; urgency=low
+pristine-tar (1.11) unstable; urgency=low
 
   * Add workaround for Debian's tar changing its output for tarballs
     containing filenames exactly 100 bytes long. Closes: #602907
-    (Needs a tar with #603231 fixed in order to work.)
+    (Needs tar 1.25-2 with #603231 fixed in order for that to work.)
 
- -- Joey Hess <joeyh@debian.org>  Thu, 11 Nov 2010 21:03:54 -0400
+ -- Joey Hess <joeyh@debian.org>  Fri, 12 Nov 2010 10:25:46 -0400
 
 pristine-tar (1.10) unstable; urgency=low
 
