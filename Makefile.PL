@@ -19,7 +19,7 @@ extra_build: zgz/zgz pristine-tar.spec
 
 ZGZ_SOURCES = zgz/zgz.c zgz/gzip/*.c zgz/old-bzip2/*.c
 zgz/zgz: $(ZGZ_SOURCES)
-	gcc -Wall -O2 -lz -o $@ $(ZGZ_SOURCES)
+	gcc -Wall -O2 -o $@ $(ZGZ_SOURCES) -lz
 
 extra_install:
 	install -d $(DESTDIR)/usr/bin
