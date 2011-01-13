@@ -1,11 +1,12 @@
+Format: http://dep.debian.net/deps/dep5/
+Source: native package
+
 Files: *
 Copyright: © 2007-2010 Joey Hess <joeyh@debian.org>
   © 2007 Faidon Liambotis
   © 2008 Cyril Brulebois <cyril.brulebois@enst-bretagne.fr>
   © 2008 Josh Triplett <josh@joshtriplett.org>
 License: GPL-2+
- On Debian systems, the complete text of the GPL can be found in
- /usr/share/common-licenses/GPL.
 
 Files: zgz/zgz.c
 Copyright: © 1997, 1998, 2003, 2004, 2006 Matthew R. Green
@@ -41,8 +42,6 @@ Copyright: © 1997, 1998, 1999, 2001, 2002, 2006, 2007 Free Software Foundation,
    © 1992-1993 Jean-loup Gailly
    © 2008 Josh Triplett
 License: GPL-2+
- On Debian systems, the complete text of the GPL can be found in
- /usr/share/common-licenses/GPL.
 
 Files: zgz/old-bzip2/*
 Copyright: © 1996-1999 Julian R Seward
@@ -79,3 +78,7 @@ License: other
   WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
   NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
   SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+License: GPL-2+
+ On Debian systems, the complete text of the GPL can be found in
+ /usr/share/common-licenses/GPL.
