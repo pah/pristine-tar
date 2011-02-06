@@ -1,5 +1,5 @@
 Format: http://dep.debian.net/deps/dep5/
-Source: native package
+Source: zgz is based on NetBSD's gzip
 
 Files: *
 Copyright: © 2007-2010 Joey Hess <joeyh@debian.org>
