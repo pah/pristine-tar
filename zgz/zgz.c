@@ -128,7 +128,7 @@ static	void	maybe_err(const char *fmt, ...)
     __attribute__((__format__(__printf__, 1, 2),noreturn));
 static	void	maybe_errx(const char *fmt, ...)
     __attribute__((__format__(__printf__, 1, 2),noreturn));
-static	void	gz_compress(int, int, const char *, uint32_t, int, int, int, int);
+static	void	gz_compress(int, int, const char *, uint32_t, int, int, int, int, int);
 static	void	usage(void);
 static	void	display_version(void);
 static	void	display_license(void);
@@ -173,8 +173,10 @@ main(int argc, char **argv)
 	const char *progname = argv[0];
 	int gnu = 0;
 	int bzold = 0;
+	int quirks = 0;
 	char *origname = NULL;
 	uint32_t timestamp = 0;
+	int memlevel = 8; /* zlib's default */
 	int nflag = 0;
 	int mflag = 0;
 	int fflag = 0;
@@ -238,6 +240,7 @@ main(int argc, char **argv)
 			origname = optarg;
 			break;
 		case 'k':
+			quirks = 1;
 			if (strcmp(optarg, "buggy-bsd") == 0) {
 				/* certain archives made with older versions of
 				 * BSD variants of gzip */
@@ -255,6 +258,9 @@ main(int argc, char **argv)
 				mflag = 1;
 				/* osflag is NTFS */
 				osflag = GZIP_OS_NTFS;
+			} else if (strcmp(optarg, "perl") == 0) {
+				/* Perl's Compress::Raw::Zlib */
+				memlevel = 9;
 			} else {
 				fprintf(stderr, "%s: unknown quirk!\n", progname);
 				usage();
@@ -305,13 +311,13 @@ main(int argc, char **argv)
 		timestamp = 0;
 
 	if (gnu) {
-		if (ntfs_quirk || xflag >= 0) {
+		if (quirks) {
 			fprintf(stderr, "%s: quirks not supported with --gnu\n", progname);
 			return 1;
 		}
 		gnuzip(STDIN_FILENO, STDOUT_FILENO, origname, timestamp, level, osflag, rsync);
 	} else if (bzold) {
-		if (ntfs_quirk || xflag >= 0) {
+		if (quirks) {
 			fprintf(stderr, "%s: quirks not supported with --old-bzip\n", progname);
 			return 1;
 		}
@@ -322,7 +328,7 @@ main(int argc, char **argv)
 			return 1;
 		}
 
-		gz_compress(STDIN_FILENO, STDOUT_FILENO, origname, timestamp, level, osflag, xflag, ntfs_quirk);
+		gz_compress(STDIN_FILENO, STDOUT_FILENO, origname, timestamp, level, memlevel, osflag, xflag, ntfs_quirk);
 	}
 	return 0;
 }
@@ -357,7 +363,7 @@ maybe_errx(const char *fmt, ...)
 
 /* compress input to output. */
 static void
-gz_compress(int in, int out, const char *origname, uint32_t mtime, int level, int osflag, int xflag, int ntfs_quirk)
+gz_compress(int in, int out, const char *origname, uint32_t mtime, int level, int memlevel, int osflag, int xflag, int ntfs_quirk)
 {
 	z_stream z;
 	char *outbufp, *inbufp;
@@ -396,7 +402,7 @@ gz_compress(int in, int out, const char *origname, uint32_t mtime, int level, in
 	z.avail_out = BUFLEN - i;
 
 	error = deflateInit2(&z, level, Z_DEFLATED,
-			     (-MAX_WBITS), 8, Z_DEFAULT_STRATEGY);
+			     (-MAX_WBITS), memlevel, Z_DEFAULT_STRATEGY);
 	if (error != Z_OK)
 		maybe_err("deflateInit2 failed");
 
@@ -516,7 +522,7 @@ usage(void)
     " \ngnu-specific options:\n"
     " -R --rsyncable           make rsync-friendly archive\n"
     " \nzlib-specific options:\n"
-    " -k --quirk QUIRK         enable a format quirk (buggy-bsd, ntfs)\n");
+    " -k --quirk QUIRK         enable a format quirk (buggy-bsd, ntfs, perl)\n");
 	exit(0);
 }
 
