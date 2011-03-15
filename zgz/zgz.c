@@ -261,6 +261,13 @@ main(int argc, char **argv)
 			} else if (strcmp(optarg, "perl") == 0) {
 				/* Perl's Compress::Raw::Zlib */
 				memlevel = 9;
+
+				/* no name or timestamp information */
+				nflag = 1;
+				mflag = 1;
+				/* maximum compression but without indicating so */
+				level = 9;
+				xflag = 0;
 			} else {
 				fprintf(stderr, "%s: unknown quirk!\n", progname);
 				usage();
