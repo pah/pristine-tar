@@ -18,12 +18,18 @@ our $verbose=0;
 our $debug=0;
 our $keep=0;
 
+sub progname {
+	my $name=$0;
+	$name=~s!^.*/(.+)$!$1!;
+	return $name
+}
+
 sub error {
-	die "$0: @_\n";
+	die progname().": @_\n";
 }
 
 sub message {
-	print STDERR "$0: @_\n";
+	print STDERR progname().": @_\n";
 }
 
 sub debug {
