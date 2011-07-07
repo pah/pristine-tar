@@ -55,12 +55,13 @@ I<tarball>, and commits it to version control. The B<pristine-tar checkout>
 command can later be used to recreate the original tarball based only
 on the information stored in version control.
 
-For B<pristine-tar checkout> to work, you also need to store the precise
-contents of the tarball in version control. To specify in which tag (or
-branch or other treeish object) it's stored, use the I<upstream> parameter.
-This defaults to "refs/heads/upstream", or if there's no such branch, any
+The I<upstream> parameter specifies the tag or branch that contains the
+same content that is present in the tarball. This defaults to
+"refs/heads/upstream", or if there's no such branch, any
 branch matching "upstream". The name of the tree it points to will be
-recorded for later use by B<pristine-tar checkout>.
+recorded for later use by B<pristine-tar checkout>. Note that the content
+does not need to be 100% identical to the content of the tarball, but
+if it is not, additional space will be used in the delta file.
 
 The delta files are stored in a branch named "pristine-tar", with filenames
 corresponding to the input tarball, with ".delta" appended. This

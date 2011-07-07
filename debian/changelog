@@ -1,3 +1,9 @@
+pristine-tar (1.14) UNRELEASED; urgency=low
+
+  * Clarify man page.
+
+ -- Joey Hess <joeyh@debian.org>  Thu, 07 Jul 2011 12:17:00 -0400
+
 pristine-tar (1.13) unstable; urgency=low
 
   [ Faidon Liambotis ]
