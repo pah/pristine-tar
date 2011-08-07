@@ -129,7 +129,7 @@ extern int file_read(char *buf,  unsigned size);
 
         /* in deflate.c */
 void lm_init(int pack_level, ush *flags);
-void gnu_deflate(int pack_level, int rsync);
+void gnu_deflate(int pack_level, int rsync, int newrsync);
 
         /* in trees.c */
 void ct_init(void);

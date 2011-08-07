@@ -72,7 +72,7 @@
 #include <getopt.h>
 #include <time.h>
 
-extern void gnuzip(int in, int out, char *origname, unsigned long timestamp, int level, int osflag, int rsync);
+extern void gnuzip(int in, int out, char *origname, unsigned long timestamp, int level, int osflag, int rsync, int newrsync);
 extern void old_bzip2(int level);
 
 #define BUFLEN		(64 * 1024)
@@ -145,7 +145,6 @@ static const struct option longopts[] = {
 	{ "no-name",		no_argument,		0,	'n' },
 	{ "name",		no_argument,		0,	'N' },
 	{ "quiet",		no_argument,		0,	'q' },
-	{ "recursive",		no_argument,		0,	'r' },
 	{ "fast",		no_argument,		0,	'1' },
 	{ "best",		no_argument,		0,	'9' },
 	{ "ascii",		no_argument,		0,	'a' },
@@ -154,6 +153,7 @@ static const struct option longopts[] = {
 	{ "old-bzip2",          no_argument,            0,      'O' },
 	{ "zlib",               no_argument,            0,      'Z' },
 	{ "rsyncable",          no_argument,            0,      'R' },
+	{ "new-rsyncable",      no_argument,            0,      'r' },
 	{ "no-timestamp",	no_argument,		0,	'm' },
 	{ "force-timestamp",	no_argument,		0,	'M' },
 	{ "timestamp",		required_argument,	0,	'T' },
@@ -185,6 +185,7 @@ main(int argc, char **argv)
 	int level = 6;
 	int osflag = GZIP_OS_UNIX;
 	int rsync = 0;
+	int new_rsync = 0;
 	int ch;
 
 	if (strcmp(progname, "gunzip") == 0 ||
@@ -280,8 +281,7 @@ main(int argc, char **argv)
 			rsync = 1;
 			break;
 		case 'r':
-			fprintf(stderr, "%s: recursive is not supported on this version\n", progname);
-			usage();
+			new_rsync = 1;
 			break;
 		case 'd':
 			fprintf(stderr, "%s: decompression is not supported on this version\n", progname);
@@ -322,7 +322,7 @@ main(int argc, char **argv)
 			fprintf(stderr, "%s: quirks not supported with --gnu\n", progname);
 			return 1;
 		}
-		gnuzip(STDIN_FILENO, STDOUT_FILENO, origname, timestamp, level, osflag, rsync);
+		gnuzip(STDIN_FILENO, STDOUT_FILENO, origname, timestamp, level, osflag, rsync, new_rsync);
 	} else if (bzold) {
 		if (quirks) {
 			fprintf(stderr, "%s: quirks not supported with --old-bzip\n", progname);
@@ -330,7 +330,7 @@ main(int argc, char **argv)
 		}
 		old_bzip2(level);
 	} else {
-		if (rsync) {
+		if (rsync || new_rsync) {
 			fprintf(stderr, "%s: --rsyncable not supported with --zlib\n", progname);
 			return 1;
 		}
@@ -528,6 +528,7 @@ usage(void)
     " -T --timestamp SECONDS   set the timestamp to the specified number of seconds\n"
     " \ngnu-specific options:\n"
     " -R --rsyncable           make rsync-friendly archive\n"
+    " -r --new-rsyncable       make rsync-friendly archive (new version)\n"
     " \nzlib-specific options:\n"
     " -k --quirk QUIRK         enable a format quirk (buggy-bsd, ntfs, perl)\n");
 	exit(0);

@@ -101,12 +101,19 @@
 #endif
 /* Matches of length 3 are discarded if their distance exceeds TOO_FAR */
 
-#ifndef RSYNC_WIN
-#  define RSYNC_WIN 4096
-#endif
+int RSYNC_WIN = 4096;
 /* Size of rsync window, must be < MAX_DIST */
 
-#define RSYNC_SUM_MATCH(sum) ((sum) % RSYNC_WIN == 0)
+/* Whether to enable compatability with Debian's old rsyncable patch. */
+int debian_rsyncable = 1;
+
+void disable_debian_rsyncable () {
+	debian_rsyncable = 0;
+	RSYNC_WIN = 8192;
+}
+
+#define RSYNC_SUM_MATCH_DEBIAN(sum) ((sum) % RSYNC_WIN == 0)
+#define RSYNC_SUM_MATCH(sum) (((sum) & (RSYNC_WIN - 1)) == 0)
 /* Whether window sum matches magic value */
 
 /* ===========================================================================
@@ -525,7 +532,9 @@ static void rsync_roll(unsigned start, unsigned num)
 	rsync_sum += (ulg)window[i];
 	/* Old character out */
 	rsync_sum -= (ulg)window[i - RSYNC_WIN];
-	if (rsync_chunk_end == 0xFFFFFFFFUL && RSYNC_SUM_MATCH(rsync_sum))
+	if (debian_rsyncable && rsync_chunk_end == 0xFFFFFFFFUL && RSYNC_SUM_MATCH_DEBIAN(rsync_sum))
+	    rsync_chunk_end = i;
+	if (! debian_rsyncable && rsync_chunk_end == 0xFFFFFFFFUL && RSYNC_SUM_MATCH(rsync_sum))
 	    rsync_chunk_end = i;
     }
 }
@@ -614,9 +623,14 @@ static void deflate_fast(int pack_level, int rsync)
             lookahead--;
 	    strstart++;
         }
-	if (rsync && strstart > rsync_chunk_end) {
+	if (rsync && debian_rsyncable && strstart > rsync_chunk_end) {
 	    rsync_chunk_end = 0xFFFFFFFFUL;
 	    flush = 2;
+	}
+	if (rsync && ! debian_rsyncable && strstart > rsync_chunk_end) {
+	    flush = 1;
+	    ct_init();
+	    rsync_chunk_end = 0xFFFFFFFFUL;
 	}
         if (flush) FLUSH_BLOCK(0), block_start = strstart;
 
@@ -636,13 +650,20 @@ static void deflate_fast(int pack_level, int rsync)
  * evaluation for matches: a match is finally adopted only if there is
  * no better match at the next window position.
  */
-void gnu_deflate(int pack_level, int rsync)
+void gnu_deflate(int pack_level, int rsync, int newrsync)
 {
     IPos hash_head;          /* head of hash chain */
     IPos prev_match;         /* previous match */
     int flush = 0;           /* set if current block must be flushed */
     int match_available = 0; /* set if previous match exists */
     register unsigned match_length = MIN_MATCH-1; /* length of best match */
+
+    /* The newrsync mode superscedes Debian's old, somewhat broken
+     * rsync patch. */
+    if (newrsync) {
+	    rsync=1;
+	    disable_debian_rsyncable();
+    }
 
     if (pack_level <= 3) {
         deflate_fast(pack_level, rsync); /* optimized for speed */
@@ -705,9 +726,14 @@ void gnu_deflate(int pack_level, int rsync)
             match_length = MIN_MATCH-1;
             strstart++;
 
-	    if (rsync && strstart > rsync_chunk_end) {
+	    if (rsync && debian_rsyncable && strstart > rsync_chunk_end) {
 		rsync_chunk_end = 0xFFFFFFFFUL;
 		flush = 2;
+	    }
+	    if (rsync && ! debian_rsyncable && strstart > rsync_chunk_end) {
+		ct_init();
+		rsync_chunk_end = 0xFFFFFFFFUL;
+		flush = 1;
 	    }
             if (flush) FLUSH_BLOCK(0), block_start = strstart;
         } else if (match_available) {
@@ -717,9 +743,14 @@ void gnu_deflate(int pack_level, int rsync)
              */
             Tracevv((stderr,"%c",window[strstart-1]));
 	    flush = ct_tally (pack_level, 0, window[strstart-1]);
-	    if (rsync && strstart > rsync_chunk_end) {
+	    if (rsync && debian_rsyncable && strstart > rsync_chunk_end) {
 		rsync_chunk_end = 0xFFFFFFFFUL;
 		flush = 2;
+	    }
+	    if (rsync && ! debian_rsyncable && strstart > rsync_chunk_end) {
+		ct_init();
+		rsync_chunk_end = 0xFFFFFFFFUL;
+		flush = 1;
 	    }
             if (flush) FLUSH_BLOCK(0), block_start = strstart;
 	    RSYNC_ROLL(strstart, 1);
@@ -729,10 +760,16 @@ void gnu_deflate(int pack_level, int rsync)
             /* There is no previous match to compare with, wait for
              * the next step to decide.
              */
-	    if (rsync && strstart > rsync_chunk_end) {
+	    if (rsync && debian_rsyncable && strstart > rsync_chunk_end) {
 		/* Reset huffman tree */
 		rsync_chunk_end = 0xFFFFFFFFUL;
 		flush = 2;
+		FLUSH_BLOCK(0), block_start = strstart;
+	    }
+	    if (rsync && ! debian_rsyncable && strstart > rsync_chunk_end) {
+		ct_init();
+		/* Reset huffman tree */
+		rsync_chunk_end = 0xFFFFFFFFUL;
 		FLUSH_BLOCK(0), block_start = strstart;
 	    }
             match_available = 1;

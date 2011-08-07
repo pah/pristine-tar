@@ -192,6 +192,7 @@ sub reproducegz {
 		# and it was produced by gnu gzip.
 		push @try, ['--gnu', @args];
 		push @try, ['--gnu', @args, '--rsyncable'];
+		push @try, ['--gnu', @args, '--new-rsyncable'];
 	}
 
 	if ($name =~ /\//) {
@@ -285,7 +286,7 @@ sub gengz {
 	my @params=split(' ', $delta->{params});
 	while (@params) {
 		$_=shift @params;
-		next if /^(--gnu|--rsyncable|-[nmM1-9])$/;
+		next if /^(--gnu|--rsyncable|--new-rsyncable|-[nmM1-9])$/;
 		if (/^(--original-name|--quirk|--osflag)$/) {
 			shift @params;
 			next;

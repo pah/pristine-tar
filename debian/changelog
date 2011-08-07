@@ -1,5 +1,9 @@
 pristine-tar (1.14) UNRELEASED; urgency=low
 
+  * Add support for gzip --rsyncable output produced by gzip 1.4.
+    This differs from prior --rsyncable output, which was made by a debian
+    specific patch and used a different rsync window size, and reset
+    huffman encodings less often.
   * Clarify man page.
 
  -- Joey Hess <joeyh@debian.org>  Thu, 07 Jul 2011 12:17:00 -0400

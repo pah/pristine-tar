@@ -38,7 +38,7 @@ static off_t bytes_in;  /* number of input bytes */
  * Deflate in to out.
  * IN assertions: the input and output buffers are cleared.
  */
-void gnuzip(int in, int out, char *origname, ulg timestamp, int level, int osflag, int rsync)
+void gnuzip(int in, int out, char *origname, ulg timestamp, int level, int osflag, int rsync, int newrsync)
 {
     uch  flags = 0;         /* general purpose bit flags */
     ush  deflate_flags = 0; /* pkzip -es, -en or -ex equivalent */
@@ -76,7 +76,7 @@ void gnuzip(int in, int out, char *origname, ulg timestamp, int level, int osfla
 	} while (*p++);
     }
 
-    gnu_deflate(level, rsync);
+    gnu_deflate(level, rsync, newrsync);
 
     /* Write the crc and uncompressed size */
     put_long(crc);
