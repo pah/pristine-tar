@@ -5,7 +5,7 @@ Build-Depends: debhelper (>= 7.0.50), dpkg-dev (>= 1.9.0), zlib1g-dev, perl
 Maintainer: Joey Hess <joeyh@debian.org>
 Standards-Version: 3.9.1
 Vcs-Git: git://git.kitenet.net/pristine-tar/
-Vcs-Browser: http://git.kitenet.net/?p=pristine-tar
+Vcs-Browser: http://git.kitenet.net/?p=pristine-tar.git
 Homepage: http://kitenet.net/~joey/code/pristine-tar/
 
 Package: pristine-tar

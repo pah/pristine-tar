@@ -1,3 +1,9 @@
+pristine-tar (1.15) UNRELEASED; urgency=low
+
+  * Fix Vcs-Browser url. Closes: #636926
+
+ -- Joey Hess <joeyh@debian.org>  Sun, 07 Aug 2011 08:53:21 -0400
+
 pristine-tar (1.14) unstable; urgency=low
 
   * Add support for gzip --rsyncable output produced by gzip 1.4.
