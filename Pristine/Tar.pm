@@ -59,6 +59,9 @@ sub doit_redir {
 	open OUTFILE, ">", $out or die("Could not open '$out' for reading: $!\n");
 	my $pid = open2(">&OUTFILE", "<&INFILE", @args);
 	waitpid $pid, 0;
+	if ($? != 0) {
+		error "command failed: @args";
+	}
 }
 
 sub tempdir {
