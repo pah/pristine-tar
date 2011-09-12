@@ -1028,7 +1028,7 @@ void mainSort ( UInt32* ptr,
       ftab [ 0 .. 65536 ] destroyed
       arr1 [0 .. nblock-1] holds sorted order
 */
-void blockSort ( EState* s )
+void blockSort_10 ( EState* s )
 {
    UInt32* ptr    = s->ptr; 
    UInt16* block  = s->block;
