@@ -170,8 +170,11 @@ void compressStream ( FILE *stream, FILE *zStream )
    /*notreached*/
 }
 
-void old_bzip2(int level) {
+int quirk_suse = 0;
+
+void old_bzip2(int level, int qs) {
 	workFactor = 30;
+	quirk_suse = qs;
 	blockSize100k = level;
 
 	compressStream(stdin, stdout);
