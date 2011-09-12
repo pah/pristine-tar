@@ -346,7 +346,7 @@ static
 __inline__
 Bool mainGtU ( UInt32  i1, 
                UInt32  i2,
-               UInt16*  block, 
+               UChar*  block, 
                UInt16* quadrant,
                UInt32  nblock,
                Int32*  budget )
@@ -483,7 +483,7 @@ Int32 incs[14] = { 1, 4, 13, 40, 121, 364, 1093, 3280,
 
 static
 void mainSimpleSort ( UInt32* ptr,
-                      UInt16*  block,
+                      UChar*  block,
                       UInt16* quadrant,
                       Int32   nblock,
                       Int32   lo, 
@@ -619,7 +619,7 @@ UChar mmed3 ( UChar a, UChar b, UChar c )
 
 static
 void mainQSort3 ( UInt32* ptr,
-                  UInt16*  block,
+                  UChar*  block,
                   UInt16* quadrant,
                   Int32   nblock,
                   Int32   loSt, 
@@ -749,7 +749,7 @@ void mainQSort3 ( UInt32* ptr,
 
 static
 void mainSort ( UInt32* ptr, 
-                UInt16*  block,
+                UChar*  block,
                 UInt16* quadrant, 
                 UInt32* ftab,
                 Int32   nblock,
@@ -1028,10 +1028,10 @@ void mainSort ( UInt32* ptr,
       ftab [ 0 .. 65536 ] destroyed
       arr1 [0 .. nblock-1] holds sorted order
 */
-void blockSort_10 ( EState* s )
+void BZ2_blockSort ( EState* s )
 {
    UInt32* ptr    = s->ptr; 
-   UInt16* block  = s->block;
+   UChar*  block  = s->block;
    UInt32* ftab   = s->ftab;
    Int32   nblock = s->nblock;
    Int32   verb   = s->verbosity;
