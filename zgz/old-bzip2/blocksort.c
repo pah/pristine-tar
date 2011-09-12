@@ -751,8 +751,7 @@ void mainSort ( UInt32* ptr,
    Int32  copy[256];
    Bool   bigDone[256];
    UChar  c1;
-   Int32  numQSorted;
-   Int32  biggestSoFar;
+   Int32  numQSorted = 0;
    UInt16 s;
 
    if (verb >= 4) VPrintf0 ( "        main sort initialise ...\n" );
@@ -825,8 +824,6 @@ void mainSort ( UInt32* ptr,
    /*--
       The main sorting loop.
    --*/
-
-   biggestSoFar = numQSorted = 0;
 
    for (i = 0; i <= 255; i++) {
 

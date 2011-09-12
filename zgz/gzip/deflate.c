@@ -562,7 +562,7 @@ static void rsync_roll(unsigned start, unsigned num)
 static void deflate_fast(int pack_level, int rsync)
 {
     IPos hash_head; /* head of the hash chain */
-    int flush;      /* set if current block must be flushed, 2=>and padded  */
+    int flush = 0;      /* set if current block must be flushed, 2=>and padded  */
     unsigned match_length = 0;  /* length of best match */
 
     prev_length = MIN_MATCH-1;

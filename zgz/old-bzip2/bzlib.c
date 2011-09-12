@@ -761,7 +761,6 @@ BZFILE * bzopen_or_bzdopen
    BZFILE *bzfp         = NULL;
    int    verbosity     = 0;
    int    workFactor    = 30;
-   int    smallMode     = 0;
 
    if (mode == NULL) return NULL;
    while (*mode) {
@@ -771,7 +770,8 @@ BZFILE * bzopen_or_bzdopen
       case 'w':
          writing = 1; break;
       case 's':
-         smallMode = 1; break;
+         //smallMode = 1;
+	 break;
       default:
          if (isdigit((int)(*mode))) {
             blockSize100k = *mode-'0';
