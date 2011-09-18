@@ -14,6 +14,8 @@ B<pristine-tar> [-vdk] [-m message] commit I<tarball> [I<upstream>]
 
 B<pristine-tar> [-vdk] checkout I<tarball>
 
+B<pristine-tar> [-vdk] list
+
 =head1 DESCRIPTION
 
 pristine-tar can regenerate an exact copy of a pristine upstream tarball
@@ -71,6 +73,11 @@ branch is created or updated as needed to add each new delta.
 
 This regenerates a copy of the specified I<tarball> using information
 previously saved in version control by B<pristine-tar commit>.
+
+=item pristine-tar list
+
+This lists tarballs that pristine-tar is able to checkout from version
+control.
 
 =back
 
@@ -192,6 +199,7 @@ dispatch(
 		ci => [\&commit, 1],
 		checkout => [\&checkout, 1],
 		co => [\&checkout, 1],
+		list => [\&list, 0],
 	},
 	options => {
 		"m|message=s" => \$message,
@@ -758,4 +766,24 @@ sub checkout {
 	close GENTAR || error "failed to generate tarball";
 
 	message("successfully generated $tarball");
+}
+
+sub list {
+	my $branch="pristine-tar";
+	my $vcs=vcstype();
+	if ($vcs eq "git") {
+		my $b=git_findbranch($branch);
+		if (defined $b) {
+			open (LIST, "git ls-tree $b --name-only |");
+			while (<LIST>) {
+				chomp;
+				next unless s/\.delta$//;
+				print $_."\n";
+			}
+		}
+	else {
+		die "unsupported vcs $vcs";
+	}
+}
+
 }

@@ -2,6 +2,8 @@ pristine-tar (1.15) UNRELEASED; urgency=low
 
   * Fix Vcs-Browser url. Closes: #636926
   * Propigate nonzero exit status from doit_redir. Closes: #600724
+  * 'pristine-tar list' displays a list of tarballs that are available for
+    checkout.
 
  -- Joey Hess <joeyh@debian.org>  Sun, 07 Aug 2011 08:53:21 -0400
 
