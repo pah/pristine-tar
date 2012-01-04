@@ -132,7 +132,7 @@ static	void	gz_compress(int, int, const char *, uint32_t, int, int, int, int, in
 static	void	usage(void);
 static	void	display_version(void);
 static	void	display_license(void);
-static	void	shamble(char *, int);
+static	void	shamble(char *, int, char *);
 
 int main(int, char **p);
 
@@ -174,6 +174,7 @@ main(int argc, char **argv)
 	const char *progname = argv[0];
 	int gnu = 0;
 	int bzold = 0;
+	int bzsuse = 0;
 	int quirks = 0;
 	char *origname = NULL;
 	uint32_t timestamp = 0;
@@ -182,7 +183,6 @@ main(int argc, char **argv)
 	int mflag = 0;
 	int fflag = 0;
 	int xflag = -1;
-	int suse_quirk = 0;
 	int ntfs_quirk = 0;
 	int level = 6;
 	int osflag = GZIP_OS_UNIX;
@@ -197,7 +197,7 @@ main(int argc, char **argv)
 		usage();
 	}
 
-#define OPT_LIST "123456789acdfhF:GLNnMmqRrT:Vo:k:s:ZO"
+#define OPT_LIST "123456789acdfhF:GLNnMmqRrT:Vo:k:s:ZOS"
 
 	while ((ch = getopt_long(argc, argv, OPT_LIST, longopts, NULL)) != -1) {
 		switch (ch) {
@@ -206,6 +206,9 @@ main(int argc, char **argv)
 			break;
 		case 'O':
 			bzold = 1;
+			break;
+		case 'S':
+			bzsuse = 1;
 			break;
 		case 'Z':
 			break;
@@ -271,9 +274,6 @@ main(int argc, char **argv)
 				/* maximum compression but without indicating so */
 				level = 9;
 				xflag = 0;
-			} else if (strcmp(optarg, "suse") == 0) {
-				/* SuSe's patched bzip2. */
-				suse_quirk = 1;
 			} else {
 				fprintf(stderr, "%s: unknown quirk!\n", progname);
 				usage();
@@ -329,12 +329,13 @@ main(int argc, char **argv)
 		}
 		gnuzip(STDIN_FILENO, STDOUT_FILENO, origname, timestamp, level, osflag, rsync, new_rsync);
 	} else if (bzold) {
-		if (suse_quirk) {
-			shamble("suse-bzip2", level);
+		if (quirks) {
+			fprintf(stderr, "%s: quirks not supported with --old-bzip2\n", progname);
+			return 1;
 		}
-		else {
-			old_bzip2(level);
-		}
+		old_bzip2(level);
+	} else if (bzsuse) {
+		shamble("suse-bzip2/bzip2", level, "");
 	} else {
 		if (rsync || new_rsync) {
 			fprintf(stderr, "%s: --rsyncable not supported with --zlib\n", progname);
@@ -507,10 +508,10 @@ gz_compress(int in, int out, const char *origname, uint32_t mtime, int level, in
 
 /* runs an external, reanimated compressor program */
 static	void
-shamble(char *zombie, int level)
+shamble(char *zombie, int level, char *opts)
 {
 	char buf[128];
-	sprintf(buf, "%s/%s %i", ZGZ_LIB, zombie, level);
+	sprintf(buf, "%s/%s -%i %s", ZGZ_LIB, zombie, level, opts);
 	exit(system(buf));
 }
 
@@ -525,6 +526,7 @@ usage(void)
     " -G --gnu                 use GNU gzip implementation\n"
     " -Z --zlib                use zlib's implementation (default)\n"
     " -O --old-bzip2           generate bzip2 (0.9.5d) output\n"
+    " -S --suse-bzip2          generate suse bzip2 output\n"
     " -1 --fast                fastest (worst) compression\n"
     " -2 .. -8                 set compression level\n"
     " -9 --best                best (slowest) compression\n"
@@ -545,7 +547,7 @@ usage(void)
     " -R --rsyncable           make rsync-friendly archive\n"
     " -r --new-rsyncable       make rsync-friendly archive (new version)\n"
     " \nzlib-specific options:\n"
-    " -k --quirk QUIRK         enable a format quirk (buggy-bsd, ntfs, perl, suse)\n");
+    " -k --quirk QUIRK         enable a format quirk (buggy-bsd, ntfs, perl)\n");
 	exit(0);
 }
 

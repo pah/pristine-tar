@@ -8,8 +8,8 @@
    This file is part of bzip2/libbzip2, a program and library for
    lossless, block-sorting data compression.
 
-   bzip2/libbzip2 version 1.0.5 of 10 December 2007
-   Copyright (C) 1996-2007 Julian Seward <jseward@bzip.org>
+   bzip2/libbzip2 version 1.0.6 of 6 September 2010
+   Copyright (C) 1996-2010 Julian Seward <jseward@bzip.org>
 
    Please read the WARNING, DISCLAIMER and PATENTS sections in the 
    README file.
@@ -36,7 +36,7 @@
 
 /*-- General stuff. --*/
 
-#define BZ_VERSION  "1.0.5, 10-Dec-2007"
+#define BZ_VERSION  "1.0.6, 6-Sept-2010"
 
 typedef char            Char;
 typedef unsigned char   Bool;
@@ -128,7 +128,7 @@ extern void bz_internal_error ( int errcode );
 
 /*-- Stuff for randomising repetitive blocks. --*/
 
-extern Int32 rNums[512];
+extern Int32 BZ2_rNums[512];
 
 #define BZ_RAND_DECLS                          \
    Int32 rNToGo;                               \
@@ -142,7 +142,7 @@ extern Int32 rNums[512];
 
 #define BZ_RAND_UPD_MASK                       \
    if (s->rNToGo == 0) {                       \
-      s->rNToGo = rNums[s->rTPos];         \
+      s->rNToGo = BZ2_rNums[s->rTPos];         \
       s->rTPos++;                              \
       if (s->rTPos == 512) s->rTPos = 0;       \
    }                                           \
@@ -152,7 +152,7 @@ extern Int32 rNums[512];
 
 /*-- Stuff for doing CRCs. --*/
 
-UInt32 crc32Table[256];
+extern UInt32 BZ2_crc32Table[256];
 
 #define BZ_INITIALISE_CRC(crcVar)              \
 {                                              \
@@ -167,7 +167,7 @@ UInt32 crc32Table[256];
 #define BZ_UPDATE_CRC(crcVar,cha)              \
 {                                              \
    crcVar = (crcVar << 8) ^                    \
-            crc32Table[(crcVar >> 24) ^    \
+            BZ2_crc32Table[(crcVar >> 24) ^    \
                            ((UChar)cha)];      \
 }
 
@@ -483,6 +483,9 @@ typedef
 
 extern Int32 
 BZ2_indexIntoF ( Int32, Int32* );
+
+extern Int32 
+BZ2_decompress ( DState* );
 
 extern void 
 BZ2_hbCreateDecodeTables ( Int32*, Int32*, Int32*, UChar*,
