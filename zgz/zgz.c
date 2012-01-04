@@ -272,7 +272,7 @@ main(int argc, char **argv)
 				level = 9;
 				xflag = 0;
 			} else if (strcmp(optarg, "suse") == 0) {
-				/* SuSe's patched bzip2. (Inexact emulation.) */
+				/* SuSe's patched bzip2. */
 				suse_quirk = 1;
 			} else {
 				fprintf(stderr, "%s: unknown quirk!\n", progname);
