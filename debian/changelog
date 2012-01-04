@@ -1,7 +1,7 @@
 pristine-tar (1.16) UNRELEASED; urgency=low
 
-  * zgz: Add --quirk suse, to deal with suse's patched bzip2.
-    (suse's pbzip2 is not yet supported so bug #641019 is still open)
+  * pristine-bz2: Can recreate bz2 files greated by Suse's
+    patched bzip2. Closes: #641019
 
  -- Joey Hess <joeyh@debian.org>  Wed, 04 Jan 2012 18:15:25 -0400
 

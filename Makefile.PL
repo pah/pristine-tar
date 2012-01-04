@@ -35,7 +35,7 @@ extra_install:
 	install -m 0644 *.1 $(DESTDIR)/usr/share/man/man1
 	install -d $(DESTDIR)$(ZGZ_LIB)/suse-bzip2
 	install zgz/pit/suse-bzip2/bzip2 $(DESTDIR)$(ZGZ_LIB)/suse-bzip2
-	install zgz/pit/suse-bzip2/libz2* $(DESTDIR)$(ZGZ_LIB)/suse-bzip2
+	install zgz/pit/suse-bzip2/libbz2* $(DESTDIR)$(ZGZ_LIB)/suse-bzip2
 
 extra_clean: pristine-tar.spec
 	rm -f *.1 zgz/zgz

@@ -9,3 +9,7 @@ override_dh_auto_configure:
 override_dh_auto_clean:
 	# distclean moans about MANIFEST, this is quieter
 	if [ -e Makefile ]; then $(MAKE) realclean; fi
+
+override_dh_makeshlibs:
+	# only contains private libraries
+

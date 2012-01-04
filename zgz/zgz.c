@@ -133,6 +133,7 @@ static	void	usage(void);
 static	void	display_version(void);
 static	void	display_license(void);
 static	void	shamble(char *, int, char *);
+static	void    rebrain(char *, char *, int, char *);
 
 int main(int, char **p);
 
@@ -152,6 +153,8 @@ static const struct option longopts[] = {
 	/* new options */
 	{ "gnu",                no_argument,            0,      'G' },
 	{ "old-bzip2",          no_argument,            0,      'O' },
+	{ "suse-bzip2",         no_argument,            0,      'S' },
+	{ "suse-pbzip2",        no_argument,            0,      'P' },
 	{ "zlib",               no_argument,            0,      'Z' },
 	{ "rsyncable",          no_argument,            0,      'R' },
 	{ "new-rsyncable",      no_argument,            0,      'r' },
@@ -175,6 +178,7 @@ main(int argc, char **argv)
 	int gnu = 0;
 	int bzold = 0;
 	int bzsuse = 0;
+	int pbzsuse = 0;
 	int quirks = 0;
 	char *origname = NULL;
 	uint32_t timestamp = 0;
@@ -197,7 +201,7 @@ main(int argc, char **argv)
 		usage();
 	}
 
-#define OPT_LIST "123456789acdfhF:GLNnMmqRrT:Vo:k:s:ZOS"
+#define OPT_LIST "123456789acdfhF:GLNnMmqRrT:Vo:k:s:ZOSP"
 
 	while ((ch = getopt_long(argc, argv, OPT_LIST, longopts, NULL)) != -1) {
 		switch (ch) {
@@ -209,6 +213,9 @@ main(int argc, char **argv)
 			break;
 		case 'S':
 			bzsuse = 1;
+			break;
+		case 'P':
+			pbzsuse = 1;
 			break;
 		case 'Z':
 			break;
@@ -336,6 +343,8 @@ main(int argc, char **argv)
 		old_bzip2(level);
 	} else if (bzsuse) {
 		shamble("suse-bzip2/bzip2", level, "");
+	} else if (pbzsuse) {
+		rebrain("suse-bzip2", "pbzip2", level, "");
 	} else {
 		if (rsync || new_rsync) {
 			fprintf(stderr, "%s: --rsyncable not supported with --zlib\n", progname);
@@ -515,6 +524,16 @@ shamble(char *zombie, int level, char *opts)
 	exit(system(buf));
 }
 
+/* swaps in a different library and runs a system program */
+static	void
+rebrain(char *zombie, char *program, int level, char *opts)
+{
+	char buf[128];
+	sprintf(buf, "LD_LIBRARY_PATH=%s/%s %s -%i %s",
+			ZGZ_LIB, zombie, program, level, opts);
+	exit(system(buf));
+}
+
 /* display usage */
 static void
 usage(void)
@@ -527,6 +546,7 @@ usage(void)
     " -Z --zlib                use zlib's implementation (default)\n"
     " -O --old-bzip2           generate bzip2 (0.9.5d) output\n"
     " -S --suse-bzip2          generate suse bzip2 output\n"
+    " -P --suse-pbzip2         generate suse pbzip2 output\n"
     " -1 --fast                fastest (worst) compression\n"
     " -2 .. -8                 set compression level\n"
     " -9 --best                best (slowest) compression\n"

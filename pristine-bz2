@@ -146,8 +146,9 @@ sub predictbzip2args {
 	my @args=["-$level"];
 
 	if ($program eq 'zgz') {
-		push @args, ["-$level", "--old-bzip2"];
+		@args=["-$level", "--old-bzip2"];
 		push @args, ["-$level", "--suse-bzip2"];
+		push @args, ["-$level", "--suse-pbzip2"];
 	}
 
 	return @args;
@@ -260,6 +261,7 @@ sub genbz2 {
 		next if $param=~/^(-[1-9])$/;
 		next if $param eq '--old-bzip2';
 		next if $param eq '--suse-bzip2';
+		next if $param eq '--suse-pbzip2';
 		die "paranoia check failed on params from delta (@params)";
 	}
 
