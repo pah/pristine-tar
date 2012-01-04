@@ -147,7 +147,7 @@ sub predictbzip2args {
 	push @args, "-$level";
 
 	if ($program eq 'zgz') {
-		push @args, '--old-bzip2';
+		push @args, "--old-bzip2";
 	}
 
 	return @args;
@@ -211,6 +211,12 @@ sub reproducebzip2 {
 
 		testvariant($orig, $tmpin, $program, @args)
 			&& return $program, @args;
+		
+		if ($program eq 'zgz') {
+			testvariant($orig, $tmpin, $program, @args,
+			            "--quirk", "suse")
+				&& return $program, @args, "--quirk", "suse";
+		}
 	}
 
 	# 7z has a weird syntax, not supported yet, as not seen in the wild
@@ -254,9 +260,15 @@ sub genbz2 {
 		fields => [qw{params program}]);
 
 	my @params=split(' ', $delta->{params});
-	foreach my $param (@params) {
+	while (@params) {
+		my $param=shift @params;
+
 		next if $param=~/^(-[1-9])$/;
 		next if $param eq '--old-bzip2';
+		if ($param eq '--quirk') {
+			shift @params;
+			next;
+		}
 		die "paranoia check failed on params from delta (@params)";
 	}
 
