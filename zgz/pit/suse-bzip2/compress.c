@@ -448,7 +448,7 @@ void sendMTFValues ( EState* s )
          comment in huffman.c for details. */
       for (t = 0; t < nGroups; t++)
          BZ2_hbMakeCodeLengths ( &(s->len[t][0]), &(s->rfreq[t][0]), 
-                                 alphaSize, 17 /*20*/ );
+                                 alphaSize, 20 );
    }
 
 
@@ -485,7 +485,7 @@ void sendMTFValues ( EState* s )
          if (s->len[t][i] > maxLen) maxLen = s->len[t][i];
          if (s->len[t][i] < minLen) minLen = s->len[t][i];
       }
-      AssertH ( !(maxLen > 17 /*20*/ ), 3004 );
+      AssertH ( !(maxLen > 20 ), 3004 );
       AssertH ( !(minLen < 1),  3005 );
       BZ2_hbAssignCodes ( &(s->code[t][0]), &(s->len[t][0]), 
                           minLen, maxLen, alphaSize );
