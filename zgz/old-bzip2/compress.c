@@ -552,7 +552,6 @@ void sendMTFValues ( EState* s )
       VPrintf1( "codes %d\n", s->numZ-nBytes );
 }
 
-extern int quirk_suse;
 
 /*---------------------------------------------------*/
 void compressBlock ( EState* s, Bool is_last_block )
@@ -569,10 +568,7 @@ void compressBlock ( EState* s, Bool is_last_block )
                    "combined CRC = 0x%8x, size = %d\n",
                    s->blockNo, s->blockCRC, s->combinedCRC, s->nblock );
 
-      if (quirk_suse)
-	      blockSort_10 ( s );
-      else
-	      blockSort ( s );
+      blockSort ( s );
    }
 
    s->zbits = (UChar*) (&((UInt16*)s->arr2)[s->nblock]);

@@ -73,7 +73,7 @@
 #include <time.h>
 
 extern void gnuzip(int in, int out, char *origname, unsigned long timestamp, int level, int osflag, int rsync, int newrsync);
-extern void old_bzip2(int level, int suse_quirk);
+extern void old_bzip2(int level);
 
 #define BUFLEN		(64 * 1024)
 
@@ -181,7 +181,6 @@ main(int argc, char **argv)
 	int mflag = 0;
 	int fflag = 0;
 	int xflag = -1;
-	int suse_quirk = 0;
 	int ntfs_quirk = 0;
 	int level = 6;
 	int osflag = GZIP_OS_UNIX;
@@ -270,9 +269,6 @@ main(int argc, char **argv)
 				/* maximum compression but without indicating so */
 				level = 9;
 				xflag = 0;
-			} else if (strcmp(optarg, "suse") == 0) {
-				/* SuSe's patched bzip2. (Inexact emulation.) */
-				suse_quirk = 1;
 			} else {
 				fprintf(stderr, "%s: unknown quirk!\n", progname);
 				usage();
@@ -328,7 +324,11 @@ main(int argc, char **argv)
 		}
 		gnuzip(STDIN_FILENO, STDOUT_FILENO, origname, timestamp, level, osflag, rsync, new_rsync);
 	} else if (bzold) {
-		old_bzip2(level, suse_quirk);
+		if (quirks) {
+			fprintf(stderr, "%s: quirks not supported with --old-bzip\n", progname);
+			return 1;
+		}
+		old_bzip2(level);
 	} else {
 		if (rsync || new_rsync) {
 			fprintf(stderr, "%s: --rsyncable not supported with --zlib\n", progname);
@@ -530,7 +530,7 @@ usage(void)
     " -R --rsyncable           make rsync-friendly archive\n"
     " -r --new-rsyncable       make rsync-friendly archive (new version)\n"
     " \nzlib-specific options:\n"
-    " -k --quirk QUIRK         enable a format quirk (buggy-bsd, ntfs, perl, suse)\n");
+    " -k --quirk QUIRK         enable a format quirk (buggy-bsd, ntfs, perl)\n");
 	exit(0);
 }
 

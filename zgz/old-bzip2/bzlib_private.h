@@ -296,8 +296,6 @@ typedef
 
 extern void 
 blockSort ( EState* );
-extern void 
-blockSort_10 ( EState* );
 
 extern void 
 compressBlock ( EState*, Bool );
