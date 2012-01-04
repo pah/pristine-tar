@@ -264,6 +264,7 @@ sub genbz2 {
 		next if $param eq '--suse-pbzip2';
 		die "paranoia check failed on params from delta (@params)";
 	}
+	my @params=split(' ', $delta->{params});
 
 	my $program=$delta->{program};
 	if (! grep { $program eq $_ } @supported_bzip2_programs) {
