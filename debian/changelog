@@ -1,3 +1,10 @@
+pristine-tar (1.16) UNRELEASED; urgency=low
+
+  * zgz: Add --quirk suse, to deal with suse's patched bzip2.
+    (suse's pbzip2 is not yet supported so bug #641019 is still open)
+
+ -- Joey Hess <joeyh@debian.org>  Wed, 04 Jan 2012 18:15:25 -0400
+
 pristine-tar (1.15) unstable; urgency=low
 
   * Fix Vcs-Browser url. Closes: #636926
