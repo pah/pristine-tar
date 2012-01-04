@@ -46,6 +46,9 @@ void panic (char *msg) {
 }
 
 static
+Bool myfeof ( FILE* f );
+
+static
 void compressStream ( FILE *stream, FILE *zStream )
 {
    BZFILE* bzf = NULL;
@@ -57,7 +60,7 @@ void compressStream ( FILE *stream, FILE *zStream )
    if (ferror(stream)) goto errhandler_io;
    if (ferror(zStream)) goto errhandler_io;
 
-   bzf = bzWriteOpen ( &bzerr, zStream, 
+   bzf = BZ2_bzWriteOpen ( &bzerr, zStream, 
                        blockSize100k, verbosity, workFactor );   
    if (bzerr != BZ_OK) goto errhandler;
 
@@ -68,12 +71,12 @@ void compressStream ( FILE *stream, FILE *zStream )
       if (myfeof(stream)) break;
       nIbuf = fread ( ibuf, sizeof(UChar), 5000, stream );
       if (ferror(stream)) goto errhandler_io;
-      if (nIbuf > 0) bzWrite ( &bzerr, bzf, (void*)ibuf, nIbuf );
+      if (nIbuf > 0) BZ2_bzWrite ( &bzerr, bzf, (void*)ibuf, nIbuf );
       if (bzerr != BZ_OK) goto errhandler;
 
    }
 
-   bzWriteClose ( &bzerr, bzf, 0, &nbytes_in, &nbytes_out );
+   BZ2_bzWriteClose ( &bzerr, bzf, 0, &nbytes_in, &nbytes_out );
    if (bzerr != BZ_OK) goto errhandler;
 
    if (ferror(zStream)) goto errhandler_io;
@@ -92,7 +95,7 @@ void compressStream ( FILE *stream, FILE *zStream )
    return;
 
    errhandler:
-   bzWriteClose ( &bzerr_dummy, bzf, 1, &nbytes_in, &nbytes_out );
+   BZ2_bzWriteClose ( &bzerr_dummy, bzf, 1, &nbytes_in, &nbytes_out );
    switch (bzerr) {
       case BZ_MEM_ERROR:
          panic ( "out of memory" );
@@ -898,7 +901,6 @@ BZFILE * bzopen_or_bzdopen
                  int open_mode)      /* bzopen: 0, bzdopen:1 */
 {
    int    bzerr;
-   char   unused[BZ_MAX_UNUSED];
    int    blockSize100k = 9;
    int    writing       = 0;
    char   mode2[10]     = "";
@@ -906,8 +908,6 @@ BZFILE * bzopen_or_bzdopen
    BZFILE *bzfp         = NULL;
    int    verbosity     = 0;
    int    workFactor    = 30;
-   int    smallMode     = 0;
-   int    nUnused       = 0; 
 
    if (mode == NULL) return NULL;
    while (*mode) {
@@ -917,7 +917,7 @@ BZFILE * bzopen_or_bzdopen
       case 'w':
          writing = 1; break;
       case 's':
-         smallMode = 1; break;
+         /*smallMode = 1;*/ break;
       default:
          if (isdigit((int)(*mode))) {
             blockSize100k = *mode-BZ_HDR_0;

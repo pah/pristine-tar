@@ -152,7 +152,7 @@ extern Int32 rNums[512];
 
 /*-- Stuff for doing CRCs. --*/
 
-extern UInt32 crc32Table[256];
+UInt32 crc32Table[256];
 
 #define BZ_INITIALISE_CRC(crcVar)              \
 {                                              \
