@@ -154,17 +154,6 @@ sub predictbzip2args {
 	return @args;
 }
 
-sub comparefiles {
-	my ($old, $new) = (shift, shift);
-	system('cmp', '-s', $old, $new);
-
-	if ($? == -1 || $? & 127) {
-		die("Failed to execute cmp: $!\n");
-	}
-
-	return $? >> 8;
-}
-
 sub testvariant {
 	my ($old, $tmpin, $bzip2_program, @args) = @_;
 
@@ -264,7 +253,7 @@ sub genbz2 {
 		next if $param eq '--suse-pbzip2';
 		die "paranoia check failed on params from delta (@params)";
 	}
-	my @params=split(' ', $delta->{params});
+	@params=split(' ', $delta->{params});
 
 	my $program=$delta->{program};
 	if (! grep { $program eq $_ } @supported_bzip2_programs) {

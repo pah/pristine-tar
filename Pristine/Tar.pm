@@ -11,7 +11,7 @@ use IPC::Open2;
 use Exporter q{import};
 
 our @EXPORT = qw(error message debug vprint doit try_doit doit_redir
-	tempdir dispatch
+	tempdir dispatch comparefiles
 	$verbose $debug $keep);
 
 our $verbose=0;
@@ -105,6 +105,17 @@ sub dispatch {
 	}
 
 	$i->[0]->(@ARGV);
+}
+
+sub comparefiles {
+	my ($old, $new) = (shift, shift);
+	system('cmp', '-s', $old, $new);
+
+	if ($? == -1 || $? & 127) {
+		die("Failed to execute cmp: $!\n");
+	}
+
+	return $? >> 8;
 }
 
 1
