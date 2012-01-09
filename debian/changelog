@@ -1,3 +1,11 @@
+pristine-tar (1.17) UNRELEASED; urgency=low
+
+  * pristine-tar: Fail when the delta is excessively large, probably
+    due to the tarball being compressed with something that tar x can 
+    auto-extract, but that pristine-tar does not support.
+
+ -- Joey Hess <joeyh@debian.org>  Mon, 09 Jan 2012 11:41:49 -0400
+
 pristine-tar (1.16) unstable; urgency=low
 
   * pristine-bz2: Can recreate bz2 files greated by Suse's

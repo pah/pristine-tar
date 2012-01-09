@@ -500,6 +500,17 @@ sub gendelta {
 		error "xdelta failed with return code $ret";
 	}
 
+	if (-s $delta{delta} >= -s $tarball) {
+		print STDERR "error: excessively large binary delta for $tarball\n";
+		if (! defined $compression) {
+			print STDERR "(Probably the tarball is compressed with an unsupported form of compression.)\n";
+		}
+		else {
+			print STDERR "(Please consider filing a bug report.)\n";
+		}
+		exit 1;
+	}
+
 	Pristine::Tar::Delta::write(Tarball => $deltafile, {
 		version => 2,
 		type => 'tar',
