@@ -45,3 +45,10 @@ program
 
 	It may also be zgz (the params will include --old-bzip2 in this
 	case).
+
+For xz files, the wrapper contains:
+
+params
+	Typically, only the compression level is needed.
+program
+	Program used to compress. Almost everytime, it is xz.

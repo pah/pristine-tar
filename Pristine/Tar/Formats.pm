@@ -6,7 +6,7 @@ package Pristine::Tar::Formats;
 use warnings;
 use strict;
 use Exporter q{import};
-our @EXPORT=qw{is_gz is_bz2 %fconstants};
+our @EXPORT=qw{is_gz is_bz2 is_xz %fconstants};
 
 our %fconstants=(
 	# magic identification
@@ -14,6 +14,12 @@ our %fconstants=(
 	GZIP_ID2 => 0x8B,
 	BZIP2_ID1 => 0x42,
 	BZIP2_ID2 => 0x5a,
+	XZ_ID1 => 0xFD,
+	XZ_ID2 => 0x37,
+	XZ_ID3 => 0x7A,
+	XZ_ID4 => 0x58,
+	XZ_ID5 => 0x5A,
+	XZ_ID6 => 0x00,
 
 	# compression methods
 	# 0x00-0x07 are reserved
@@ -76,6 +82,12 @@ sub is_gz {
 sub is_bz2 {
 	magic(shift, $fconstants{BZIP2_ID1}, $fconstants{BZIP2_ID2},
 		$fconstants{BZIP2_METHOD_HUFFMAN});
+}
+
+sub is_xz {
+	magic(shift, $fconstants{XZ_ID1}, $fconstants{XZ_ID2},
+		$fconstants{XZ_ID3}, $fconstants{XZ_ID4},
+		$fconstants{XZ_ID5}, $fconstants{XZ_ID6});
 }
 
 1

@@ -1,0 +1,212 @@
+#!/usr/bin/perl
+
+=head1 NAME
+
+pristine-xz - regenerate pristine xz files
+
+=head1 SYNOPSIS
+
+B<pristine-xz> [-vdk] gendelta I<file.xz> I<delta>
+
+B<pristine-xz> [-vdk] genxz I<delta> I<file>
+
+=head1 DESCRIPTION
+
+This is a complement to the pristine-tar(1) command. Normally you
+don't need to run it by hand, since pristine-tar calls it as necessary
+to handle .tar.xz files.
+
+pristine-xz gendelta takes the specified I<xz> file, and generates a
+small binary I<delta> file that can later be used by pristine-xz genxz
+to recreate the original file.
+
+pristine-xz genxz takes the specified I<delta> file, and compresses the
+specified input I<file> (which must be identical to the contents of the
+original xz file). The resulting file will be identical to
+the original gz file used to create the delta.
+
+The approach used to regenerate the original xz file is to figure out
+how it was produced -- what compression level was used, etc. Currently
+support is poor for xz files produced with unusual compression options.
+
+If the delta filename is "-", pristine-xz reads or writes it to stdio.
+
+=head1 OPTIONS
+
+=over 4
+
+=item -v
+
+Verbose mode, show each command that is run.
+
+=item -d
+
+Debug mode.
+
+=item -k
+
+Don't clean up the temporary directory on exit.
+
+=item -t
+
+Try harder to determine how to generate deltas of difficult xz files.
+
+=back
+
+=head1 ENVIRONMENT
+
+=over 4
+
+=item B<TMPDIR>
+
+Specifies a location to place temporary files, other than the default.
+
+=back
+
+=head1 AUTHOR
+
+Joey Hess <joeyh@debian.org>,
+Faidon Liambotis <paravoid@debian.org>,
+Cyril Brulebois <cyril.brulebois@enst-bretagne.fr>
+
+Licensed under the GPL, version 2.
+
+=cut
+
+use warnings;
+use strict;
+use Pristine::Tar;
+use Pristine::Tar::Delta;
+use Pristine::Tar::Formats;
+use File::Basename qw/basename/;
+use IO::Handle;
+
+my @supported_xz_programs = qw(xz);
+
+my $try=0;
+
+dispatch(
+	commands => {
+		usage => [\&usage],
+		genxz => [\&genxz, 2],
+		gendelta => [\&gendelta, 2],
+	},
+	options => {
+		"t|try!" => \$try,
+	},
+);
+
+sub usage {
+	print STDERR "Usage: pristine-xz [-vdkt] gendelta file.xz delta\n";
+	print STDERR "       pristine-xz [-vdkt] genxz delta file\n";
+}
+
+sub readxz {
+	my $filename = shift;
+
+	if (! is_xz($filename)) {
+		error "This is not a valid xz archive.";
+	}
+
+	# XXX This is the default compression level; we don't currently have
+	# a way to guess the level from the file format, as this level only
+	# presets several other tunables. Correct handling would involve
+	# finding as many preset values as possible, and reconstructing the
+	# compression level from that.
+	my $level = 6;
+
+	return ($level);
+}
+
+sub predictxzargs {
+	my ($level, $program) = @_;
+
+	my @args=["-z", "-$level"];
+
+	return @args;
+}
+
+sub testvariant {
+	my ($old, $tmpin, $xz_program, @args) = @_;
+
+	my $new=$tmpin.'.xz';
+	unlink($new);
+
+	# Note that file name, mode, mtime do not matter to xz.
+
+	# try xz'ing with the arguments passed
+	doit_redir($tmpin, $new, $xz_program, @args);
+
+	unless (-e $new) {
+		die("$xz_program failed, aborting");
+	}
+
+	# and compare the generated with the original
+	return !comparefiles($old, $new);
+}
+
+sub reproducexz {
+	my $orig=shift;
+
+	my $wd=tempdir();
+	
+	my $tmpin="$wd/test";
+	doit_redir($orig, $tmpin, "xz", "-dc");
+
+	# read fields from xz headers
+	my ($level) = readxz($orig);
+	debug("level: $level");
+
+	foreach my $program (@supported_xz_programs) {
+		# try to guess the xz arguments that are needed by the
+		# header information
+		foreach my $args (predictxzargs($level, $program)) {
+			testvariant($orig, $tmpin, $program, @$args)
+				&& return $program, @$args;
+		}
+	}
+
+	print STDERR "pristine-xz failed to reproduce build of $orig\n";
+	print STDERR "(Please file a bug report.)\n";
+	exit 1;
+}
+
+sub genxz {
+	my $deltafile=shift;
+	my $file=shift;
+
+	my $delta=Pristine::Tar::Delta::read(Tarball => $deltafile);
+	Pristine::Tar::Delta::assert($delta, type => "xz", maxversion => 2, 
+		fields => [qw{params program}]);
+
+	my @params=split(' ', $delta->{params});
+	while (@params) {
+		my $param=shift @params;
+
+		next if $param=~/^(-[1-9])$/;
+		next if $param eq '-z';
+		die "paranoia check failed on params from delta (@params)";
+	}
+	@params=split(' ', $delta->{params});
+
+	my $program=$delta->{program};
+	if (! grep { $program eq $_ } @supported_xz_programs) {
+		die "paranoia check failed on program from delta ($program)";
+	}
+
+	doit($program, @params, $file);
+}
+
+sub gendelta {
+	my $xzfile=shift;
+	my $deltafile=shift;
+
+	my ($program, @params) = reproducexz($xzfile);
+
+	Pristine::Tar::Delta::write(Tarball => $deltafile, {
+		version => '2.0',
+		type => 'xz',
+		params => "@params",
+		program => $program,
+	});
+}

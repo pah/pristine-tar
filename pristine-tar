@@ -27,8 +27,9 @@ the I<upstream> branch, thus allowing Debian packages to be built entirely
 using sources in version control, without the need to keep copies of
 upstream tarballs.
 
-pristine-tar supports compressed tarballs, calling out to pristine-gz(1)
-and pristine-bz2(1) to produce the pristine gzip and bzip2 files.
+pristine-tar supports compressed tarballs, calling out to pristine-gz(1),
+pristine-bz2(1), and pristine-xz(1) to produce the pristine gzip, bzip2,
+and xz files.
 
 =head1 COMMANDS
 
@@ -145,8 +146,8 @@ available.
 
 =head1 LIMITATIONS
 
-Only tarballs, gzipped tarballs, and bzip2ed tarballs are currently
-supported.
+Only tarballs, gzipped tarballs, bzip2ed tarballs, and xzed tarballs
+are currently supported.
 
 Currently only the git revision control system is supported by the
 "checkout" and "commit" commands. It's ok if the working copy
@@ -395,21 +396,14 @@ sub gentar {
 
 	if (defined $delta->{wrapper}) {
 		my $delta_wrapper=Pristine::Tar::Delta::read(Tarball => $delta->{wrapper});
-		if ($delta_wrapper->{type} eq 'gz') {
-			doit("pristine-gz", 
+		if (grep { $_ eq $delta_wrapper->{type} } qw{gz bz2 xz}) {
+			doit("pristine-".$delta_wrapper->{type}, 
 				($verbose ? "-v" : "--no-verbose"),
 				($debug ? "-d" : "--no-debug"),
 				($keep ? "-k" : "--no-keep"),
-				"gengz", $delta->{wrapper}, $out);
-			doit("mv", "-f", $out.".gz", $tarball);
-		}
-		elsif ($delta_wrapper->{type} eq 'bz2') {
-			doit("pristine-bz2",
-				($verbose ? "-v" : "--no-verbose"),
-				($debug ? "-d" : "--no-debug"),
-				($keep ? "-k" : "--no-keep"),
-				"genbz2", $delta->{wrapper}, $out);
-			doit("mv", "-f", $out.".bz2", $tarball);
+				"gen".$delta_wrapper->{type},
+				$delta->{wrapper}, $out);
+			doit("mv", "-f", $out.".".$delta_wrapper->{type}, $tarball);
 		}
 		else {
 			error "unknown wrapper file type: ".
@@ -458,6 +452,14 @@ sub gendelta {
 		open(OUT, ">", "$tempdir/origtarball") || die "$tempdir/origtarball: $!";
 		print OUT $_ while <IN>;
 		close IN || die "bzcat: $!";
+		close OUT || die "$tempdir/origtarball: $!";
+	}
+	elsif (is_xz($tarball)) {
+		$compression='xz';
+		open(IN, "-|", "xzcat", $tarball) || die "xzcat: $!";
+		open(OUT, ">", "$tempdir/origtarball") || die "$tempdir/origtarball: $!";
+		print OUT $_ while <IN>;
+		close IN || die "xzcat: $!";
 		close OUT || die "$tempdir/origtarball: $!";
 	}
 	close IN;
