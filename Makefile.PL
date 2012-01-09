@@ -17,6 +17,7 @@ extra_build: zgz/zgz pristine-tar.spec
 	pod2man -c pristine-tar pristine-tar > pristine-tar.1
 	pod2man -c pristine-gz  pristine-gz  > pristine-gz.1
 	pod2man -c pristine-bz2 pristine-bz2 > pristine-bz2.1
+	pod2man -c pristine-xz pristine-xz > pristine-xz.1
 	pod2man -c zgz zgz/zgz.pod > zgz.1
 	make -C zgz/pit/suse-bzip2
 
@@ -31,7 +32,7 @@ zgz/pit/suse-bzip2/suse-bzip2: $(SUSE_BZIP2_SOURCES)
 extra_install:
 	install -d $(DESTDIR)/usr/bin
 	install -d $(DESTDIR)/usr/share/man/man1
-	install pristine-tar pristine-gz pristine-bz2 zgz/zgz $(DESTDIR)/usr/bin
+	install pristine-tar pristine-gz pristine-bz2 pristine-xz zgz/zgz $(DESTDIR)/usr/bin
 	install -m 0644 *.1 $(DESTDIR)/usr/share/man/man1
 	install -d $(DESTDIR)$(ZGZ_LIB)/suse-bzip2
 	install zgz/pit/suse-bzip2/bzip2 $(DESTDIR)$(ZGZ_LIB)/suse-bzip2
