@@ -108,21 +108,25 @@ sub readxz {
 		error "This is not a valid xz archive.";
 	}
 
-	# XXX This is the default compression level; we don't currently have
-	# a way to guess the level from the file format, as this level only
-	# presets several other tunables. Correct handling would involve
-	# finding as many preset values as possible, and reconstructing the
-	# compression level from that.
-	my $level = 6;
+	# XXX We don't currently have a way to guess the level from the
+	# file format, as this level only presets several other tunables.
+	# Correct handling would involve finding as many preset values as
+	# possible, and reconstructing the compression level from that.
+	#
+	# So far in the wild only these levels have been seen.
+	# (Note that level 9 can use a lot of memory.)
+	my $possible_levels = [6, 9];
 
-	return ($level);
+	return ($possible_levels);
 }
 
 sub predictxzargs {
-	my ($level, $program) = @_;
+	my ($possible_levels, $program) = @_;
 
-	my @args=["-z", "-$level"];
-
+	my @args;
+	foreach my $level (@$possible_levels) {
+		push @args, ["-z", "-$level"];
+	}
 	return @args;
 }
 
@@ -154,13 +158,12 @@ sub reproducexz {
 	doit_redir($orig, $tmpin, "xz", "-dc");
 
 	# read fields from xz headers
-	my ($level) = readxz($orig);
-	debug("level: $level");
+	my ($possible_levels) = readxz($orig);
 
 	foreach my $program (@supported_xz_programs) {
 		# try to guess the xz arguments that are needed by the
 		# header information
-		foreach my $args (predictxzargs($level, $program)) {
+		foreach my $args (predictxzargs($possible_levels, $program)) {
 			testvariant($orig, $tmpin, $program, @$args)
 				&& return $program, @$args;
 		}
@@ -183,7 +186,7 @@ sub genxz {
 	while (@params) {
 		my $param=shift @params;
 
-		next if $param=~/^(-[1-9])$/;
+		next if $param=~/^(-[0-9])$/;
 		next if $param eq '-z';
 		die "paranoia check failed on params from delta (@params)";
 	}

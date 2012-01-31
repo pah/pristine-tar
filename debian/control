@@ -12,7 +12,7 @@ Package: pristine-tar
 Architecture: any
 Section: utils
 Depends: xdelta, ${shlibs:Depends}, ${misc:Depends}, perl-modules
-Recommends: pbzip2, bzip2
+Recommends: pbzip2, bzip2, xz-utils
 Description: regenerate pristine tarballs
  pristine-tar can regenerate a pristine upstream tarball using only a small
  binary delta file and a revision control checkout of the upstream branch.
