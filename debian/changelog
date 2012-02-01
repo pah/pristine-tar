@@ -1,3 +1,9 @@
+pristine-tar (1.19) unstable; urgency=low
+
+  * Fix duplicate function oops.
+
+ -- Joey Hess <joeyh@debian.org>  Wed, 01 Feb 2012 11:00:43 -0400
+
 pristine-tar (1.18) unstable; urgency=low
 
   * pristine-xz: A simplistic xz recreator.

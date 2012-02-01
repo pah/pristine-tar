@@ -159,17 +159,6 @@ sub predictgzipargs {
 	return @args;
 }
 
-sub comparefiles {
-	my ($old, $new) = (shift, shift);
-	system('cmp', '-s', $old, $new);
-
-	if ($? == -1 || $? & 127) {
-		die("Failed to execute cmp: $!\n");
-	}
-
-	return $? >> 8;
-}
-
 sub reproducegz {
 	my ($orig, $tempdir, $tempin) = @_;
 	my $tempout="$tempdir/test.gz";
