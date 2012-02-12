@@ -115,7 +115,7 @@ sub readxz {
 	#
 	# So far in the wild only these levels have been seen.
 	# (Note that level 9 can use a lot of memory.)
-	my $possible_levels = [6, 9];
+	my $possible_levels = ["6", "9", "6e", "9e"];
 
 	return ($possible_levels);
 }
@@ -186,7 +186,7 @@ sub genxz {
 	while (@params) {
 		my $param=shift @params;
 
-		next if $param=~/^(-[0-9])$/;
+		next if $param=~/^(-[0-9]e?)$/;
 		next if $param eq '-z';
 		die "paranoia check failed on params from delta (@params)";
 	}
