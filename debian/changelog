@@ -1,10 +1,10 @@
-pristine-tar (1.20) UNRELEASED; urgency=low
+pristine-tar (1.20) unstable; urgency=low
 
   * pristine-xz: Try --extreme too. While my corpus has no such xz files,
     Darren Salt points out that automake 1.11.2 has started using
     extreme mode. Closes: #658666
 
- -- Joey Hess <joeyh@debian.org>  Sun, 12 Feb 2012 14:20:44 -0400
+ -- Joey Hess <joeyh@debian.org>  Sun, 12 Feb 2012 14:23:48 -0400
 
 pristine-tar (1.19) unstable; urgency=low
 
