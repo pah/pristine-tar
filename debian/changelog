@@ -1,3 +1,10 @@
+pristine-tar (1.21) UNRELEASED; urgency=low
+
+  * Fix bug in mtime resetting code, which caused delta files to be created
+    that failed to regenerate the original tarball. Closes: #661902
+
+ -- Joey Hess <joeyh@debian.org>  Fri, 02 Mar 2012 14:55:07 -0400
+
 pristine-tar (1.20) unstable; urgency=low
 
   * pristine-xz: Try --extreme too. While my corpus has no such xz files,

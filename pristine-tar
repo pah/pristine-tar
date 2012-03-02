@@ -300,7 +300,11 @@ sub recreatetarball {
 			chmod(0755, "$tempdir/workdir/$file") ||
 				die "chmod: $!";
 		}
+	}
 
+	# Set file times only after modifying of the directory content is
+	# done.
+	foreach my $file (@manifest) {
 		if (-e "$tempdir/workdir/$file") {
 			utime(0, 0, "$tempdir/workdir/$file") || die "utime: $file: $!";
 		}
@@ -324,6 +328,8 @@ sub recreatetarball {
 				chmod(0755, $_) ||
 					die "chmod: $!";
 			}
+		}, "$tempdir/workdir");
+		find(sub {
 			utime(0, 0, $_) || die "utime: $_: $!";
 		}, "$tempdir/workdir");
 	}
