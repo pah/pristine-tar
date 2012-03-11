@@ -577,6 +577,13 @@ sub export {
 			}
 		}
 
+		# We have an id that is probably a commit. Let's get to the
+		# id of the actual tree instead. This makes us more robust
+		# against any later changes to the commit.
+		my $treeid=`git rev-parse '$id^{tree}'`;
+		chmomp $treeid;
+		$id = $treeid if length $treeid;
+
 		doit("git archive --format=tar \Q$id\E | (cd '$dest' && tar x)");
 	}
 	else {
