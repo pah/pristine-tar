@@ -1,11 +1,11 @@
-pristine-tar (1.22) UNRELEASED; urgency=low
+pristine-tar (1.22) unstable; urgency=low
 
   * Store the sha1 of the tree that is being committed, rather than
     a sha1 of a commit or other object that points to the tree.
     This makes committed tarballs more resilient against git filter-branch
     when it's only used to change commit metadata. Closes: #467288
 
- -- Joey Hess <joeyh@debian.org>  Sun, 11 Mar 2012 18:46:31 -0400
+ -- Joey Hess <joeyh@debian.org>  Sun, 11 Mar 2012 18:49:12 -0400
 
 pristine-tar (1.21) unstable; urgency=low
 
