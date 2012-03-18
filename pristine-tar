@@ -212,6 +212,7 @@ sub usage {
 	print STDERR "       pristine-tar [-vdk] gentar delta tarball\n";
 	print STDERR "       pristine-tar [-vdk] [-m message] commit tarball [upstream]\n";
 	print STDERR "       pristine-tar [-vdk] checkout tarball\n";
+	print STDERR "       pristine-tar        list\n";
 	exit 1;
 }
 
