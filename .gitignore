@@ -1,6 +1,6 @@
 *.1
 zgz/zgz
-zgz/pit/suse-bzip2/suse-bzip2
+pit/suse-bzip2/suse-bzip2
 Makefile
 Makefile.old
 blib
