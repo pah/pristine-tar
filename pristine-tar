@@ -528,7 +528,7 @@ sub gendelta {
 }
 
 sub vcstype {
-	if (-d ".git" ||
+	if (-e ".git" ||
 	    (exists $ENV{GIT_DIR} && length $ENV{GIT_DIR})) {
 		return 'git';
 	}

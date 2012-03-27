@@ -1,3 +1,10 @@
+pristine-tar (1.23) UNRELEASED; urgency=low
+
+  * Detect git submodules procuded by recent git, where .git is a file,
+    not a directory. Closes: #666033
+
+ -- Joey Hess <joeyh@debian.org>  Tue, 27 Mar 2012 19:42:25 -0400
+
 pristine-tar (1.22) unstable; urgency=low
 
   * Store the sha1 of the tree that is being committed, rather than
