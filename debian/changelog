@@ -1,9 +1,11 @@
-pristine-tar (1.23) UNRELEASED; urgency=low
+pristine-tar (1.23) unstable; urgency=low
 
   * Detect git submodules procuded by recent git, where .git is a file,
     not a directory. Closes: #666033
+  * pristine-xz: Handle CRC32 files made with PylibLZMA. Thanks, Mike Miller
+    Closes: #662129, #660783
 
- -- Joey Hess <joeyh@debian.org>  Tue, 27 Mar 2012 19:42:25 -0400
+ -- Joey Hess <joeyh@debian.org>  Sat, 31 Mar 2012 19:00:49 -0400
 
 pristine-tar (1.22) unstable; urgency=low
 
