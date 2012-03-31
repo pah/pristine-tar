@@ -126,6 +126,7 @@ sub predictxzargs {
 	my @args;
 	foreach my $level (@$possible_levels) {
 		push @args, ["-z", "-$level"];
+		push @args, ["-z", "-$level", "--check=crc32"];
 	}
 	return @args;
 }
