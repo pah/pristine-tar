@@ -1,3 +1,9 @@
+pristine-tar (1.24) unstable; urgency=low
+
+  * pristine-xz: Add --check=crc32 to list of allowed parameters.
+
+ -- Joey Hess <joeyh@debian.org>  Sun, 01 Apr 2012 12:21:24 -0400
+
 pristine-tar (1.23) unstable; urgency=low
 
   * Detect git submodules procuded by recent git, where .git is a file,
