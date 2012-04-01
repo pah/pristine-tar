@@ -189,6 +189,7 @@ sub genxz {
 
 		next if $param=~/^(-[0-9]e?)$/;
 		next if $param eq '-z';
+		next if $param eq '--check=crc32';
 		die "paranoia check failed on params from delta (@params)";
 	}
 	@params=split(' ', $delta->{params});
