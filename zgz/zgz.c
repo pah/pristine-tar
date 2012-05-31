@@ -66,7 +66,6 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <zlib.h>
-#include <fts.h>
 #include <libgen.h>
 #include <stdarg.h>
 #include <getopt.h>
