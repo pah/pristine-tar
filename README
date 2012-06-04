@@ -1,0 +1,11 @@
+pristine-tar can regenerate a pristine upstream tarball using only a small
+binary delta file and a revision control checkout of the upstream branch.
+
+The package also includes a pristine-gz command, which can regenerate a
+pristine .gz file, a pristine-bz2 for .bz2 files, and a pristine-xz for .xz
+files.
+
+The delta file is designed to be checked into revision control along-side
+the upstream branch, thus allowing Debian packages to be built entirely
+using sources in revision control, without the need to keep copies of
+upstream tarballs.
