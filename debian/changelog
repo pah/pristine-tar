@@ -1,6 +1,8 @@
 pristine-tar (1.25) UNRELEASED; urgency=low
 
   * Remove unused fts.h include. Closes: #675367
+  * pristine-xz: Add --check=sha256 and compression levels 0 and 0e.
+    Closes: #677241 Thanks, Vincent Ladeuil
 
  -- Joey Hess <joeyh@debian.org>  Thu, 31 May 2012 12:33:34 -0400
 
