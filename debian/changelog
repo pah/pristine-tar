@@ -1,3 +1,13 @@
+pristine-tar (1.26) UNRELEASED; urgency=low
+
+  * pristine-xz: Use xz --robot to extract information from xz files,
+    avoiding the need to do more expensive guessing. Will also later
+    allow supporting files needing --block-split (once upstream xz
+    provides that option; a patch has been submitted).
+    Closes: #677250 Thanks, Vincent Ladeuil
+
+ -- Joey Hess <joeyh@debian.org>  Tue, 19 Jun 2012 09:24:30 -0400
+
 pristine-tar (1.25) unstable; urgency=low
 
   * Remove unused fts.h include. Closes: #675367

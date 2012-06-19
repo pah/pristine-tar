@@ -101,7 +101,150 @@ sub usage {
 	print STDERR "       pristine-xz [-vdkt] genxz delta file\n";
 }
 
+sub assign_fields {
+	my ($hash, $labels, $fields) = @_;
+	@$hash{@$labels} = @$fields[1..scalar(@$labels)];
+}
+
+sub scan_xz_lvv_robot {
+	my ($filename) = @_;
+	# We need at least version 5.0 to get a proper '-lvv --robot'
+	# implemented
+	my $cmd = "xz -lvv --robot $filename";
+	my $ret = open (my $in, "$cmd |") || die "$cmd failed: $!";
+	my %xz = (file => {}, stream => {}, blocks => [],
+		  summary => {}, totals => {});
+	my (%file, %stream, @blocks, %summary, %totals);
+	my @file_labels = qw{nb_streams nb_blocks compressed uncompressed
+			     ratio checks padding_size};
+	my @stream_labels =
+		qw{stream_num nb_blocks compressed_offset uncompressed_offset
+		   compressed_size uncompressed_size ratio check_name
+		   padding_size};
+	my @block_labels = 
+		qw{stream_num block_in_stream block_in_file compressed_offset
+		   uncompressed_offset compressed_size uncompressed_size ratio
+		   check_name check_value header_size size_present_flags
+		   actual_compressed_size uncompress_memory filter_chain};
+	my @summary_labels = qw{uncompressed_memory size_in_blocks};
+	my @totals_labels =
+		qw{nb_streams nb_blocks compressed_size uncompressed_size ratio
+		   check_names padding_size nb_files uncompressed_memory
+		   size_in_blocks};
+
+	while (my $line = <$in>) {
+		chomp $line;
+		my @fields = split(/\t/, $line);
+		if ($fields[0] eq 'name') {
+			next;
+		}
+		if ($fields[0] eq 'file') {
+			assign_fields($xz{file}, \@file_labels, \@fields);
+			next;
+		}
+		if ($fields[0] eq 'stream') {
+			assign_fields($xz{stream}, \@stream_labels, \@fields);
+			next;
+		}
+		if ($fields[0] eq 'block') {
+			my %block;
+			assign_fields(\%block, \@block_labels, \@fields);
+			push @{$xz{blocks}}, \%block;
+			next;
+		}
+		if ($fields[0] eq 'summary') {
+			assign_fields($xz{summary}, \@summary_labels, \@fields);
+			next;
+		}
+		if ($fields[0] eq 'totals') {
+			assign_fields($xz{totals}, \@totals_labels, \@fields);
+			next;
+		}
+	}
+	close $in;
+	return \%xz;
+}
+
+sub predict_xz_args {
+	my ($xz) = @_;
+	my $presets = undef;
+	my $block_split = undef;
+	my $blocks = $xz->{blocks};
+	if (scalar(@$blocks)) {
+		# There is at least one block. We assume the same compression
+		# level for all blocks
+		my $block = $blocks->[0];
+		my @filters = split(/,/, $block->{filter_chain});
+		if (scalar(@filters) != 1 || $filters[0] !~ /^--lzma2=/) {
+			die "Only LZMA2 is supported";
+		}
+		# Deduce the presets from the dict size
+		if ($filters[0] =~ /--lzma2=dict=(.*)/) {
+			my $dict_size = $1;
+			my %lzma2_presets_from_dict_size_of =
+				('256KiB' => ['0'],
+				 '1Mib'   => ['1'],
+				 '2MiB'   => ['2'],
+				 '4MiB'   => ['4', '3'],
+				 # Put 6 before 5 as it's the default and is
+				 # more likely to be right
+				 '8MiB'   => ['6', '5'],
+				 '16MiB'  => ['7'],
+				 '32MiB'  => ['8'],
+				 '64MiB'  => ['9'],
+				);
+			$presets = $lzma2_presets_from_dict_size_of{$dict_size};
+			die "Unkown dict size: $dict_size\n"
+				if (!defined($presets));
+		}
+		if (scalar(@$blocks) > 1) {
+			# Gather the block uncompressed sizes
+			$block_split = join(',', map {$_->{uncompressed_size}}
+					    @$blocks);
+		}
+	}
+	# FIXME: none is missing
+	my %check_kwd_of = 
+		(CRC32 => 'crc32',
+		 CRC64 => 'crc64',
+		 'SHA-256' => 'sha256',
+		);
+	my $check_name = $xz->{stream}->{check_name};
+	my $check_kwd = $check_kwd_of{$check_name};
+	die "Unknown xz check: $check_name\n" if (!defined($check_kwd));
+
+	my $possible_args = [];
+	my $common = ["--check=$check_kwd", "-z"];
+	# FIXME: --block-split is not (yet) part of xz-utils upstream
+	if (0 && defined($block_split)) {
+		# We put the block list in front of the parameters to make it
+		# easier to filter it later.
+		unshift @$common, "--block-split=$block_split";
+	}
+	foreach my $preset (@$presets) {
+		push @$possible_args, [@$common, "-$preset"];
+		push @$possible_args, [@$common, "-${preset}e"];
+	}
+	return $possible_args;
+}
+
 sub readxz {
+	my $filename = shift;
+
+	if (! is_xz($filename)) {
+		error "This is not a valid xz archive.";
+	}
+
+	# This will guess the compression level, check and blocks from the file.
+	# More info is still needed if the level used was 3/4 or 5/6 (see
+	# lzma2_presets_from_dict_size_of in predict_xz_args) or if --extreme
+	# was used. We output possible args for each combination in this case.
+	my $xz = scan_xz_lvv_robot($filename);
+	my $possible_args = predict_xz_args($xz);
+	return $possible_args;
+}
+
+sub predictxzlevels {
 	my $filename = shift;
 
 	if (! is_xz($filename)) {
@@ -155,19 +298,36 @@ sub reproducexz {
 	my $orig=shift;
 
 	my $wd=tempdir();
-	
+
 	my $tmpin="$wd/test";
 	doit_redir($orig, $tmpin, "xz", "-dc");
 
 	# read fields from xz headers
-	my ($possible_levels) = readxz($orig);
+	my $possible_args;
+	eval {
+		$possible_args = readxz($orig);
+	};
+	# If we get an error we fallback to guessing, otherwise, we should
+	# succeed with one of the proposed combinations
+	if (! $@) {
+		foreach my $program (@supported_xz_programs) {
+			foreach my $args (@$possible_args) {
+				testvariant($orig, $tmpin, $program, @$args)
+					&& return $program, @$args;
+			}
+		}
+	}
+	else {
+		# Fallback to guessing
+		my ($possible_levels) = predictxzlevels($orig);
 
-	foreach my $program (@supported_xz_programs) {
-		# try to guess the xz arguments that are needed by the
-		# header information
-		foreach my $args (predictxzargs($possible_levels, $program)) {
-			testvariant($orig, $tmpin, $program, @$args)
-				&& return $program, @$args;
+		foreach my $program (@supported_xz_programs) {
+			# try to guess the xz arguments that are needed
+			foreach my $args (predictxzargs($possible_levels,
+							$program)) {
+				testvariant($orig, $tmpin, $program, @$args)
+					&& return $program, @$args;
+			}
 		}
 	}
 
