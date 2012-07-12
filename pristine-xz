@@ -168,7 +168,7 @@ sub scan_xz_lvv_robot {
 sub predict_xz_args {
 	my ($xz) = @_;
 	my $presets = undef;
-	my $block_split = undef;
+	my $block_list = undef;
 	my $blocks = $xz->{blocks};
 	if (scalar(@$blocks)) {
 		# There is at least one block. We assume the same compression
@@ -199,13 +199,13 @@ sub predict_xz_args {
 		}
 		if (scalar(@$blocks) > 1) {
 			# Gather the block uncompressed sizes
-			$block_split = join(',', map {$_->{uncompressed_size}}
+			$block_list = join(',', map {$_->{uncompressed_size}}
 					    @$blocks);
 		}
 	}
-	# FIXME: none is missing
 	my %check_kwd_of = 
-		(CRC32 => 'crc32',
+		(None => 'none',
+		 CRC32 => 'crc32',
 		 CRC64 => 'crc64',
 		 'SHA-256' => 'sha256',
 		);
@@ -215,11 +215,8 @@ sub predict_xz_args {
 
 	my $possible_args = [];
 	my $common = ["--check=$check_kwd", "-z"];
-	# FIXME: --block-split is not (yet) part of xz-utils upstream
-	if (0 && defined($block_split)) {
-		# We put the block list in front of the parameters to make it
-		# easier to filter it later.
-		unshift @$common, "--block-split=$block_split";
+	if (defined($block_list)) {
+		unshift @$common, "--block-list=$block_list";
 	}
 	foreach my $preset (@$presets) {
 		push @$possible_args, [@$common, "-$preset"];
@@ -350,8 +347,11 @@ sub genxz {
 
 		next if $param=~/^(-[0-9]e?)$/;
 		next if $param eq '-z';
+		next if $param eq '--check=none';
 		next if $param eq '--check=crc32';
+		next if $param eq '--check=crc64';
 		next if $param eq '--check=sha256';
+		next if $param=~/^(--block-list=[0-9,]+)$/;
 		die "paranoia check failed on params from delta (@params)";
 	}
 	@params=split(' ', $delta->{params});
