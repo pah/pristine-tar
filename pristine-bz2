@@ -261,7 +261,7 @@ sub genbz2 {
 	}
 
 	if ($program eq 'zgz') {
-		# unlike bzip2, zgz only uses sdio
+		# unlike bzip2, zgz only uses stdio
 		doit_redir($file, "$file.bz2", $program, @params);
 	}
 	else {
