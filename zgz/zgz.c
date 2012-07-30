@@ -528,8 +528,17 @@ static	void
 rebrain(char *zombie, char *program, int level, char *opts)
 {
 	char buf[128];
+#if defined(__APPLE__) && defined(__MACH__)
+        /* On Mac OS X, set $DYLD_LIBRARY_PATH to swap in a different
+         * dynamic library. */
+	sprintf(buf, "DYLD_LIBRARY_PATH=%s/%s %s -%i %s",
+			ZGZ_LIB, zombie, program, level, opts);
+#else
+        /* On other Unix-like systems, set $LD_LIBRARY_PATH to swap in
+         * a different shared object library. */
 	sprintf(buf, "LD_LIBRARY_PATH=%s/%s %s -%i %s",
 			ZGZ_LIB, zombie, program, level, opts);
+#endif
 	exit(system(buf));
 }
 

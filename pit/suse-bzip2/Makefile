@@ -16,6 +16,10 @@ somajor=1.0
 sominor=$(somajor).4
 SHELL=/bin/sh
 
+# Determine the operating system name to decide whether to build a
+# shared object library libbz2.so or a dynamic library libbz2.dylib.
+UNAME_S := $(shell uname -s)
+
 # To assist in cross-compiling
 CC=gcc
 AR=ar
@@ -39,8 +43,16 @@ OBJS= blocksort.o  \
 
 all: libbz2.a bzip2
 
+ifeq ("${UNAME_S}", "Darwin")
+# On Mac OS X, link against the dynamic library.
+bzip2: libbz2.dylib bzip2.o
+	$(CC) $(CFLAGS) $(LDFLAGS) -o bzip2 bzip2.o -L. -lbz2
+else
+# On all other (Unix-like) platforms assume to link against a
+# shared object library.
 bzip2: libbz2.so bzip2.o
 	$(CC) $(CFLAGS) $(LDFLAGS) -o bzip2 bzip2.o -L. -lbz2
+endif
 
 bzip2recover: bzip2recover.o
 	$(CC) $(CFLAGS) $(LDFLAGS) -o bzip2recover bzip2recover.o
@@ -54,6 +66,22 @@ libbz2.a: $(OBJS)
 		$(RANLIB) libbz2.a ; \
 	fi
 
+
+ifeq ("${UNAME_S}", "Darwin")
+# On Mac OS X, compile libbz2 as a dynamic library.
+libbz2.dylib: libbz2.$(somajor).dylib
+	ln -sf $^ $@
+
+libbz2.$(somajor).dylib: libbz2.$(sominor).dylib
+	ln -sf $^ $@
+
+libbz2.$(sominor).dylib: $(OBJS:%.o=%.sho)
+	$(CC) -dynamiclib \
+	  -Wl,-headerpad_max_install_names,-undefined,dynamic_lookup,-compatibility_version,$(somajor),-current_version,$(sominor),-install_name,$(PREFIX)/lib/libbz2.$(sominor).dylib \
+	  -o libbz2.$(sominor).dylib $(OBJ) $^ -lc
+else
+# On all other (Unix-like) platforms compile libbz2 as
+# a shared object library.
 libbz2.so: libbz2.so.$(somajor)
 	ln -sf $^ $@
 
@@ -63,6 +91,7 @@ libbz2.so.$(somajor): libbz2.so.$(sominor)
 libbz2.so.$(sominor): $(OBJS:%.o=%.sho)
 	$(CC) -o libbz2.so.$(sominor) -shared \
 	  -Wl,-soname,libbz2.so.$(somajor) $^ -lc
+endif
 
 %.sho: %.c
 	$(CC) $(CFLAGS) -D_REENTRANT -fPIC -o $@ -c $<
@@ -71,6 +100,32 @@ libbz2.so.$(sominor): $(OBJS:%.o=%.sho)
 	$(CC) $(CFLAGS) -D_REENTRANT -o $@ -c $<
 
 check: test
+
+ifeq ("${UNAME_S}", "Darwin")
+# On Mac OS X, $DYLD_LIBRARY_PATH needs to be set to test libbz2.dylib.
+test: bzip2
+	@cat words1
+	DYLD_LIBRARY_PATH=.:$$DYLD_LIBRARY_PATH \
+	./bzip2 -1  < sample1.ref > sample1.rb2
+	DYLD_LIBRARY_PATH=.:$$DYLD_LIBRARY_PATH \
+	./bzip2 -2  < sample2.ref > sample2.rb2
+	DYLD_LIBRARY_PATH=.:$$DYLD_LIBRARY_PATH \
+	./bzip2 -3  < sample3.ref > sample3.rb2
+	DYLD_LIBRARY_PATH=.:$$DYLD_LIBRARY_PATH \
+	./bzip2 -d  < sample1.bz2 > sample1.tst
+	DYLD_LIBRARY_PATH=.:$$DYLD_LIBRARY_PATH \
+	./bzip2 -d  < sample2.bz2 > sample2.tst
+	DYLD_LIBRARY_PATH=.:$$DYLD_LIBRARY_PATH \
+	./bzip2 -ds < sample3.bz2 > sample3.tst
+	cmp sample1.bz2 sample1.rb2 
+	cmp sample2.bz2 sample2.rb2
+	cmp sample3.bz2 sample3.rb2
+	cmp sample1.tst sample1.ref
+	cmp sample2.tst sample2.ref
+	cmp sample3.tst sample3.ref
+	@cat words3
+else
+# On all other (Unix-like) systems, set $LD_LIBRARY_PATH to test libbz2.dylib.
 test: bzip2
 	@cat words1
 	LD_LIBRARY_PATH=.:$$LD_LIBRARY_PATH \
@@ -92,6 +147,7 @@ test: bzip2
 	cmp sample2.tst sample2.ref
 	cmp sample3.tst sample3.ref
 	@cat words3
+endif
 
 install: bzip2 bzip2recover libbz2.a
 	if ( test ! -d $(PREFIX)/bin ) ; then mkdir -p $(PREFIX)/bin ; fi
