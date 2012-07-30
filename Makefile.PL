@@ -42,8 +42,9 @@ extra_clean: pristine-tar.spec
 	rm -f *.1 zgz/zgz
 	make clean -C pit/suse-bzip2
 
+# Extract the version number from debian/changelog to update pristine-tar.spec
 pristine-tar.spec:
-	sed -i "s/Version:.*/Version: $$(perl -e '$$_=<>;print m/\((.*?)\)/'<debian/changelog)/" pristine-tar.spec
+	sed "s/Version:.*/Version: $$(perl -e '$$_=<>;print m/\((.*?)\)/'<debian/changelog)/" pristine-tar.spec > pristine-tar.spec.tmp && mv pristine-tar.spec.tmp pristine-tar.spec
 
 .PHONY: pristine-tar.spec
 }
