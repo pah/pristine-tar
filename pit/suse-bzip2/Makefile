@@ -103,42 +103,25 @@ check: test
 
 ifeq ("${UNAME_S}", "Darwin")
 # On Mac OS X, $DYLD_LIBRARY_PATH needs to be set to test libbz2.dylib.
-test: bzip2
-	@cat words1
-	DYLD_LIBRARY_PATH=.:$$DYLD_LIBRARY_PATH \
-	./bzip2 -1  < sample1.ref > sample1.rb2
-	DYLD_LIBRARY_PATH=.:$$DYLD_LIBRARY_PATH \
-	./bzip2 -2  < sample2.ref > sample2.rb2
-	DYLD_LIBRARY_PATH=.:$$DYLD_LIBRARY_PATH \
-	./bzip2 -3  < sample3.ref > sample3.rb2
-	DYLD_LIBRARY_PATH=.:$$DYLD_LIBRARY_PATH \
-	./bzip2 -d  < sample1.bz2 > sample1.tst
-	DYLD_LIBRARY_PATH=.:$$DYLD_LIBRARY_PATH \
-	./bzip2 -d  < sample2.bz2 > sample2.tst
-	DYLD_LIBRARY_PATH=.:$$DYLD_LIBRARY_PATH \
-	./bzip2 -ds < sample3.bz2 > sample3.tst
-	cmp sample1.bz2 sample1.rb2 
-	cmp sample2.bz2 sample2.rb2
-	cmp sample3.bz2 sample3.rb2
-	cmp sample1.tst sample1.ref
-	cmp sample2.tst sample2.ref
-	cmp sample3.tst sample3.ref
-	@cat words3
+LD_PATH_VAR=DYLD_LIBRARY_PATH
 else
-# On all other (Unix-like) systems, set $LD_LIBRARY_PATH to test libbz2.dylib.
+# On all other (Unix-like) systems, set $LD_LIBRARY_PATH to test libbz2.so.
+LD_PATH_VAR=LD_LIBRARY_PATH
+endif
+
 test: bzip2
 	@cat words1
-	LD_LIBRARY_PATH=.:$$LD_LIBRARY_PATH \
+	$(LD_PATH_VAR)=.:$$$(LD_PATH_VAR) \
 	./bzip2 -1  < sample1.ref > sample1.rb2
-	LD_LIBRARY_PATH=.:$$LD_LIBRARY_PATH \
+	$(LD_PATH_VAR)=.:$$$(LD_PATH_VAR) \
 	./bzip2 -2  < sample2.ref > sample2.rb2
-	LD_LIBRARY_PATH=.:$$LD_LIBRARY_PATH \
+	$(LD_PATH_VAR)=.:$$$(LD_PATH_VAR) \
 	./bzip2 -3  < sample3.ref > sample3.rb2
-	LD_LIBRARY_PATH=.:$$LD_LIBRARY_PATH \
+	$(LD_PATH_VAR)=.:$$$(LD_PATH_VAR) \
 	./bzip2 -d  < sample1.bz2 > sample1.tst
-	LD_LIBRARY_PATH=.:$$LD_LIBRARY_PATH \
+	$(LD_PATH_VAR)=.:$$$(LD_PATH_VAR) \
 	./bzip2 -d  < sample2.bz2 > sample2.tst
-	LD_LIBRARY_PATH=.:$$LD_LIBRARY_PATH \
+	$(LD_PATH_VAR)=.:$$$(LD_PATH_VAR) \
 	./bzip2 -ds < sample3.bz2 > sample3.tst
 	cmp sample1.bz2 sample1.rb2 
 	cmp sample2.bz2 sample2.rb2
@@ -147,7 +130,6 @@ test: bzip2
 	cmp sample2.tst sample2.ref
 	cmp sample3.tst sample3.ref
 	@cat words3
-endif
 
 install: bzip2 bzip2recover libbz2.a
 	if ( test ! -d $(PREFIX)/bin ) ; then mkdir -p $(PREFIX)/bin ; fi
