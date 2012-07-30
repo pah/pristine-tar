@@ -30,10 +30,10 @@ pit/suse-bzip2/suse-bzip2: $(SUSE_BZIP2_SOURCES)
 	gcc -Wall -O2 -o $@ $(SUSE_BZIP2_SOURCES)
 
 extra_install:
-	install -d $(DESTDIR)/usr/bin
-	install -d $(DESTDIR)/usr/share/man/man1
-	install pristine-tar pristine-gz pristine-bz2 pristine-xz zgz/zgz $(DESTDIR)/usr/bin
-	install -m 0644 *.1 $(DESTDIR)/usr/share/man/man1
+	install -d $(DESTDIR)$(PREFIX)/bin
+	install -d $(DESTDIR)$(PREFIX)/share/man/man1
+	install pristine-tar pristine-gz pristine-bz2 pristine-xz zgz/zgz $(DESTDIR)$(PREFIX)/bin
+	install -m 0644 *.1 $(DESTDIR)$(PREFIX)/share/man/man1
 	install -d $(DESTDIR)$(ZGZ_LIB)/suse-bzip2
 	install pit/suse-bzip2/bzip2 $(DESTDIR)$(ZGZ_LIB)/suse-bzip2
 	install pit/suse-bzip2/libbz2* $(DESTDIR)$(ZGZ_LIB)/suse-bzip2
