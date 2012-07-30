@@ -189,6 +189,9 @@ $ENV{LANG}='C';
 delete $ENV{TAR_OPTIONS};
 delete $ENV{TAPE};
 
+my $tar_program = "tar";
+my $xdelta_program = "xdelta";
+
 my $message;
 
 dispatch(
@@ -345,7 +348,7 @@ sub recreatetarball_helper {
 	
 	my $ret="$tempdir/recreatetarball";
 
-	doit("tar", "cf", $ret, "--owner", 0, "--group", 0, 
+	doit($tar_program, "cf", $ret, "--owner", 0, "--group", 0, 
 		"--numeric-owner", "-C", "$tempdir/workdir",
 		"--no-recursion", "--mode", "0644", 
 		"--files-from", "$tempdir/manifest");
@@ -391,7 +394,7 @@ sub gentar {
 	my $ok;
 	foreach my $variant (@try) {
 		my $recreatetarball=$variant->();
-		my $ret=try_doit("xdelta", "patch", $delta->{delta}, $recreatetarball, $out);
+		my $ret=try_doit($xdelta_program, "patch", $delta->{delta}, $recreatetarball, $out);
 		if ($ret == 0) {
 			$ok=1;
 			last;
@@ -489,7 +492,7 @@ sub gendelta {
 	if (! exists $opts{recreatetarball}) {
 		my $sourcedir="$tempdir/tmp";
 		doit("mkdir", $sourcedir);
-		doit("tar", "xf", File::Spec->rel2abs($tarball), "-C", $sourcedir);
+		doit($tar_program, "xf", File::Spec->rel2abs($tarball), "-C", $sourcedir);
 		# if all files were in a subdir, use the subdir as the sourcedir
 		my @out=grep { $_ ne "$sourcedir/.." && $_ ne "$sourcedir/." }
 			(glob("$sourcedir/*"), glob("$sourcedir/.*"));
@@ -503,7 +506,7 @@ sub gendelta {
 	}
 
 	$delta{delta}="$tempdir/delta";
-	my $ret=system("xdelta delta -0 --pristine $recreatetarball $tarball $delta{delta}") >> 8;
+	my $ret=system("$xdelta_program delta -0 --pristine $recreatetarball $tarball $delta{delta}") >> 8;
 	# xdelta exits 1 on success if there were differences
 	if ($ret != 1 && $ret != 0) {
 		error "xdelta failed with return code $ret";
