@@ -189,8 +189,8 @@ $ENV{LANG}='C';
 delete $ENV{TAR_OPTIONS};
 delete $ENV{TAPE};
 
-my $tar_program = "@TAR_PROGRAM@";
-my $xdelta_program = "@XDELTA_PROGRAM@";
+my $tar_program = "tar";
+my $xdelta_program = "xdelta";
 
 my $message;
 

@@ -17,20 +17,20 @@ PERL_SHEBANG:=/usr/bin/env perl
 TAR_PROGRAM:=tar
 XDELTA_PROGRAM:=xdelta
 
-%:	%.in
-	sed -e "s/^#!\\/usr\\/bin\\/env perl/#!$(subst /,\\/,$(PERL_SHEBANG))/g" \
-	    -e "s/@TAR_PROGRAM@/$(subst /,\\/,$(TAR_PROGRAM))/g" \
-	    -e "s/@XDELTA_PROGRAM@/$(subst /,\\/,$(XDELTA_PROGRAM))/g" \
+%:	%.pl
+	sed -e "s|^#!/usr/bin/env perl|#!$(PERL_SHEBANG)|g" \
+	    -e "s|tar_program = \".*\";|tar_program = \"$(TAR_PROGRAM)\";|g" \
+	    -e "s|xdelta_program = \".*\";|xdelta_program = \"$(XDELTA_PROGRAM)\";|g" \
 	    $< > $@
 	chmod a+x $@
 
-pristine-tar: pristine-tar.in Makefile.PL
+pristine-tar: pristine-tar.pl Makefile.PL
 
-pristine-gz: pristine-gz.in Makefile.PL
+pristine-gz: pristine-gz.pl Makefile.PL
 
-pristine-bz2: pristine-bz2.in Makefile.PL
+pristine-bz2: pristine-bz2.pl Makefile.PL
 
-pristine-xz: pristine-xz.in Makefile.PL
+pristine-xz: pristine-xz.pl Makefile.PL
 
 extra_build: zgz/zgz pristine-tar.spec pristine-tar pristine-gz pristine-bz2 pristine-xz
 	pod2man -c pristine-tar pristine-tar > pristine-tar.1
