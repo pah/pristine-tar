@@ -1,3 +1,27 @@
+pristine-tar (1.26.1) UNRELEASED; urgency=low
+
+  * First version of pristine-tar to compile and work on Mac OS X.
+  * Makefile.PL: Fix to always take into account $(PREFIX) when
+    installing files (i.e., pristine-tar, pristine-gz, pristine-bz2,
+    pristine-xz, zgz, and its man pages). Configure shebang line and
+    names of tar as well as xdelta in the Perl scripts generated from
+    pristine-tar.in, pristine-gz.in, pristine-bz2.in, pristine-xz.in.
+    The in-place editing option '-i' of sed is not anymore used to
+    update pristine-tar.spec. The option is not supported by sed on
+    all Unix platforms.
+  * pristine-tar, pristine-gz, pristine-bz2, pristine-xz: Renamed to
+    pristine-tar.in, pristine-gz.in, pristine-bz2.in, pristine-xz.in,
+    respectively. Shebang to call Perl is now configured from within
+    Makefile.PL as well is the actual name of tar and xdelta. Thus,
+    porting of pristine-tar to other Unix-like platforms is
+    facilitated, where these programs these programs may have a
+    different name (e.g., gnutar, gtar, xdelta1) or are installed in
+    places outside the user's PATH.
+  * zgz/zgz.c: Use DYLD_LIBRARY_PATH instead of LD_LIBRARY_PATH to swap
+    in dynamic library on Mac OS X.
+  * pit/suse-bzip2/Makefile: Fix to compile libbz2 as dynamic library
+    on Mac OS X.
+
 pristine-tar (1.26) UNRELEASED; urgency=low
 
   * pristine-xz: Use xz --robot to extract information from xz files,
