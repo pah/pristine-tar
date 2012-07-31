@@ -22,6 +22,8 @@ pristine-tar (1.26.1) UNRELEASED; urgency=low
   * pit/suse-bzip2/Makefile: Fix to compile libbz2 as dynamic library
     on Mac OS X.
 
+ -- Torsten Maehne <Torsten.Maehne@gmx.de>  Tue, 31 Jul 2012 17:42:30 CEST
+
 pristine-tar (1.26) UNRELEASED; urgency=low
 
   * pristine-xz: Use xz --robot to extract information from xz files,
@@ -95,7 +97,7 @@ pristine-tar (1.18) unstable; urgency=low
 pristine-tar (1.17) unstable; urgency=low
 
   * pristine-tar: Fail when the delta is excessively large, probably
-    due to the tarball being compressed with something that tar x can 
+    due to the tarball being compressed with something that tar x can
     auto-extract, but that pristine-tar does not support.
 
  -- Joey Hess <joeyh@debian.org>  Mon, 09 Jan 2012 11:44:44 -0400
