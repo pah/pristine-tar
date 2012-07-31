@@ -21,7 +21,7 @@ XDELTA_PROGRAM:=xdelta
 	sed -e "s/^#!\\/usr\\/bin\\/env perl/#!$(subst /,\\/,$(PERL_SHEBANG))/g" \
 	    -e "s/@TAR_PROGRAM@/$(subst /,\\/,$(TAR_PROGRAM))/g" \
 	    -e "s/@XDELTA_PROGRAM@/$(subst /,\\/,$(XDELTA_PROGRAM))/g" \
-	    $^ > $@
+	    $< > $@
 	chmod a+x $@
 
 pristine-tar: pristine-tar.in Makefile.PL
@@ -63,7 +63,9 @@ extra_clean: pristine-tar.spec
 
 # Extract the version number from debian/changelog to update pristine-tar.spec
 pristine-tar.spec:
-	sed "s/Version:.*/Version: $$(perl -e '$$_=<>;print m/\((.*?)\)/'<debian/changelog)/" pristine-tar.spec > pristine-tar.spec.tmp && mv pristine-tar.spec.tmp pristine-tar.spec
+	sed "s/Version:.*/Version: $$(perl -e '$$_=<>;print m/\((.*?)\)/'<debian/changelog)/" \
+	    pristine-tar.spec > pristine-tar.spec.tmp \
+        && mv pristine-tar.spec.tmp pristine-tar.spec
 
 .PHONY: pristine-tar.spec
 }

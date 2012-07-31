@@ -70,10 +70,10 @@ libbz2.a: $(OBJS)
 ifeq ("${UNAME_S}", "Darwin")
 # On Mac OS X, compile libbz2 as a dynamic library.
 libbz2.dylib: libbz2.$(somajor).dylib
-	ln -sf $^ $@
+	ln -sf $< $@
 
 libbz2.$(somajor).dylib: libbz2.$(sominor).dylib
-	ln -sf $^ $@
+	ln -sf $< $@
 
 libbz2.$(sominor).dylib: $(OBJS:%.o=%.sho)
 	$(CC) -dynamiclib \
@@ -83,10 +83,10 @@ else
 # On all other (Unix-like) platforms compile libbz2 as
 # a shared object library.
 libbz2.so: libbz2.so.$(somajor)
-	ln -sf $^ $@
+	ln -sf $< $@
 
 libbz2.so.$(somajor): libbz2.so.$(sominor)
-	ln -sf $^ $@
+	ln -sf $< $@
 
 libbz2.so.$(sominor): $(OBJS:%.o=%.sho)
 	$(CC) -o libbz2.so.$(sominor) -shared \
