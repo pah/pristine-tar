@@ -174,9 +174,10 @@ install: bzip2 bzip2recover libbz2.a
 	echo ".so man1/bzdiff.1" > $(PREFIX)/man/man1/bzcmp.1
 
 clean: 
-	rm -f *.o *.sho libbz2.a libbz2.so* bzip2 bzip2recover \
-	sample1.rb2 sample2.rb2 sample3.rb2 \
-	sample1.tst sample2.tst sample3.tst
+	rm -f *.o *.sho libbz2.a libbz2.so* libbz2.*.dylib \
+	      bzip2 bzip2recover \
+	      sample1.rb2 sample2.rb2 sample3.rb2 \
+	      sample1.tst sample2.tst sample3.tst
 
 
 distclean: clean
