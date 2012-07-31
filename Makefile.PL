@@ -22,7 +22,7 @@ XDELTA_PROGRAM:=xdelta
 	    -e "s/@TAR_PROGRAM@/$(subst /,\\/,$(TAR_PROGRAM))/g" \
 	    -e "s/@XDELTA_PROGRAM@/$(subst /,\\/,$(XDELTA_PROGRAM))/g" \
 	    $^ > $@
-
+	chmod a+x $@
 
 pristine-tar: pristine-tar.in Makefile.PL
 
