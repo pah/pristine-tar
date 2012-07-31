@@ -11,9 +11,28 @@ clean:: extra_clean
 install:: extra_install
 pure_install:: extra_install
 
-ZGZ_LIB=$(PREFIX)/lib/zgz
+ZGZ_LIB:=$(PREFIX)/lib/zgz
 
-extra_build: zgz/zgz pristine-tar.spec
+PERL_SHEBANG:=/usr/bin/env perl
+TAR_PROGRAM:=tar
+XDELTA_PROGRAM:=xdelta
+
+%:	%.in
+	sed -e "s/^#!\\/usr\\/bin\\/env perl/#!$(subst /,\\/,$(PERL_SHEBANG))/g" \
+	    -e "s/@TAR_PROGRAM@/$(subst /,\\/,$(TAR_PROGRAM))/g" \
+	    -e "s/@XDELTA_PROGRAM@/$(subst /,\\/,$(XDELTA_PROGRAM))/g" \
+	    $^ > $@
+
+
+pristine-tar: pristine-tar.in Makefile.PL
+
+pristine-gz: pristine-gz.in Makefile.PL
+
+pristine-bz2: pristine-bz2.in Makefile.PL
+
+pristine-xz: pristine-xz.in Makefile.PL
+
+extra_build: zgz/zgz pristine-tar.spec pristine-tar pristine-gz pristine-bz2 pristine-xz
 	pod2man -c pristine-tar pristine-tar > pristine-tar.1
 	pod2man -c pristine-gz  pristine-gz  > pristine-gz.1
 	pod2man -c pristine-bz2 pristine-bz2 > pristine-bz2.1
@@ -39,7 +58,7 @@ extra_install:
 	install pit/suse-bzip2/libbz2* $(DESTDIR)$(ZGZ_LIB)/suse-bzip2
 
 extra_clean: pristine-tar.spec
-	rm -f *.1 zgz/zgz
+	rm -f *.1 pristine-tar pristine-gz pristine-bz2 pristine-xz zgz/zgz
 	make clean -C pit/suse-bzip2
 
 # Extract the version number from debian/changelog to update pristine-tar.spec
