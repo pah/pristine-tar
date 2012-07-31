@@ -1,7 +1,12 @@
+*.[oa]
+*.sho
+*.so
+*.so.*
 *.1
 zgz/zgz
-pit/suse-bzip2/suse-bzip2
+pit/suse-bzip2/bzip2
 Makefile
 Makefile.old
+MYMETA.yml
 blib
 pm_to_blib
