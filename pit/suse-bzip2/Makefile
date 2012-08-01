@@ -43,16 +43,21 @@ OBJS= blocksort.o  \
 
 all: libbz2.a bzip2
 
-ifeq ("${UNAME_S}", "Darwin")
-# On Mac OS X, link against the dynamic library.
-bzip2: libbz2.dylib bzip2.o
-	$(CC) $(CFLAGS) $(LDFLAGS) -o bzip2 bzip2.o -L. -lbz2
+ifeq ("$(UNAME_S)","Darwin")
+soext=dylib
+soext_major=$(somajor).$(soext)
+soext_minor=$(sominor).$(soext)
+LDDLFLAGS=-dynamiclib \
+          -Wl,-headerpad_max_install_names,-undefined,dynamic_lookup,-compatibility_version,$(somajor),-current_version,$(sominor),-install_name,$(PREFIX)/lib/libbz2.$(soext_minor)
 else
-# On all other (Unix-like) platforms assume to link against a
-# shared object library.
-bzip2: libbz2.so bzip2.o
-	$(CC) $(CFLAGS) $(LDFLAGS) -o bzip2 bzip2.o -L. -lbz2
+soext=so
+soext_major=$(soext).$(somajor)
+soext_minor=$(soext).$(sominor)
+LDDLFLAGS=-shared -Wl,-soname,libbz2.$(soext_major)
 endif
+
+bzip2: libbz2.$(soext) bzip2.o
+	$(CC) $(CFLAGS) $(LDFLAGS) -o bzip2 bzip2.o -L. -lbz2
 
 bzip2recover: bzip2recover.o
 	$(CC) $(CFLAGS) $(LDFLAGS) -o bzip2recover bzip2recover.o
@@ -66,32 +71,14 @@ libbz2.a: $(OBJS)
 		$(RANLIB) libbz2.a ; \
 	fi
 
-
-ifeq ("${UNAME_S}", "Darwin")
-# On Mac OS X, compile libbz2 as a dynamic library.
-libbz2.dylib: libbz2.$(somajor).dylib
+libbz2.$(soext): libbz2.$(soext_major)
 	ln -sf $< $@
 
-libbz2.$(somajor).dylib: libbz2.$(sominor).dylib
+libbz2.$(soext_major): libbz2.$(soext_minor)
 	ln -sf $< $@
 
-libbz2.$(sominor).dylib: $(OBJS:%.o=%.sho)
-	$(CC) -dynamiclib \
-	  -Wl,-headerpad_max_install_names,-undefined,dynamic_lookup,-compatibility_version,$(somajor),-current_version,$(sominor),-install_name,$(PREFIX)/lib/libbz2.$(sominor).dylib \
-	  -o libbz2.$(sominor).dylib $(OBJ) $^ -lc
-else
-# On all other (Unix-like) platforms compile libbz2 as
-# a shared object library.
-libbz2.so: libbz2.so.$(somajor)
-	ln -sf $< $@
-
-libbz2.so.$(somajor): libbz2.so.$(sominor)
-	ln -sf $< $@
-
-libbz2.so.$(sominor): $(OBJS:%.o=%.sho)
-	$(CC) -o libbz2.so.$(sominor) -shared \
-	  -Wl,-soname,libbz2.so.$(somajor) $^ -lc
-endif
+libbz2.$(soext_minor): $(OBJS:%.o=%.sho)
+	$(CC)  $(LDDLFLAGS) -o $@ $^ -lc
 
 %.sho: %.c
 	$(CC) $(CFLAGS) -D_REENTRANT -fPIC -o $@ -c $<
