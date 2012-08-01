@@ -22,7 +22,7 @@ pristine-tar (1.26.1) UNRELEASED; urgency=low
   * pit/suse-bzip2/Makefile: Fix to compile libbz2 as dynamic library
     on Mac OS X.
 
- -- Torsten Maehne <Torsten.Maehne@gmx.de>  Tue, 31 Jul 2012 17:42:30 CEST
+ -- Torsten Maehne <Torsten.Maehne@gmx.de>  Tue, 31 Jul 2012 17:42:30 +0200
 
 pristine-tar (1.26) UNRELEASED; urgency=low
 
