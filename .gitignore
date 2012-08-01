@@ -4,10 +4,6 @@
 *.so.*
 *.dylib
 *.1
-pristine-tar
-pristine-gz
-pristine-bz2
-pristine-xz
 zgz/zgz
 pit/suse-bzip2/bzip2
 Makefile
