@@ -115,7 +115,6 @@ WriteMakefile(
 	ABSTRACT	=> 'regenerate a pristine upstream tarball using only a small '
 					.'binary delta file and a copy of the source which can be '
 					.'a revision control checkout',
-	PREFIX		=> "/usr/local",
 	MAN3PODS	=> {},
 	PMLIBDIRS	=> ["Pristine"],
 	EXE_FILES	=> ["pristine-tar","pristine-bz2","pristine-gz","pristine-xz"],
