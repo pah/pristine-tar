@@ -25,47 +25,38 @@ Info: Recent versions (>= 6.43) of MakeMaker may warn about the custom
 EOF
 }
 
-# Add a few more targets.
-sub MY::postamble {
+package MY;
 
-my $pa = q{
+sub macro {
+    my $inherited = shift->SUPER::macro(@_);
+    my $subst = '';
+
+    $subst .= '-e "s|^\#!.*|\#!$(PERL_SHEBANG)|g"'
+        unless ! ${PERL_SHEBANG};
+    $subst .= q[-e "s|tar_program = \".*\";|tar_program = \"$(TAR_PROGRAM)\";|g"]
+        unless ! ${TAR_PROGRAM};
+    $subst .= q[-e "s|xdelta_program = \".*\";|xdelta_program = \"$(XDELTA_PROGRAM)\";|g"]
+        unless ! ${XDELTA_PROGRAM};
+
+    $inherited .= "\nPARAM_SUBST = ${subst}";
+    $inherited;
+}
+
+# Add a few more targets.
+sub postamble {
+
+q{
 all:: extra_build
 clean:: extra_clean
 install:: extra_install
 pure_install:: extra_install
 
-PERL_SHEBANG  :=__PERL_SHEBANG__
-TAR_PROGRAM   :=__TAR_PROGRAM__
-XDELTA_PROGRAM:=__XDELTA_PROGRAM__
-
-BIN_PERL := \
-  pristine-tar \
-  pristine-bz2 \
-  pristine-gz  \
-  pristine-xz
-
-# Adjust scripts according to extra config parameters, if needed
-ifneq (,$(PERL_SHEBANG)$(TAR_PROGRAM)$(XDELTA_PROGRAM))
-
-ifneq (,$(PERL_SHEBANG))
-PERL_SHEBANG_XPR:=-e "s|^\#!.*|\#!$(PERL_SHEBANG)|g"
-endif
-ifneq (,$(TAR_PROGRAM))
-TAR_PROGRAM_XPR :=-e "s|tar_program = \".*\";|tar_program = \"$(TAR_PROGRAM)\";|g"
-endif
-ifneq (,$(XDELTA_PROGRAM))
-XDELTA_PROGRAM_XPR:=-e "s|xdelta_program = \".*\";|xdelta_program = \"$(XDELTA_PROGRAM)\";|g"
-endif
-
-$(BIN_PERL): %:
-	sed $(PERL_SHEBANG_XPR) \
-		$(TAR_PROGRAM_XPR) \
-		$(XDELTA_PROGRAM_XPR) \
-		$@ > $@.new
-	mv $@.new $@
-	chmod a+x $@
-PHONY+=$(BIN_PERL)
-
+ifneq (,$(PARAM_SUBST))
+$(EXE_FILES): %:
+	sed $(PARAM_SUBST) $@ > $@.new
+	$(MV) $@.new $@
+	$(CHMOD) $(PERM_RWX) $@
+PHONY+=$(EXE_FILES)
 endif
 
 ZGZ_LIB:=$(PREFIX)/lib/zgz
@@ -94,17 +85,11 @@ pristine-tar.spec:
 PHONY+=pristine-tar.spec
 
 .PHONY: $(PHONY)
-};
-
-	# replace custom parameters
-	$pa =~ s|__PERL_SHEBANG__|${PERL_SHEBANG}|eg;
-	$pa =~ s|__TAR_PROGRAM__|${TAR_PROGRAM}|eg;
-	$pa =~ s|__XDELTA_PROGRAM__|${XDELTA_PROGRAM}|eg;
-
-	$pa;
 }
 
-WriteMakefile(
+}
+
+ExtUtils::MakeMaker::WriteMakefile(
 	NAME		=> 'Pristine',
 	AUTHOR		=> 'Joey Hess <joey@kitenet.net>',
 	ABSTRACT	=> 'regenerate a pristine upstream tarball using only a small '
@@ -118,5 +103,8 @@ WriteMakefile(
 	MAN3PODS	=> {},
 	PMLIBDIRS	=> ["Pristine"],
 	EXE_FILES	=> ["pristine-tar","pristine-bz2","pristine-gz","pristine-xz"],
+	macro		=> { PERL_SHEBANG   => "${PERL_SHEBANG}",
+					 TAR_PROGRAM    => "${TAR_PROGRAM}",
+					 XDELTA_PROGRAM => "${XDELTA_PROGRAM}" },
 	clean		=> { FILES => 'zgz/zgz' },
 );
