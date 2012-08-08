@@ -68,24 +68,19 @@ PHONY+=$(BIN_PERL)
 
 endif
 
-extra_build: zgz/zgz zgz.1 pristine-tar.spec
-	$(MAKE) -C pit/suse-bzip2
-
 ZGZ_LIB:=$(PREFIX)/lib/zgz
 ZGZ_SOURCES = zgz/zgz.c zgz/gzip/*.c zgz/old-bzip2/*.c
 zgz/zgz: $(ZGZ_SOURCES)
 	gcc -Wall -O2 -o $@ $(ZGZ_SOURCES) -lz -DZGZ_LIB=\"$(ZGZ_LIB)\"
 
-zgz.1: zgz/zgz.pod
-	pod2man -c zgz $< > $@
+extra_build: zgz/zgz pristine-tar.spec
+	$(MAKE) -C pit/suse-bzip2
 
 extra_install:
 	install -d $(DESTDIR)$(PREFIX)/bin
-	install -d $(DESTDIR)$(PREFIX)/share/man/man1
 	install zgz/zgz $(DESTDIR)$(PREFIX)/bin
-	install -m 0644 zgz.1 $(DESTDIR)$(PREFIX)/share/man/man1
 	install -d $(DESTDIR)$(ZGZ_LIB)/suse-bzip2
-	install pit/suse-bzip2/bzip2 $(DESTDIR)$(ZGZ_LIB)/suse-bzip2
+	install pit/suse-bzip2/bzip2   $(DESTDIR)$(ZGZ_LIB)/suse-bzip2
 	install pit/suse-bzip2/libbz2* $(DESTDIR)$(ZGZ_LIB)/suse-bzip2
 
 extra_clean: pristine-tar.spec
@@ -115,8 +110,13 @@ WriteMakefile(
 	ABSTRACT	=> 'regenerate a pristine upstream tarball using only a small '
 					.'binary delta file and a copy of the source which can be '
 					.'a revision control checkout',
+	MAN1PODS  => { 'pristine-tar' => '$(INST_MAN1DIR)/pristine-tar.1',
+				   'pristine-bz2' => '$(INST_MAN1DIR)/pristine-bz2.1',
+				   'pristine-gz'  => '$(INST_MAN1DIR)/pristine-gz.1',
+				   'pristine-xz'  => '$(INST_MAN1DIR)/pristine-xz.1',
+				   'zgz/zgz.pod'  => '$(INST_MAN1DIR)/zgz.1' },
 	MAN3PODS	=> {},
 	PMLIBDIRS	=> ["Pristine"],
 	EXE_FILES	=> ["pristine-tar","pristine-bz2","pristine-gz","pristine-xz"],
-	clean		=> { FILES => 'zgz/zgz zgz.1' },
+	clean		=> { FILES => 'zgz/zgz' },
 );
