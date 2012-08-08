@@ -15,10 +15,14 @@ my $PERL_SHEBANG   = $args{PERL_SHEBANG} || "" ;
 my $TAR_PROGRAM    = $args{TAR_PROGRAM} || "" ;
 my $XDELTA_PROGRAM = $args{XDELTA_PROGRAM} || "" ;
 
-if ($PERL_SHEBANG || $TAR_PROGRAM || $XDELTA_PROGRAM) {
-  print "Info: Recent versions (>= 6.43) of MakeMaker will warn about unknown\n";
-  print "      MakeMaker parameters 'PERL_SHEBANG', 'TAR_PROGRAM', and 'XDELTA_PROGRAM',\n";
-  print "      which are anyway correctly handled for generating the Makefile.\n";
+if( $ExtUtils::MakeMaker::VERSION ge '6.43_00' and
+    ($PERL_SHEBANG || $TAR_PROGRAM || $XDELTA_PROGRAM) )
+{
+  print <<EOF;
+Info: Recent versions (>= 6.43) of MakeMaker may warn about the custom
+      parameters 'PERL_SHEBANG', 'TAR_PROGRAM', and 'XDELTA_PROGRAM'
+      which are anyway correctly handled for generating the Makefile.
+EOF
 }
 
 # Add a few more targets.
