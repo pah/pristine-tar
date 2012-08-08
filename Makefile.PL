@@ -93,8 +93,7 @@ ExtUtils::MakeMaker::WriteMakefile(
 	NAME		=> 'Pristine',
 	AUTHOR		=> 'Joey Hess <joey@kitenet.net>',
 	ABSTRACT	=> 'regenerate a pristine upstream tarball using only a small '
-					.'binary delta file and a copy of the source which can be '
-					.'a revision control checkout',
+				  .'binary delta file and a revision control checkout',
 	MAN1PODS  => { 'pristine-tar' => '$(INST_MAN1DIR)/pristine-tar.1',
 				   'pristine-bz2' => '$(INST_MAN1DIR)/pristine-bz2.1',
 				   'pristine-gz'  => '$(INST_MAN1DIR)/pristine-gz.1',
