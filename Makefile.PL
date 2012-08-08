@@ -15,6 +15,12 @@ my $PERL_SHEBANG   = $args{PERL_SHEBANG} || "" ;
 my $TAR_PROGRAM    = $args{TAR_PROGRAM} || "" ;
 my $XDELTA_PROGRAM = $args{XDELTA_PROGRAM} || "" ;
 
+if ($PERL_SHEBANG || $TAR_PROGRAM || $XDELTA_PROGRAM) {
+  print "Info: Recent versions (>= 6.43) of MakeMaker will warn about unknown\n";
+  print "      MakeMaker parameters 'PERL_SHEBANG', 'TAR_PROGRAM', and 'XDELTA_PROGRAM',\n";
+  print "      which are anyway correctly handled for generating the Makefile.\n";
+}
+
 # Add a few more targets.
 sub MY::postamble {
 
