@@ -1,28 +1,28 @@
 pristine-tar (1.26.1) UNRELEASED; urgency=low
 
   * First version of pristine-tar to compile and work on Mac OS X.
-  * Makefile.PL: Fix to always take into account $(PREFIX) when
-    installing files (i.e., pristine-tar, pristine-gz, pristine-bz2,
-    pristine-xz, zgz, and its man pages). Configure shebang line and
-    names of tar as well as xdelta in the Perl scripts generated from
-    pristine-tar.pl, pristine-gz.pl, pristine-bz2.pl, pristine-xz.pl.
-    The in-place editing option '-i' of sed is not anymore used to
-    update pristine-tar.spec, because the option is not supported by
-    sed on all Unix platforms.
-  * pristine-tar, pristine-gz, pristine-bz2, pristine-xz: Renamed to
-    pristine-tar.pl, pristine-gz.pl, pristine-bz2.pl, pristine-xz.pl,
-    respectively. Shebang to call Perl is now configured from within
-    Makefile.PL as well is the actual name of tar and xdelta. Thus,
-    porting of pristine-tar to other Unix-like platforms is
-    facilitated, where these programs may have a different name
-    (e.g., gnutar, gtar, xdelta1) or are installed in places outside
-    the user's PATH.
+  * INSTALL: Extended instructions documenting Makefile.PL parameters.
+  * Makefile.PL: Fix to always take into account MakeMaker parameters
+    PREFIX or INSTALL_BASE when installing files (i.e., pristine-tar,
+    pristine-gz, pristine-bz2, pristine-xz, zgz, and its man pages).
+    Configure shebang line and names of tar as well as xdelta in the
+    Perl scripts pristine-tar, pristine-gz, pristine-bz2, pristine-xz
+    via new Makefile.PL parameters PERL_SHEBANG, TAR_PROGRAM, and
+    XDELTA_PROGRAM. The in-place editing option '-i' of sed is not
+    anymore used to update files like pristine-tar.spec, because the
+    option is not supported by sed on all Unix platforms.
+  * pristine-tar, pristine-gz, pristine-bz2, pristine-xz: Shebang to
+    call Perl is now configured from within Makefile.PL as well is
+    the actual name of tar and xdelta. Thus, porting of pristine-tar
+    to other Unix-like platforms is facilitated, where these programs
+    may have a different name (e.g., gnutar, gtar, xdelta1) or are
+    installed in places outside the user's PATH.
   * zgz/zgz.c: Use DYLD_LIBRARY_PATH instead of LD_LIBRARY_PATH to swap
     in dynamic library on Mac OS X.
   * pit/suse-bzip2/Makefile: Fix to compile libbz2 as dynamic library
     on Mac OS X.
 
- -- Torsten Maehne <Torsten.Maehne@gmx.de>  Tue, 31 Jul 2012 17:42:30 +0200
+ -- Torsten Maehne <Torsten.Maehne@gmx.de>  Thu, 09 Aug 2012 18:42:30 +0200
 
 pristine-tar (1.26) UNRELEASED; urgency=low
 
