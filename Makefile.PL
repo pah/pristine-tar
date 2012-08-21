@@ -65,7 +65,7 @@ zgz/zgz: $(ZGZ_SOURCES)
 	gcc -Wall -O2 -o $@ $(ZGZ_SOURCES) -lz -DZGZ_LIB=\"$(ZGZ_LIB)\"
 
 extra_build: zgz/zgz pristine-tar.spec
-	$(MAKE) -C pit/suse-bzip2
+	$(MAKE) PREFIX=$(PREFIX) -C pit/suse-bzip2
 
 extra_install:
 	install -d $(DESTDIR)$(PREFIX)/bin
@@ -75,7 +75,7 @@ extra_install:
 	install pit/suse-bzip2/libbz2* $(DESTDIR)$(ZGZ_LIB)/suse-bzip2
 
 extra_clean: pristine-tar.spec
-	$(MAKE) clean -C pit/suse-bzip2
+	$(MAKE) PREFIX=$(PREFIX) clean -C pit/suse-bzip2
 
 # Extract the version number from debian/changelog to update pristine-tar.spec
 pristine-tar.spec:

@@ -48,7 +48,7 @@ soext=dylib
 soext_major=$(somajor).$(soext)
 soext_minor=$(sominor).$(soext)
 LDDLFLAGS=-dynamiclib \
-          -Wl,-headerpad_max_install_names,-undefined,dynamic_lookup,-compatibility_version,$(somajor),-current_version,$(sominor),-install_name,$(PREFIX)/lib/libbz2.$(soext_minor)
+          -Wl,-headerpad_max_install_names,-undefined,dynamic_lookup,-compatibility_version,$(somajor),-current_version,$(sominor),-install_name,$(PREFIX)/lib/zgz/suse-bzip2/libbz2.$(soext_minor)
 else
 soext=so
 soext_major=$(soext).$(somajor)
