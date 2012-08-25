@@ -1,11 +1,11 @@
-pristine-tar (1.26) UNRELEASED; urgency=low
+pristine-tar (1.26) unstable; urgency=low
 
   * pristine-xz: Use xz --robot to extract information from xz files,
     avoiding the need to do more expensive guessing. Support --block-list
     when available to reproduce multi block files.
     Closes: #677250 Thanks, Vincent Ladeuil
 
- -- Joey Hess <joeyh@debian.org>  Tue, 19 Jun 2012 09:24:30 -0400
+ -- Joey Hess <joeyh@debian.org>  Sat, 25 Aug 2012 11:54:46 -0400
 
 pristine-tar (1.25) unstable; urgency=low
 
