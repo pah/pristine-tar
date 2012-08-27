@@ -3,6 +3,7 @@
 *.so
 *.so.*
 *.dylib
+*.1
 zgz/zgz
 pit/suse-bzip2/bzip2
 Makefile
