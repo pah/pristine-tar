@@ -14,11 +14,6 @@ pure_install:: extra_install
 ZGZ_LIB=$(PREFIX)/lib/zgz
 
 extra_build: zgz/zgz pristine-tar.spec
-	pod2man -c pristine-tar pristine-tar > pristine-tar.1
-	pod2man -c pristine-gz  pristine-gz  > pristine-gz.1
-	pod2man -c pristine-bz2 pristine-bz2 > pristine-bz2.1
-	pod2man -c pristine-xz pristine-xz > pristine-xz.1
-	pod2man -c zgz zgz/zgz.pod > zgz.1
 	$(MAKE) -C pit/suse-bzip2 PREFIX=$(PREFIX)
 
 ZGZ_SOURCES = zgz/zgz.c zgz/gzip/*.c zgz/old-bzip2/*.c
@@ -27,9 +22,8 @@ zgz/zgz: $(ZGZ_SOURCES)
 
 extra_install:
 	install -d $(DESTDIR)$(PREFIX)/bin
-	install -d $(DESTDIR)$(PREFIX)/share/man/man1
 	install pristine-tar pristine-gz pristine-bz2 pristine-xz zgz/zgz $(DESTDIR)$(PREFIX)/bin
-	install -m 0644 *.1 $(DESTDIR)$(PREFIX)/share/man/man1
+	install zgz/zgz $(DESTDIR)$(PREFIX)/bin
 	install -d $(DESTDIR)$(ZGZ_LIB)/suse-bzip2
 	install pit/suse-bzip2/bzip2 $(DESTDIR)$(ZGZ_LIB)/suse-bzip2
 	install pit/suse-bzip2/libbz2* $(DESTDIR)$(ZGZ_LIB)/suse-bzip2
@@ -48,7 +42,13 @@ pristine-tar.spec: debian/changelog
 
 WriteMakefile(
 	NAME		=> 'Pristine',
-	MAN1PODS	=> {},
+	MAN1PODS	=> {
+		'pristine-tar' => '$(INST_MAN1DIR)/pristine-tar.1',
+		'pristine-bz2' => '$(INST_MAN1DIR)/pristine-bz2.1',
+		'pristine-gz'  => '$(INST_MAN1DIR)/pristine-gz.1',
+		'pristine-xz'  => '$(INST_MAN1DIR)/pristine-xz.1',
+		'zgz/zgz.pod'  => '$(INST_MAN1DIR)/zgz.1'
+	},
 	MAN3PODS	=> {},
 	PMLIBDIRS	=> ["Pristine"],
 );

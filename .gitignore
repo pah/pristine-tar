@@ -2,7 +2,6 @@
 *.sho
 *.so
 *.so.*
-*.1
 zgz/zgz
 pit/suse-bzip2/bzip2
 Makefile
