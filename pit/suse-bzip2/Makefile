@@ -16,6 +16,10 @@ somajor=1.0
 sominor=$(somajor).4
 SHELL=/bin/sh
 
+# Determine the operating system name to decide whether to build a
+# shared object library libbz2.so or a dynamic library libbz2.dylib.
+UNAME_S := $(shell uname -s)
+
 # To assist in cross-compiling
 CC=gcc
 AR=ar
@@ -39,7 +43,20 @@ OBJS= blocksort.o  \
 
 all: libbz2.a bzip2
 
-bzip2: libbz2.so bzip2.o
+ifeq ("$(UNAME_S)","Darwin")
+soext=dylib
+soext_major=$(somajor).$(soext)
+soext_minor=$(sominor).$(soext)
+LDDLFLAGS=-dynamiclib \
+          -Wl,-headerpad_max_install_names,-undefined,dynamic_lookup,-compatibility_version,$(somajor),-current_version,$(sominor),-install_name,$(PREFIX)/lib/zgz/suse-bzip2/libbz2.$(soext_minor)
+else
+soext=so
+soext_major=$(soext).$(somajor)
+soext_minor=$(soext).$(sominor)
+LDDLFLAGS=-shared -Wl,-soname,libbz2.$(soext_major)
+endif
+
+bzip2: libbz2.$(soext) bzip2.o
 	$(CC) $(CFLAGS) $(LDFLAGS) -o bzip2 bzip2.o -L. -lbz2
 
 bzip2recover: bzip2recover.o
@@ -54,15 +71,14 @@ libbz2.a: $(OBJS)
 		$(RANLIB) libbz2.a ; \
 	fi
 
-libbz2.so: libbz2.so.$(somajor)
-	ln -sf $^ $@
+libbz2.$(soext): libbz2.$(soext_major)
+	ln -sf $< $@
 
-libbz2.so.$(somajor): libbz2.so.$(sominor)
-	ln -sf $^ $@
+libbz2.$(soext_major): libbz2.$(soext_minor)
+	ln -sf $< $@
 
-libbz2.so.$(sominor): $(OBJS:%.o=%.sho)
-	$(CC) -o libbz2.so.$(sominor) -shared \
-	  -Wl,-soname,libbz2.so.$(somajor) $^ -lc
+libbz2.$(soext_minor): $(OBJS:%.o=%.sho)
+	$(CC)  $(LDDLFLAGS) -o $@ $^ -lc
 
 %.sho: %.c
 	$(CC) $(CFLAGS) -D_REENTRANT -fPIC -o $@ -c $<
@@ -71,19 +87,28 @@ libbz2.so.$(sominor): $(OBJS:%.o=%.sho)
 	$(CC) $(CFLAGS) -D_REENTRANT -o $@ -c $<
 
 check: test
+
+ifeq ("${UNAME_S}", "Darwin")
+# On Mac OS X, $DYLD_LIBRARY_PATH needs to be set to test libbz2.dylib.
+LD_PATH_VAR=DYLD_LIBRARY_PATH
+else
+# On all other (Unix-like) systems, set $LD_LIBRARY_PATH to test libbz2.so.
+LD_PATH_VAR=LD_LIBRARY_PATH
+endif
+
 test: bzip2
 	@cat words1
-	LD_LIBRARY_PATH=.:$$LD_LIBRARY_PATH \
+	$(LD_PATH_VAR)=.:$$$(LD_PATH_VAR) \
 	./bzip2 -1  < sample1.ref > sample1.rb2
-	LD_LIBRARY_PATH=.:$$LD_LIBRARY_PATH \
+	$(LD_PATH_VAR)=.:$$$(LD_PATH_VAR) \
 	./bzip2 -2  < sample2.ref > sample2.rb2
-	LD_LIBRARY_PATH=.:$$LD_LIBRARY_PATH \
+	$(LD_PATH_VAR)=.:$$$(LD_PATH_VAR) \
 	./bzip2 -3  < sample3.ref > sample3.rb2
-	LD_LIBRARY_PATH=.:$$LD_LIBRARY_PATH \
+	$(LD_PATH_VAR)=.:$$$(LD_PATH_VAR) \
 	./bzip2 -d  < sample1.bz2 > sample1.tst
-	LD_LIBRARY_PATH=.:$$LD_LIBRARY_PATH \
+	$(LD_PATH_VAR)=.:$$$(LD_PATH_VAR) \
 	./bzip2 -d  < sample2.bz2 > sample2.tst
-	LD_LIBRARY_PATH=.:$$LD_LIBRARY_PATH \
+	$(LD_PATH_VAR)=.:$$$(LD_PATH_VAR) \
 	./bzip2 -ds < sample3.bz2 > sample3.tst
 	cmp sample1.bz2 sample1.rb2 
 	cmp sample2.bz2 sample2.rb2
@@ -136,9 +161,10 @@ install: bzip2 bzip2recover libbz2.a
 	echo ".so man1/bzdiff.1" > $(PREFIX)/man/man1/bzcmp.1
 
 clean: 
-	rm -f *.o *.sho libbz2.a libbz2.so* bzip2 bzip2recover \
-	sample1.rb2 sample2.rb2 sample3.rb2 \
-	sample1.tst sample2.tst sample3.tst
+	rm -f *.o *.sho libbz2.a libbz2.so* libbz2.*.dylib \
+	      bzip2 bzip2recover \
+	      sample1.rb2 sample2.rb2 sample3.rb2 \
+	      sample1.tst sample2.tst sample3.tst
 
 
 distclean: clean
