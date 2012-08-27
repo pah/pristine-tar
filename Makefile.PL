@@ -22,14 +22,12 @@ zgz/zgz: $(ZGZ_SOURCES)
 
 extra_install:
 	install -d $(DESTDIR)$(PREFIX)/bin
-	install pristine-tar pristine-gz pristine-bz2 pristine-xz zgz/zgz $(DESTDIR)$(PREFIX)/bin
 	install zgz/zgz $(DESTDIR)$(PREFIX)/bin
 	install -d $(DESTDIR)$(ZGZ_LIB)/suse-bzip2
 	install pit/suse-bzip2/bzip2 $(DESTDIR)$(ZGZ_LIB)/suse-bzip2
 	install pit/suse-bzip2/libbz2* $(DESTDIR)$(ZGZ_LIB)/suse-bzip2
 
 extra_clean:
-	rm -f *.1 zgz/zgz
 	$(MAKE) clean -C pit/suse-bzip2 PREFIX=$(PREFIX)
 
 pristine-tar.spec: debian/changelog
@@ -42,6 +40,10 @@ pristine-tar.spec: debian/changelog
 
 WriteMakefile(
 	NAME		=> 'Pristine',
+	AUTHOR		=> 'Joey Hess <joey@kitenet.net>',
+	ABSTRACT	=>
+		'regenerate a pristine upstream tarball using only a small '.
+		'binary delta file and a revision control checkout',
 	MAN1PODS	=> {
 		'pristine-tar' => '$(INST_MAN1DIR)/pristine-tar.1',
 		'pristine-bz2' => '$(INST_MAN1DIR)/pristine-bz2.1',
@@ -51,4 +53,6 @@ WriteMakefile(
 	},
 	MAN3PODS	=> {},
 	PMLIBDIRS	=> ["Pristine"],
+	EXE_FILES	=> ["pristine-tar","pristine-bz2","pristine-gz","pristine-xz"],
+	clean		=> { FILES => 'zgz/zgz' },
 );
