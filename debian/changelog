@@ -1,3 +1,13 @@
+pristine-tar (1.27) UNRELEASED; urgency=low
+
+  * Now ported to Mac OS X.
+    - MakeFile.PL fixes
+    - zgz: Use DYLD_LIBRARY_PATH on OSX instead of LD_LIBRARY_PATH
+    - suse-bzip2/Makefile: compile shared library appropriately on OSX
+    Thanks, Torsten Maehne and Philipp A. Hartmann.
+
+ -- Joey Hess <joeyh@debian.org>  Mon, 27 Aug 2012 11:35:37 -0400
+
 pristine-tar (1.26) unstable; urgency=low
 
   * pristine-xz: Use xz --robot to extract information from xz files,
