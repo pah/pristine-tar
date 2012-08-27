@@ -38,8 +38,9 @@ extra_clean:
 	rm -f *.1 zgz/zgz
 	$(MAKE) clean -C pit/suse-bzip2 PREFIX=$(PREFIX)
 
-pristine-tar.spec:
-	sed -i "s/Version:.*/Version: $$(perl -e '$$_=<>;print m/\((.*?)\)/'<debian/changelog)/" pristine-tar.spec
+pristine-tar.spec: debian/changelog
+	sed "s/Version:.*/Version: $$($(PERLRUN) -e '$$_=<>;print m/\((.*?)\)/'<$<)/" \
+		$@ > $@.new && $(MV) $@.new $@
 
 .PHONY: pristine-tar.spec
 }
