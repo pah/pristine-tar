@@ -25,10 +25,6 @@ ZGZ_SOURCES = zgz/zgz.c zgz/gzip/*.c zgz/old-bzip2/*.c
 zgz/zgz: $(ZGZ_SOURCES)
 	gcc -Wall -O2 -o $@ $(ZGZ_SOURCES) -lz -DZGZ_LIB=\"$(ZGZ_LIB)\"
 
-SUSE_BZIP2_SOURCES = pit/suse-bzip2/*.c
-pit/suse-bzip2/suse-bzip2: $(SUSE_BZIP2_SOURCES)
-	gcc -Wall -O2 -o $@ $(SUSE_BZIP2_SOURCES)
-
 extra_install:
 	install -d $(DESTDIR)$(PREFIX)/bin
 	install -d $(DESTDIR)$(PREFIX)/share/man/man1
