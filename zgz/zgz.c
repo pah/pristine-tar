@@ -528,7 +528,14 @@ static	void
 rebrain(char *zombie, char *program, int level, char *opts)
 {
 	char buf[128];
-	sprintf(buf, "LD_LIBRARY_PATH=%s/%s %s -%i %s",
+
+#if defined(__APPLE__) && defined(__MACH__)
+#	define LD_PATH_VAR "DYLD_LIBRARY_PATH" 
+#else
+#	define LD_PATH_VAR "LD_LIBRARY_PATH"
+#endif
+
+	sprintf(buf, LD_PATH_VAR "=%s/%s %s -%i %s",
 			ZGZ_LIB, zombie, program, level, opts);
 	exit(system(buf));
 }
