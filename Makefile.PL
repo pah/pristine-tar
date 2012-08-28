@@ -9,6 +9,14 @@ my $PERL_SHEBANG   = $args{PERL_SHEBANG} || "" ;
 my $TAR_PROGRAM    = $args{TAR_PROGRAM} || "" ;
 my $XDELTA_PROGRAM = $args{XDELTA_PROGRAM} || "" ;
 
+if ($PERL_SHEBANG || $TAR_PROGRAM || $XDELTA_PROGRAM) {
+  print <<EOF;
+Info: MakeMaker may warn about the custom parameters 'PERL_SHEBANG',
+      'TAR_PROGRAM', and 'XDELTA_PROGRAM', which are anyway correctly
+      handled for generating the Makefile.
+EOF
+}
+
 package MY;
 
 sub macro {
