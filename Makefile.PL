@@ -3,13 +3,43 @@ use warnings;
 use strict;
 use ExtUtils::MakeMaker;
 
+# read custom parameters
+my %args = map { split /\s*=\s*/ } @ARGV;
+my $PERL_SHEBANG   = $args{PERL_SHEBANG} || "" ;
+my $TAR_PROGRAM    = $args{TAR_PROGRAM} || "" ;
+my $XDELTA_PROGRAM = $args{XDELTA_PROGRAM} || "" ;
+
+package MY;
+
+sub macro {
+    my $inherited = shift->SUPER::macro(@_);
+    my $subst = '';
+
+    $subst .= q[-e "s|^\#!.*|\#!$(PERL_SHEBANG)|g" ]
+        unless ! ${PERL_SHEBANG};
+    $subst .= q[-e "s|tar_program = \".*\";|tar_program = \"$(TAR_PROGRAM)\";|g" ]
+        unless ! ${TAR_PROGRAM};
+    $subst .= q[-e "s|xdelta_program = \".*\";|xdelta_program = \"$(XDELTA_PROGRAM)\";|g" ]
+        unless ! ${XDELTA_PROGRAM};
+
+    $inherited .= "\nPARAM_SUBST = ${subst}";
+    $inherited;
+}
 # Add a few more targets.
-sub MY::postamble {
+sub postamble {
 q{
 all:: extra_build
 clean:: extra_clean
 install:: extra_install
 pure_install:: extra_install
+
+ifneq (,$(PARAM_SUBST))
+$(EXE_FILES): %:
+	sed $(PARAM_SUBST) $@ > $@.new
+	$(MV) $@.new $@
+	$(CHMOD) $(PERM_RWX) $@
+PHONY+=$(EXE_FILES)
+endif
 
 ZGZ_LIB=$(PREFIX)/lib/zgz
 
@@ -40,12 +70,13 @@ extra_clean:
 pristine-tar.spec: debian/changelog
 	sed "s/Version:.*/Version: $$($(PERLRUN) -e '$$_=<>;print m/\((.*?)\)/'<$<)/" \
 		$@ > $@.new && $(MV) $@.new $@
+PHONY+=pristine-tar.spec
 
-.PHONY: pristine-tar.spec
+.PHONY: $(PHONY)
 }
 }
 
-WriteMakefile(
+ExtUtils::MakeMaker::WriteMakefile(
 	NAME		=> 'Pristine',
 	AUTHOR		=> 'Joey Hess <joey@kitenet.net>',
 	ABSTRACT	=>
@@ -55,5 +86,10 @@ WriteMakefile(
 	MAN3PODS	=> {},
 	PMLIBDIRS	=> ["Pristine"],
 	EXE_FILES	=> ["pristine-tar","pristine-bz2","pristine-gz","pristine-xz"],
+	macro		=> {
+		PERL_SHEBANG   => "${PERL_SHEBANG}",
+		TAR_PROGRAM    => "${TAR_PROGRAM}",
+		XDELTA_PROGRAM => "${XDELTA_PROGRAM}"
+	},
 	clean		=> { FILES => 'zgz/zgz' },
 );
