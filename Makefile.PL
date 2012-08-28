@@ -26,9 +26,9 @@ sub macro {
 
     $subst .= '-e "s|^\#!.*|\#!$(PERL_SHEBANG)|g"'
         unless ! ${PERL_SHEBANG};
-    $subst .= q[-e "s|tar_program = \".*\";|tar_program = \"$(TAR_PROGRAM)\";|g"]
+    $subst .= q[ -e "s|tar_program = \".*\";|tar_program = \"$(TAR_PROGRAM)\";|g"]
         unless ! ${TAR_PROGRAM};
-    $subst .= q[-e "s|xdelta_program = \".*\";|xdelta_program = \"$(XDELTA_PROGRAM)\";|g"]
+    $subst .= q[ -e "s|xdelta_program = \".*\";|xdelta_program = \"$(XDELTA_PROGRAM)\";|g"]
         unless ! ${XDELTA_PROGRAM};
 
     $inherited .= "\nPARAM_SUBST = ${subst}";
