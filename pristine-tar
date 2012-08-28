@@ -189,6 +189,9 @@ $ENV{LANG}='C';
 delete $ENV{TAR_OPTIONS};
 delete $ENV{TAPE};
 
+# The following two assignments are potentially munged during the
+# build process to hold the values of TAR_PROGRAM and XDELTA_PROGRAM
+# parameters as given to Makefile.PL.
 my $tar_program = "tar";
 my $xdelta_program = "xdelta";
 

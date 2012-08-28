@@ -3,25 +3,18 @@ use warnings;
 use strict;
 use ExtUtils::MakeMaker;
 
-# Suppress warnings about parameters we allow the user to specify.
-# (does not work in recent versions of MakeMaker)
-$ExtUtils::MakeMaker::Recognized_Att_Keys{'PERL_SHEBANG'}   = 1;
-$ExtUtils::MakeMaker::Recognized_Att_Keys{'TAR_PROGRAM'}    = 1;
-$ExtUtils::MakeMaker::Recognized_Att_Keys{'XDELTA_PROGRAM'} = 1;
-
 # read custom parameters
 my %args = map { split /\s*=\s*/ } @ARGV;
 my $PERL_SHEBANG   = $args{PERL_SHEBANG} || "" ;
 my $TAR_PROGRAM    = $args{TAR_PROGRAM} || "" ;
 my $XDELTA_PROGRAM = $args{XDELTA_PROGRAM} || "" ;
 
-if( $ExtUtils::MakeMaker::VERSION ge '6.43_00' and
-    ($PERL_SHEBANG || $TAR_PROGRAM || $XDELTA_PROGRAM) )
+if ($PERL_SHEBANG || $TAR_PROGRAM || $XDELTA_PROGRAM)
 {
   print <<EOF;
-Info: Recent versions (>= 6.43) of MakeMaker may warn about the custom
-      parameters 'PERL_SHEBANG', 'TAR_PROGRAM', and 'XDELTA_PROGRAM'
-      which are anyway correctly handled for generating the Makefile.
+Info: MakeMaker may warn about the custom parameters 'PERL_SHEBANG',
+      'TAR_PROGRAM', and 'XDELTA_PROGRAM', which are anyway correctly
+      handled for generating the Makefile.
 EOF
 }
 
