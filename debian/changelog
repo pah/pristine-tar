@@ -4,6 +4,7 @@ pristine-tar (1.27) UNRELEASED; urgency=low
     - MakeFile.PL fixes
     - zgz: Use DYLD_LIBRARY_PATH on OSX instead of LD_LIBRARY_PATH
     - suse-bzip2/Makefile: compile shared library appropriately on OSX
+    - INSTALL: Added some options useful when installing on OSX
     Thanks, Torsten Maehne and Philipp A. Hartmann.
 
  -- Joey Hess <joeyh@debian.org>  Mon, 27 Aug 2012 11:35:37 -0400
