@@ -49,7 +49,8 @@ $(EXE_FILES): %:
 PHONY+=$(EXE_FILES)
 endif
 
-ZGZ_LIB=$(PREFIX)/lib/zgz
+LIBDIR ?= $(PREFIX)/lib
+PKGLIBDIR ?= $(LIBDIR)/pristine-tar
 
 extra_build: zgz/zgz pristine-tar.spec
 	pod2man -c pristine-tar pristine-tar > pristine-tar.1
@@ -61,16 +62,15 @@ extra_build: zgz/zgz pristine-tar.spec
 
 ZGZ_SOURCES = zgz/zgz.c zgz/gzip/*.c zgz/old-bzip2/*.c
 zgz/zgz: $(ZGZ_SOURCES)
-	gcc -Wall -O2 -o $@ $(ZGZ_SOURCES) -lz -DZGZ_LIB=\"$(ZGZ_LIB)\"
+	gcc -Wall -O2 -o $@ $(ZGZ_SOURCES) -lz -DPKGLIBDIR=\"$(PKGLIBDIR)\"
 
 extra_install:
 	install -d $(DESTDIR)$(PREFIX)/bin
 	install zgz/zgz $(DESTDIR)$(PREFIX)/bin
 	install -d $(DESTDIR)$(PREFIX)/share/man/man1
 	install -m 0644 *.1 $(DESTDIR)$(PREFIX)/share/man/man1
-	install -d $(DESTDIR)$(ZGZ_LIB)/suse-bzip2
-	install pit/suse-bzip2/bzip2 $(DESTDIR)$(ZGZ_LIB)/suse-bzip2
-	install pit/suse-bzip2/libbz2* $(DESTDIR)$(ZGZ_LIB)/suse-bzip2
+	install -d $(DESTDIR)$(PKGLIBDIR)/suse-bzip2
+	install pit/suse-bzip2/bzip2 pit/suse-bzip2/libbz2* $(DESTDIR)$(PKGLIBDIR)/suse-bzip2
 
 extra_clean:
 	$(MAKE) clean -C pit/suse-bzip2 PREFIX=$(PREFIX)

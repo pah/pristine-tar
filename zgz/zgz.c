@@ -131,8 +131,8 @@ static	void	gz_compress(int, int, const char *, uint32_t, int, int, int, int, in
 static	void	usage(void);
 static	void	display_version(void);
 static	void	display_license(void);
-static	void	shamble(char *, int, char *);
-static	void    rebrain(char *, char *, int, char *);
+static	void	shamble(char *, int);
+static	void    rebrain(char *, char *, int);
 
 int main(int, char **p);
 
@@ -341,9 +341,9 @@ main(int argc, char **argv)
 		}
 		old_bzip2(level);
 	} else if (bzsuse) {
-		shamble("suse-bzip2/bzip2", level, "");
+		shamble("suse-bzip2/bzip2", level);
 	} else if (pbzsuse) {
-		rebrain("suse-bzip2", "pbzip2", level, "");
+		rebrain("suse-bzip2", "pbzip2", level);
 	} else {
 		if (rsync || new_rsync) {
 			fprintf(stderr, "%s: --rsyncable not supported with --zlib\n", progname);
@@ -516,18 +516,34 @@ gz_compress(int in, int out, const char *origname, uint32_t mtime, int level, in
 
 /* runs an external, reanimated compressor program */
 static	void
-shamble(char *zombie, int level, char *opts)
+shamble(char *zombie, int level)
 {
-	char buf[128];
-	sprintf(buf, "%s/%s -%i %s", ZGZ_LIB, zombie, level, opts);
-	exit(system(buf));
+	char exec_buf[PATH_MAX];
+	char level_buf[3];
+	char *argv[3];
+	int i;
+
+	snprintf(exec_buf, sizeof(exec_buf), "%s/%s", PKGLIBDIR, zombie);
+	snprintf(level_buf, sizeof(level_buf), "-%i", level);
+
+	i = 0;
+	argv[i++] = exec_buf;
+	argv[i++] = level_buf;
+	argv[i++] = NULL;
+
+	execvp(exec_buf, argv);
+	perror("Failed to run external program");
+	exit(1);
 }
 
 /* swaps in a different library and runs a system program */
 static	void
-rebrain(char *zombie, char *program, int level, char *opts)
+rebrain(char *zombie, char *program, int level)
 {
-	char buf[128];
+	char path_buf[PATH_MAX];
+	char level_buf[3];
+	char *argv[3];
+	int i;
 
 #if defined(__APPLE__) && defined(__MACH__)
 #	define LD_PATH_VAR "DYLD_LIBRARY_PATH" 
@@ -535,9 +551,20 @@ rebrain(char *zombie, char *program, int level, char *opts)
 #	define LD_PATH_VAR "LD_LIBRARY_PATH"
 #endif
 
-	sprintf(buf, LD_PATH_VAR "=%s/%s %s -%i %s",
-			ZGZ_LIB, zombie, program, level, opts);
-	exit(system(buf));
+	snprintf(path_buf, sizeof(path_buf), "%s/%s", PKGLIBDIR, zombie);
+	/* FIXME - should append, not overwrite */
+	setenv(LD_PATH_VAR, path_buf, 1);
+
+	snprintf(level_buf, sizeof(level_buf), "-%i", level);
+
+	i = 0;
+	argv[i++] = program;
+	argv[i++] = level_buf;
+	argv[i++] = NULL;
+
+	execvp(program, argv);
+	perror("Failed to run external program");
+	exit(1);
 }
 
 /* display usage */
