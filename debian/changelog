@@ -6,6 +6,9 @@ pristine-tar (1.27) UNRELEASED; urgency=low
     - suse-bzip2/Makefile: compile shared library appropriately on OSX
     - INSTALL: Added some options useful when installing on OSX
     Thanks, Torsten Maehne and Philipp A. Hartmann.
+  * zgz: Don't hardcode /lib, avoid segfaulting when installed in a
+    > 128 character path.
+    Thanks, Colin Walters
 
  -- Joey Hess <joeyh@debian.org>  Mon, 27 Aug 2012 11:35:37 -0400
 
