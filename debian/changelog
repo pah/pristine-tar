@@ -9,6 +9,8 @@ pristine-tar (1.27) UNRELEASED; urgency=low
   * zgz: Don't hardcode /lib, avoid segfaulting when installed in a
     > 128 character path.
     Thanks, Colin Walters
+  * Fix typo that led to incorrect error message when pristine-tar
+    branch does not exist. Closes: #700448 Thanks, paul cannon
 
  -- Joey Hess <joeyh@debian.org>  Mon, 27 Aug 2012 11:35:37 -0400
 

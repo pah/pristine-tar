@@ -814,9 +814,8 @@ sub list {
 				print $_."\n";
 			}
 		}
+	}
 	else {
 		die "unsupported vcs $vcs";
 	}
-}
-
 }
