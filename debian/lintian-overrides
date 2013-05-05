@@ -1,0 +1,5 @@
+# pristine-tar contains several embedded and modified compressors,
+# which are only used to recreate original tarballs.
+embedded-library usr/lib/pristine-tar/suse-bzip2/libbz2.so: bzip2
+embedded-library usr/lib/pristine-tar/suse-bzip2/libbz2.so.1.0: bzip2
+embedded-library usr/lib/pristine-tar/suse-bzip2/libbz2.so.1.0.4: bzip2

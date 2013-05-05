@@ -1,0 +1,15 @@
+#!/usr/bin/make -f
+%:
+	dh $@
+
+override_dh_auto_configure:
+	# keeps it out of /usr/local
+	dh_auto_configure -- PREFIX=/usr
+
+override_dh_auto_clean:
+	# distclean moans about MANIFEST, this is quieter
+	if [ -e Makefile ]; then $(MAKE) realclean; fi
+
+override_dh_makeshlibs:
+	# only contains private libraries
+

@@ -1,0 +1,39 @@
+Run `perl Makefile.PL` to generate a Makefile, then run `make` and
+`make install`.
+
+To configure pristine-tar for your local environment, you may specify
+the following additional parameters to Makefile.PL for the creation
+of the Makefile
+
+PERL_SHEBANG=<shell-shebang-to-launch-perl-script>
+TAR_PROGRAM=<name-or-path-to-gnu-tar>
+XDELTA_PROGRAM=<name-or-path-to-xdelta1>
+
+The PERL_SHEBANG needs only to be adapted in rare cases, as it is usually
+correctly set by MakeMaker. However, the TAR_PROGRAM should refer to the GNU
+version of Tar, which may be called, e.g., "tar" (default), "gtar", or
+"gnutar" depending on the system. The XDELTA_PROGRAM needs to refer to the
+Xdelta program in version 1.x (http://xdelta.org), which may be called, e.g.,
+"xdelta" (default) or "xdelta1". Xdelta3 won't work, as it has a different
+command line syntax.
+
+The installation destination (default: /usr/local) can be specified either
+via the ./Makefile.PL parameter:
+
+PREFIX=<installation-prefix>
+
+or
+
+INSTALL_BASE=<installation-prefix>
+
+See the manpage (or perldoc) of ExtUtils::MakeMaker for more details.
+
+
+EXAMPLE:
+
+$ perl Makefile.PL \
+    TAR_PROGRAM=gnutar \
+    XDELTA_PROGRAM=xdelta \
+    PREFIX=/usr/local
+$ make
+$ make install

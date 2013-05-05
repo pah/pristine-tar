@@ -1,0 +1,25 @@
+* Investigate files that the programs cannot reproduce. Such files are stored
+  in the testsuite git branch.
+
+* Would be nice to keep a md5sums list of the files in the manifest and
+  check and error if any are different. The error message from xdelta when
+  a source file doesn't have the right checksup is fairly obscure and
+  doesn't aid in fixing the problem.
+
+  There's an implementation of this in the manifest-md5sums branch of
+  git://git.debian.org/git/users/kibi-guest/pristine-tar.git , but I have
+  not yet decided about applying it, since it would bloat the delta files
+  with a list of all the files and md5sums..
+
+* Optimisation: Enhance zgz so it runs multiple compression alternatives
+  block-by-block in parallell, aborting compressors when they differ
+  from the target file.
+
+* Add binary deltas for unreproducible bz2 files. (But currently, only two
+  bz2 files are known that fails to reproduce: nsis and freecol in testsuite.)
+
+* Support checkout/checkin using other VCS than git.
+
+  bzr-builddeb stores pristine-tar data in bzr repositories.
+  The delta is stored in a bzr revprop named "deb-pristine-delta"
+  or "deb-pristine-delta-bz2".

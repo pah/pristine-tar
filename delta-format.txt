@@ -1,0 +1,54 @@
+The delta file is a compressed tarball, containing the following files:
+
+version
+	Currently "2.0" or "3.0".
+type
+	Type of file this is a delta for ("tar", "gz", or "bz2").
+
+
+For tar files, it contains:
+
+manifest
+	List of all files in the tarball, as output by `tar t`.
+	Used to order files correctly when rebuilding it.
+delta
+	xdelta between the generated tarball and the original tarball.
+wrapper
+	Encapsulated delta file for the .gz or .bz2 wrapper for the
+	tarball. Optional, if not present a pristine .gz won't be generated.
+
+
+For gz files, wrapper contains:
+
+params
+	Parameters to pass to zgz.
+	("-n 9", "-M", "--rsyncable")
+timestamp
+	Timestamp of the original input file, in seconds from epoch.
+filename
+	Filename of the original input file.
+delta
+	xdelta between the generated gz file and the original gz file.
+	(Optional; needs version "3.0".)
+
+
+For bzip2 files the wrapper contains:
+
+params
+	Typically, only the compression level is needed (4th byte of the
+	compressed file), and its matching parameter stored: -N.
+	In some cases a -bN parameter is detected and stored.
+program
+	Program used to compress. Almost everytime, it is bzip2 (or another
+	implementation producing bit-identical results). pbzip2 might also be
+	detected, but several parameters might interfere (-r, -pN).
+
+	It may also be zgz (the params will include --old-bzip2 in this
+	case).
+
+For xz files, the wrapper contains:
+
+params
+	Typically, only the compression level is needed.
+program
+	Program used to compress. Almost everytime, it is xz.

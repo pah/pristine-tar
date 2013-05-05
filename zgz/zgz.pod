@@ -1,0 +1,33 @@
+=head1 NAME
+
+zgz - Frankenstein's compressor
+
+=head1 SYNOPSIS
+
+B<zgz> [options] < file > file.gz
+
+=head1 DESCRIPTION
+
+This program is an unholy combination of the BSD gzip program, a modified
+GNU gzip that supports setting an arbitrary file name and timestamp,
+and an old, rotting version of bzip2 that we dug up somewhere at midnight.
+Only the bits to do with file compression were kept.
+
+There are many arcane options which aid L<pristine-gz>(1) in re-animating
+files. Use --help to see all the gory details.
+
+=head1 AUTHOR
+
+Matthew R. Green,
+Jean-loup Gailly,
+Julian R Seward,
+Faidon Liambotis,
+Josh Triplett,
+Joey Hess
+
+Note that several of the above donors would be very suprised at finding
+parts of themselves ... er, their work ... shambling around here. Please
+direct correspondance and/or flaming pitchforks to the pristine-tar
+maintainers.
+
+=cut
