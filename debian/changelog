@@ -1,4 +1,4 @@
-pristine-tar (1.27) UNRELEASED; urgency=low
+pristine-tar (1.27) unstable; urgency=low
 
   * Now ported to Mac OS X.
     - MakeFile.PL fixes
@@ -12,7 +12,7 @@ pristine-tar (1.27) UNRELEASED; urgency=low
   * Fix typo that led to incorrect error message when pristine-tar
     branch does not exist. Closes: #700448 Thanks, paul cannon
 
- -- Joey Hess <joeyh@debian.org>  Mon, 27 Aug 2012 11:35:37 -0400
+ -- Joey Hess <joeyh@debian.org>  Sat, 04 May 2013 23:50:40 -0400
 
 pristine-tar (1.26) unstable; urgency=low
 
