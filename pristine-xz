@@ -352,7 +352,7 @@ sub genxz {
 		next if $param eq '--check=crc64';
 		next if $param eq '--check=sha256';
 		next if $param=~/^(--block-list=[0-9,]+)$/;
-		die "paranoia check failed on params from delta (@params)";
+		die "paranoia check failed on params from delta ($param)";
 	}
 	@params=split(' ', $delta->{params});
 

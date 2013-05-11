@@ -280,7 +280,7 @@ sub gengz {
 			shift @params;
 			next;
 		}
-		die "paranoia check failed on params from delta (@params)";
+		die "paranoia check failed on params from delta ($_)";
 	}
 	@params=split(' ', $delta->{params});
 

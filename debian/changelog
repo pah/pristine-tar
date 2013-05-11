@@ -1,3 +1,10 @@
+pristine-tar (1.29) UNRELEASED; urgency=low
+
+  * Fix display of unsupported param when paranoia check fails.
+    Closes: #707820
+
+ -- Joey Hess <joeyh@debian.org>  Sat, 11 May 2013 11:19:56 -0400
+
 pristine-tar (1.28) unstable; urgency=low
 
   * Update lintian overrides.
