@@ -343,18 +343,23 @@ sub recreatetarball {
 
 	delete $ENV{TAR_LONGLINK_100};
 	$recreatetarball_tempdir=$tempdir;
-	return recreatetarball_helper();
+	return recreatetarball_helper(%options);
 }
 
 sub recreatetarball_helper {
+	my %options=@_;
 	my $tempdir=$recreatetarball_tempdir;
 	
 	my $ret="$tempdir/recreatetarball";
+	my @cmd=($tar_program, "cf", $ret, "--owner", 0, "--group", 0,
+			"--numeric-owner", "-C", "$tempdir/workdir",
+			"--no-recursion", "--mode", "0644",
+            "--files-from", "$tempdir/manifest");
+	if (exists $options{tar_format}) {
+		push @cmd, ("-H", $options{tar_format});
+	}
 
-	doit($tar_program, "cf", $ret, "--owner", 0, "--group", 0, 
-		"--numeric-owner", "-C", "$tempdir/workdir",
-		"--no-recursion", "--mode", "0644", 
-		"--files-from", "$tempdir/manifest");
+	doit(@cmd);
 	
 	return $ret;
 }
@@ -393,6 +398,10 @@ sub gentar {
 	push @try, sub { recreatetarball($delta->{manifest}, getcwd,
 			clobber_source => 0, %opts) };
 	push @try, \&recreatetarball_longlink_100;
+	push @try, sub { recreatetarball($delta->{manifest}, getcwd,
+			clobber_source => 0, tar_format => "gnu", %opts) };
+	push @try, sub { recreatetarball($delta->{manifest}, getcwd,
+			clobber_source => 0, tar_format => "posix", %opts) };
 
 	my $ok;
 	foreach my $variant (@try) {
