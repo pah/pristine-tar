@@ -222,6 +222,21 @@ sub usage {
 	exit 1;
 }
 
+sub unquote_filename {
+	my $filename = shift;
+
+	$filename =~ s/\\a/\a/g;
+	$filename =~ s/\\b/\b/g;
+	$filename =~ s/\\f/\f/g;
+	$filename =~ s/\\n/\n/g;
+	$filename =~ s/\\r/\r/g;
+	$filename =~ s/\\t/\t/g;
+	$filename =~ s/\\v/\x11/g;
+	$filename =~ s/\\\\/\\/g;
+
+	return $filename;
+}
+
 my $recreatetarball_tempdir;
 sub recreatetarball {
 	my $manifestfile=shift;
@@ -281,30 +296,32 @@ sub recreatetarball {
 	# in the tarball, since it can easily vary.
 	my $full_sweep=0;
 	foreach my $file (@manifest) {
-		if (-l "$tempdir/workdir/$file") {
+		my $unquoted_file = unquote_filename($file);
+
+		if (-l "$tempdir/workdir/$unquoted_file") {
 			# Can't set timestamp of a symlink, so
 			# replace the symlink with an empty file.
-			unlink("$tempdir/workdir/$file") || die "unlink: $!";
-			open(OUT, ">", "$tempdir/workdir/$file") || die "open: $!";
+			unlink("$tempdir/workdir/$unquoted_file") || die "unlink: $!";
+			open(OUT, ">", "$tempdir/workdir/$unquoted_file") || die "open: $!";
 			close OUT;
 		}
-		elsif (! -e "$tempdir/workdir/$file") {
+		elsif (! -e "$tempdir/workdir/$unquoted_file") {
 			debug("$file is listed in the manifest but may not be present in the source directory");
 			$full_sweep=1;
 
 			if ($options{create_missing}) {
 				# Avoid tar failing on the nonexistent item by
 				# creating a dummy directory.
-				debug("creating missing $file");
-				mkpath "$tempdir/workdir/$file";
+				debug("creating missing $unquoted_file");
+				mkpath "$tempdir/workdir/$unquoted_file";
 			}
 		}
 		
-		if (-d "$tempdir/workdir/$file" && (-u _ || -g _ || -k _)) {
+		if (-d "$tempdir/workdir/$unquoted_file" && (-u _ || -g _ || -k _)) {
 			# tar behaves weirdly for some special modes
 			# and ignores --mode, so clear them.
 			debug("chmod $file");
-			chmod(0755, "$tempdir/workdir/$file") ||
+			chmod(0755, "$tempdir/workdir/$unquoted_file") ||
 				die "chmod: $!";
 		}
 	}
@@ -312,8 +329,9 @@ sub recreatetarball {
 	# Set file times only after modifying of the directory content is
 	# done.
 	foreach my $file (@manifest) {
-		if (-e "$tempdir/workdir/$file") {
-			utime(0, 0, "$tempdir/workdir/$file") || die "utime: $file: $!";
+		my $unquoted_file = unquote_filename($file);
+		if (-e "$tempdir/workdir/$unquoted_file") {
+			utime(0, 0, "$tempdir/workdir/$unquoted_file") || die "utime: $file: $!";
 		}
 	}
 	
@@ -438,7 +456,7 @@ sub genmanifest {
 	my $tarball=shift;
 	my $manifest=shift;
 
-	open(IN, "tar tf $tarball |") || die "tar tf: $!";
+	open(IN, "tar --quoting-style=escape -tf $tarball |") || die "tar tf: $!";
 	open(OUT, ">", $manifest) || die "$!";
 	while (<IN>) {
 		chomp;
