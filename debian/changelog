@@ -1,4 +1,4 @@
-pristine-tar (1.29) UNRELEASED; urgency=low
+pristine-tar (1.29) unstable; urgency=low
 
   * Fix display of unsupported param when paranoia check fails.
     Closes: #707820
@@ -7,8 +7,11 @@ pristine-tar (1.29) UNRELEASED; urgency=low
     have been the default format used by tar when the delta file
     was originally generated.
     Thanks, Markus Lehtonen.
+  * Improve handling of escaped characters in filenames listed by
+    tar -t. Closes: #719078
+    Thanks, Chow Loong Jin
 
- -- Joey Hess <joeyh@debian.org>  Sat, 11 May 2013 11:19:56 -0400
+ -- Joey Hess <joeyh@debian.org>  Mon, 26 Aug 2013 11:54:08 -0400
 
 pristine-tar (1.28) unstable; urgency=low
 
