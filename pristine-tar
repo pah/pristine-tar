@@ -727,6 +727,7 @@ sub commitdelta {
 		# index, and without touching the working tree. Aka deep 
 		# git magick.
 		$ENV{GIT_INDEX_FILE}="$tempdir/index";
+		$ENV{GIT_WORK_TREE}="$tempdir";
 		if (! exists $ENV{GIT_DIR} || ! length $ENV{GIT_DIR}) {		
 			$ENV{GIT_DIR}=getcwd."/.git";
 		}
