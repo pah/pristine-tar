@@ -189,6 +189,10 @@ $ENV{LANG}='C';
 delete $ENV{TAR_OPTIONS};
 delete $ENV{TAPE};
 
+# Ask tar to please be compatable with version 1.26.
+# In version 1.27, it changed some fields used in longlink entries.
+$ENV{PRISTINE_TAR_COMPAT}=1;
+
 # The following two assignments are potentially munged during the
 # build process to hold the values of TAR_PROGRAM and XDELTA_PROGRAM
 # parameters as given to Makefile.PL.
