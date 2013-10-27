@@ -359,7 +359,6 @@ sub recreatetarball {
 		}, "$tempdir/workdir");
 	}
 
-	delete $ENV{TAR_LONGLINK_100};
 	$recreatetarball_tempdir=$tempdir;
 	return recreatetarball_helper(%options);
 }
