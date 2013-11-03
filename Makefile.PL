@@ -74,7 +74,7 @@ extra_install:
 
 extra_clean:
 	$(MAKE) clean -C pit/suse-bzip2 PREFIX=$(PREFIX)
-	rm *.1
+	rm -f *.1
 
 pristine-tar.spec: debian/changelog
 	sed "s/Version:.*/Version: $$($(PERLRUN) -e '$$_=<>;print m/\((.*?)\)/'<$<)/" \
