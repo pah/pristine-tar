@@ -2,8 +2,8 @@ pristine-tar (1.30) UNRELEASED; urgency=low
 
   * Set GIT_WORK_TREE when committing to make it work when inside
     a git submodule. Thanks, Victor Vasiliev. Closes: #726007
-  * Work around change in longlink fields in tar 1.27.
-    (Needs PRISTINE_TAR_COMPAT patch applied to tar.)
+  * Work around change in longlink fields in tar 1.27,
+    and depend on version -3 which adds PRISTINE_TAR_COMPAT.
     Closes: #726963
 
  -- Joey Hess <joeyh@debian.org>  Sun, 27 Oct 2013 12:31:30 -0400
