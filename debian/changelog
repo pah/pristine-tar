@@ -1,3 +1,10 @@
+pristine-tar (1.31) UNRELEASED; urgency=medium
+
+  * Build on Hurd without needing PATH_MAX defined. Closes: #738670
+    Thanks, Svante Signell
+
+ -- Joey Hess <joeyh@debian.org>  Wed, 12 Feb 2014 13:13:18 -0400
+
 pristine-tar (1.30) unstable; urgency=low
 
   * Set GIT_WORK_TREE when committing to make it work when inside

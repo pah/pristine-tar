@@ -518,12 +518,14 @@ gz_compress(int in, int out, const char *origname, uint32_t mtime, int level, in
 static	void
 shamble(char *zombie, int level)
 {
-	char exec_buf[PATH_MAX];
+	char *exec_buf;
 	char level_buf[3];
 	char *argv[3];
-	int i;
+	int i, len;
 
-	snprintf(exec_buf, sizeof(exec_buf), "%s/%s", PKGLIBDIR, zombie);
+	len = strlen(PKGLIBDIR) + 1 + strlen(zombie) + 1;
+	exec_buf = malloc(len);
+	snprintf(exec_buf, len, "%s/%s", PKGLIBDIR, zombie);
 	snprintf(level_buf, sizeof(level_buf), "-%i", level);
 
 	i = 0;
@@ -540,10 +542,10 @@ shamble(char *zombie, int level)
 static	void
 rebrain(char *zombie, char *program, int level)
 {
-	char path_buf[PATH_MAX];
+	char *path_buf;
 	char level_buf[3];
 	char *argv[3];
-	int i;
+	int i, len;
 
 #if defined(__APPLE__) && defined(__MACH__)
 #	define LD_PATH_VAR "DYLD_LIBRARY_PATH" 
@@ -551,9 +553,12 @@ rebrain(char *zombie, char *program, int level)
 #	define LD_PATH_VAR "LD_LIBRARY_PATH"
 #endif
 
-	snprintf(path_buf, sizeof(path_buf), "%s/%s", PKGLIBDIR, zombie);
+	len = strlen(PKGLIBDIR) + 1 + strlen(zombie) + 1;
+	path_buf = malloc(len);
+	snprintf(path_buf, len, "%s/%s", PKGLIBDIR, zombie);
 	/* FIXME - should append, not overwrite */
 	setenv(LD_PATH_VAR, path_buf, 1);
+	free(path_buf);
 
 	snprintf(level_buf, sizeof(level_buf), "-%i", level);
 
