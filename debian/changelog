@@ -1,9 +1,9 @@
-pristine-tar (1.31) UNRELEASED; urgency=medium
+pristine-tar (1.31) unstable; urgency=medium
 
   * Build on Hurd without needing PATH_MAX defined. Closes: #738670
     Thanks, Svante Signell
 
- -- Joey Hess <joeyh@debian.org>  Wed, 12 Feb 2014 13:13:18 -0400
+ -- Joey Hess <joeyh@debian.org>  Wed, 23 Apr 2014 14:01:03 -0400
 
 pristine-tar (1.30) unstable; urgency=low
 
